@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教會活動意願調查</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- 視覺設計 (CSS) --- */
+        :root {
+            --primary-color: #6C8EBF; /* 溫暖的莫蘭迪藍 */
+            --bg-color: #F4F7F6;
+            --card-bg: #FFFFFF;
+            --text-main: #333333;
+            --text-muted: #666666;
+        }
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px 15px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            background-color: var(--card-bg);
+            max-width: 500px;
+            width: 100%;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            padding: 30px 25px;
+            box-sizing: border-box;
+            display: none; /* 預設隱藏，等 LINE 登入後才顯示 */
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .header h1 {
+            font-size: 22px;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+        .header p {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin: 0;
+        }
+        /* 表單元素設計 */
+        .question-block {
+            margin-bottom: 25px;
+        }
+        .question-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        .option-label {
+            display: block;
+            background-color: var(--bg-color);
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+        /* 點選時的邊框變化 */
+        .option-label:has(input:checked) {
+            border-color: var(--primary-color);
+            background-color: #EBF1F5;
+        }
+        .option-label input {
+            margin-right: 10px;
+            transform: scale(1.2);
+            accent-color: var(--primary-color);
+        }
+        .text-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: inherit;
+            box-sizing: border-box;
+            margin-top: 5px;
+        }
+        .submit-btn {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .submit-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        /* 載入中畫面 */
+        #loading {
+            text-align: center;
+            margin-top: 50px;
+            color: var(--text-muted);
+        }
+        /* 成功畫面 */
+        #success-message {
+            text-align: center;
+            display: none;
+            padding: 40px 20px;
+        }
+        #success-message h2 { color: var(--primary-color); }
+    </style>
+</head>
+<body>
+
+    <div id="loading">
+        <h2>系統讀取中...</h2>
+        <p>正在驗證 LINE 帳號，請稍候</p>
+    </div>
+
+    <div id="success-message" class="container">
+        <h2>🎉 投票成功！</h2>
+        <p>謝謝 <span id="success-name"></span> 的參與，我們已經收到你的回覆囉！</p>
+    </div>
+
+    <div id="app" class="container">
+        <div class="header">
+            <h1>教會活動意願調查</h1>
+            <p>平安！<span id="user-name" style="font-weight:bold; color:#333;"></span>，請告訴我們你的想法</p>
+        </div>
+
+        <form id="vote-form">
+            <div class="question-block">
+                <div class="question-title">1. 偏好活動行程？ (單選)</div>
+                <label class="option-label">
+                    <input type="radio" name="trip" value="方案一" required> 方案一：和平島自然導覽與海港晚宴
+                </label>
+                <label class="option-label">
+                    <input type="radio" name="trip" value="方案二" required> 方案二：包棟民宿與星空 BBQ 派對
+                </label>
+            </div>
+
+            <div class="question-block">
+                <div class="question-title">2. 請選擇偏好舉辦活動的時間？ (可複選)</div>
+                <label class="option-label">
+                    <input type="checkbox" name="date" value="6/13-6/14"> 6/13 - 6/14 (週六日)
+                </label>
+                <label class="option-label">
+                    <input type="checkbox" name="date" value="6/27-6/28"> 6/27 - 6/28 (週六日)
+                </label>
+                <label class="option-label" style="display:flex; align-items:center;">
+                    <input type="checkbox" name="date" value="其他" id="other-checkbox">
+                    其他時間：
+                    <input type="text" id="other-text" class="text-input" style="margin-top:0; margin-left:10px;" placeholder="請填寫日期">
+                </label>
+            </div>
+
+            <button type="submit" id="submit-btn" class="submit-btn">送出我的期待 ✨</button>
+        </form>
+    </div>
+
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script>
+        // ==========================================
+        // ⚠️ 你只需要修改以下兩個變數：
+        // ==========================================
+        const LIFF_ID = "2009879130-CwjiaVKB"; 
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx4pg2qbQU2Kun4iIblBezfEvWSU59F4UzK3oyRpuOf5ESW6mMRQfsG_PTTnnBJQZfgPA/exec";
+        // ==========================================
+
+        let currentUser = { name: "", id: "" };
+
+        // 1. 初始化 LINE LIFF
+        async function initializeLiff() {
+            try {
+                await liff.init({ liffId: LIFF_ID });
+                
+                if (liff.isLoggedIn()) {
+                    // 已登入：抓取使用者資料
+                    const profile = await liff.getProfile();
+                    currentUser.name = profile.displayName;
+                    currentUser.id = profile.userId;
+                    
+                    // 替換畫面上的名字，並顯示表單
+                    document.getElementById('user-name').innerText = currentUser.name;
+                    document.getElementById('success-name').innerText = currentUser.name;
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('app').style.display = 'block';
+                } else {
+                    // 未登入：強制跳轉 LINE 登入畫面
+                    liff.login();
+                }
+            } catch (err) {
+                console.error('LIFF 初始化失敗', err);
+                document.getElementById('loading').innerHTML = '<h2 style="color:red;">登入失敗</h2><p>請確認 LIFF ID 是否設定正確，或使用 LINE 開啟此連結。</p>';
+            }
+        }
+
+        // 當網頁載入完成時，執行初始化
+        window.onload = initializeLiff;
+
+        // 2. 處理表單送出邏輯
+        document.getElementById('vote-form').addEventListener('submit', async function(e) {
+            e.preventDefault(); // 防止網頁重新整理
+            
+            const btn = document.getElementById('submit-btn');
+            btn.innerText = "資料傳送中...";
+            btn.disabled = true;
+
+            // 抓取選項一 (單選)
+            const tripChoice = document.querySelector('input[name="trip"]:checked').value;
+            
+            // 抓取選項二 (複選 + 其他)
+            let dateChoices = [];
+            document.querySelectorAll('input[name="date"]:checked').forEach(checkbox => {
+                if(checkbox.value === "其他") {
+                    const otherText = document.getElementById('other-text').value;
+                    dateChoices.push(otherText ? `其他(${otherText})` : "其他(未填寫)");
+                } else {
+                    dateChoices.push(checkbox.value);
+                }
+            });
+
+            // 如果沒勾選日期，擋下來
+            if(dateChoices.length === 0) {
+                alert("請至少選擇一個活動時間！");
+                btn.innerText = "送出我的期待 ✨";
+                btn.disabled = false;
+                return;
+            }
+
+            // 整理要送出的資料
+            const postData = {
+                userName: currentUser.name,
+                userId: currentUser.id,
+                choice_trip: tripChoice,
+                choice_time: dateChoices.join(", ") // 將多個日期用逗號合併
+            };
+
+            // 3. 傳送資料到 Google Apps Script
+            try {
+                const response = await fetch(GAS_API_URL, {
+                    method: 'POST',
+                    // 設定 text/plain 避免 CORS 阻擋
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(postData)
+                });
+
+                if(response.ok) {
+                    // 成功：隱藏表單，顯示感謝畫面
+                    document.getElementById('app').style.display = 'none';
+                    document.getElementById('success-message').style.display = 'block';
+                } else {
+                    throw new Error("傳送失敗");
+                }
+            } catch (error) {
+                alert("傳送失敗，請稍後再試或通知同工！");
+                btn.innerText = "送出我的期待 ✨";
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
