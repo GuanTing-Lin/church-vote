@@ -3,179 +3,400 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>教會活動意願調查</title>
+    <title>香草山小組出遊投票</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        /* --- 視覺設計 (CSS) --- */
+        /* --- 🎨 視覺代幣 (Design Tokens) from Figma --- */
         :root {
-            --primary-color: #6C8EBF; /* 溫暖的莫蘭迪藍 */
-            --bg-color: #F4F7F6;
-            --card-bg: #FFFFFF;
+            --primary-orange: #F9A826; /* 卡片一主色 */
+            --primary-blue: #007BFF;   /* 卡片二主色 */
+            --primary-green: #3BD0AF;  /* 提交按鈕主色 */
+            --bg-body: #F8F9FA;
+            --bg-card: #FFFFFF;
             --text-main: #333333;
             --text-muted: #666666;
+            --shadow-card: 0 4px 15px rgba(0,0,0,0.06);
+            --radius-main: 12px;
         }
+
+        /* 重設基礎樣式 */
         body {
             font-family: 'Noto Sans TC', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
+            background-color: var(--bg-body);
             margin: 0;
-            padding: 20px 15px;
+            padding: 0;
+            color: var(--text-main);
+            /* 下方提交按鈕是固定的，預留空間以免擋到內容 */
+            padding-bottom: 120px; 
+        }
+
+        /* --- 1. 頂部導覽列 (Top Bar) --- */
+        .top-nav {
+            background-color: var(--bg-card);
+            padding: 15px 30px;
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
         }
-        .container {
-            background-color: var(--card-bg);
-            max-width: 500px;
-            width: 100%;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            padding: 30px 25px;
-            box-sizing: border-box;
-            display: none; /* 預設隱藏，等 LINE 登入後才顯示 */
+        .top-nav h1 {
+            font-size: 18px;
+            margin: 0;
+            font-weight: 700;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-        .header h1 {
-            font-size: 22px;
-            color: var(--primary-color);
-            margin-bottom: 5px;
-        }
-        .header p {
+        .user-info {
+            display: flex;
+            align-items: center;
             font-size: 14px;
             color: var(--text-muted);
-            margin: 0;
         }
-        /* 表單元素設計 */
-        .question-block {
+        /* LINE 大頭貼預位 */
+        .avatar-placeholder {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #eee;
+            margin-left: 10px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        /* 主容器 */
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 15px;
+            box-sizing: border-box;
+        }
+
+        /* 投票說明 */
+        .voting-header {
             margin-bottom: 25px;
+            padding-left: 10px;
         }
-        .question-title {
+        .voting-header h2 { font-size: 20px; margin-bottom: 5px; color: var(--primary-orange); }
+        .voting-header p { font-size: 14px; margin: 0; color: var(--text-muted); }
+
+        /* --- 2. 方案卡片排版 (Cards Row) --- */
+        .cards-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* 兩欄 */
+            gap: 25px;
+        }
+        
+        /* 手機版改為單欄 */
+        @media (max-width: 768px) {
+            .cards-row { grid-template-columns: 1fr; }
+        }
+
+        /* 卡片共用樣式 */
+        .trip-card {
+            background-color: var(--bg-card);
+            border-radius: var(--radius-main);
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+            display: flex;
+            flex-direction: column;
+            border: 2px solid transparent; /* 預留邊框給「選取中」狀態 */
+            transition: border-color 0.2s;
+        }
+        
+        /* 選取中狀態的卡片邊框 */
+        .trip-card.selected { border-color: var(--primary-green); }
+
+        /* 卡片圖片區 */
+        .card-img-block {
+            position: relative;
+            height: 180px;
+            background-color: #eee; /* 預位 */
+        }
+        .card-img-block img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* 卡片小徽章 (Badge) */
+        .card-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background-color: rgba(255,255,255,0.8);
+            backdrop-filter: blur(4px);
+            color: #333;
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* 卡片文字區 */
+        .card-body {
+            padding: 20px 25px;
+            flex-grow: 1;
+        }
+        .card-title {
             font-size: 16px;
             font-weight: 700;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
         }
-        .option-label {
+        .itinerary-list {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            font-size: 14px;
+            color: var(--text-main);
+            line-height: 1.8;
+        }
+        .day-label {
+            font-weight: 700;
+            background-color: #FFEFCF;
+            color: var(--primary-orange);
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-right: 8px;
+        }
+
+        /* 卡片按鈕區 (對應 Figma) */
+        .card-footer { padding: 10px 25px 25px; }
+        
+        .trip-btn {
+            width: 100%;
+            background: none;
+            border: 1px solid transparent;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.2s;
+        }
+        /* 選項一按鈕配色 (橘黃色) */
+        .trip-btn-orange { border-color: var(--primary-orange); color: var(--primary-orange); }
+        .trip-btn-orange:hover { background-color: #FEF8EF; }
+        /* 選項二按鈕配色 (藍色) */
+        .trip-btn-blue { border-color: var(--primary-blue); color: var(--primary-blue); }
+        .trip-btn-blue:hover { background-color: #F0F8FF; }
+
+        /* 按鈕已選取狀態 (打勾) */
+        .trip-btn.checked { background-color: var(--primary-green); color: white; border-color: var(--primary-green); }
+        
+        /* --- 3. 固定提交按鈕 (Footer Button) --- */
+        .fixed-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--bg-card);
+            padding: 20px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 100;
+        }
+        .submit-btn {
+            max-width: 900px;
+            width: 90%;
+            background-color: var(--primary-green);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: var(--radius-main);
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            box-sizing: border-box;
+            transition: opacity 0.2s;
+        }
+        /* 預設禁用狀態 */
+        .submit-btn:disabled { background-color: #cccccc; cursor: not-allowed; opacity: 0.7; }
+        .submit-btn:not(:disabled):hover { opacity: 0.9; }
+
+        /* 提交按鈕下方的提示文字 */
+        .submit-helper { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+
+        /* --- 4. 時間選取彈窗 (Modal) --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0,0,0,0.4);
+            backdrop-filter: blur(2px);
+            z-index: 200;
+            display: none; /* 預設隱藏 */
+            justify-content: center;
+            align-items: center;
+        }
+        .modal {
+            background-color: var(--bg-card);
+            max-width: 450px;
+            width: 90%;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .modal-header h3 { font-size: 18px; margin: 0; color: #333; }
+        .modal-body { margin-top: 20px; }
+        
+        /* 彈窗內的選項排版 */
+        .modal-option-label {
             display: block;
-            background-color: var(--bg-color);
-            padding: 12px 15px;
+            background-color: var(--bg-body);
+            padding: 12px;
             border-radius: 8px;
             margin-bottom: 10px;
             cursor: pointer;
             border: 1px solid transparent;
-            transition: all 0.2s;
         }
-        /* 點選時的邊框變化 */
-        .option-label:has(input:checked) {
-            border-color: var(--primary-color);
-            background-color: #EBF1F5;
-        }
-        .option-label input {
-            margin-right: 10px;
-            transform: scale(1.2);
-            accent-color: var(--primary-color);
-        }
-        .text-input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
+        .modal-option-label:has(input:checked) { border-color: var(--primary-orange); background-color: #FEF8EF; }
+        .modal-option-label input { margin-right: 10px; accent-color: var(--primary-orange); }
+        
+        .modal-footer { margin-top: 25px; display: flex; gap: 10px; }
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
             border-radius: 8px;
-            font-family: inherit;
-            box-sizing: border-box;
-            margin-top: 5px;
-        }
-        .submit-btn {
-            width: 100%;
-            background-color: var(--primary-color);
-            color: white;
             border: none;
-            padding: 14px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 700;
+            font-size: 15px;
             cursor: pointer;
-            transition: opacity 0.2s;
+            font-weight: 500;
         }
-        .submit-btn:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        /* 載入中畫面 */
-        #loading {
-            text-align: center;
-            margin-top: 50px;
-            color: var(--text-muted);
-        }
-        /* 成功畫面 */
-        #success-message {
-            text-align: center;
-            display: none;
-            padding: 40px 20px;
-        }
-        #success-message h2 { color: var(--primary-color); }
+        .modal-btn-confirm { background-color: var(--primary-orange); color: white; }
+        .modal-btn-cancel { background-color: #eee; color: #333; }
+        
+        /* 系統載入畫面 */
+        #loading { text-align: center; margin-top: 80px; color: var(--text-muted); }
     </style>
 </head>
 <body>
 
-    <div id="loading">
-        <h2>系統讀取中...</h2>
-        <p>正在驗證 LINE 帳號，請稍候</p>
-    </div>
-
-    <div id="success-message" class="container">
-        <h2>🎉 投票成功！</h2>
-        <p>謝謝 <span id="success-name"></span> 的參與，我們已經收到你的回覆囉！</p>
-    </div>
-
-    <div id="app" class="container">
-        <div class="header">
-            <h1>教會活動意願調查</h1>
-            <p>平安！<span id="user-name" style="font-weight:bold; color:#333;"></span>，請告訴我們你的想法</p>
+    <header class="top-nav">
+        <h1>香草山小組出遊投票</h1>
+        <div class="user-info">
+            <span id="welcome-text">讀取中...</span>
+            <div class="avatar-placeholder" id="user-avatar">?</div>
         </div>
+    </header>
 
-        <form id="vote-form">
-            <div class="question-block">
-                <div class="question-title">1. 偏好活動行程？ (單選)</div>
-                <label class="option-label">
-                    <input type="radio" name="trip" value="方案一" required> 方案一：和平島自然導覽與海港晚宴
-                </label>
-                <label class="option-label">
-                    <input type="radio" name="trip" value="方案二" required> 方案二：包棟民宿與星空 BBQ 派對
-                </label>
+    <div id="loading">
+        <h2>系統驗證中...</h2>
+        <p>正在連動 LINE 帳號，請稍候</p>
+    </div>
+
+    <main class="container" id="app" style="display:none;">
+        
+        <div class="cards-row">
+            
+            <div class="trip-card" id="card-1">
+                <div class="card-img-block">
+                    <img src="https://i.imgur.com/rWv1yA0.jpg" alt="宜蘭風景"> 
+                    <div class="card-badge">方案一：2D1N</div>
+                </div>
+                <div class="card-body">
+                    <div class="card-title">方案一：宜蘭深度放鬆之旅</div>
+                    <ul class="itinerary-list">
+                        <li><span class="day-label">Day 1</span> 宜蘭設治紀念館 -> 海港午宴</li>
+                        <li>包棟民宿 (泳池/KTV/桌遊) -> 星空 BBQ</li>
+                        <li><span class="day-label">Day 2</span> 悠閒早餐</li>
+                        <li>選擇 A：烏石港衝浪 / 選擇 B：網美咖啡廳</li>
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    <button class="trip-btn trip-btn-orange" id="btn-choice-1">選擇此方案</button>
+                </div>
             </div>
 
-            <div class="question-block">
-                <div class="question-title">2. 請選擇偏好舉辦活動的時間？ (可複選)</div>
-                <label class="option-label">
-                    <input type="checkbox" name="date" value="6/13-6/14"> 6/13 - 6/14 (週六日)
-                </label>
-                <label class="option-label">
-                    <input type="checkbox" name="date" value="6/27-6/28"> 6/27 - 6/28 (週六日)
-                </label>
-                <label class="option-label" style="display:flex; align-items:center;">
-                    <input type="checkbox" name="date" value="其他" id="other-checkbox">
-                    其他時間：
-                    <input type="text" id="other-text" class="text-input" style="margin-top:0; margin-left:10px;" placeholder="請填寫日期">
-                </label>
+            <div class="trip-card" id="card-2">
+                <div class="card-img-block">
+                    <img src="https://i.imgur.com/HbyvYVw.jpg" alt="基隆彩色屋">
+                    <div class="card-badge">方案二：一日遊</div>
+                </div>
+                <div class="card-body">
+                    <div class="card-title">方案二：基隆海派清涼快閃</div>
+                    <ul class="itinerary-list">
+                        <li>基隆嶼和平島公園 (導覽/健行)</li>
+                        <li>和平島地質公園 (天然藍海水池)</li>
+                        <li>正濱漁港彩色屋 SUP 立槳體驗</li>
+                        <li>海港特色晚宴</li>
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    <button class="trip-btn trip-btn-blue" id="btn-choice-2">選擇此方案</button>
+                </div>
             </div>
 
-            <button type="submit" id="submit-btn" class="submit-btn">送出我的期待 ✨</button>
-        </form>
+        </div>
+    </main>
+
+    <footer class="fixed-footer" id="footer-btn-block" style="display:none;">
+        <button class="submit-btn" id="final-submit" disabled>提交投票</button>
+        <div class="submit-helper">請先點選其中一個方案，並確認日期，再提交投票。</div>
+    </footer>
+
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>最後一步：請選擇偏好的活動時間 (可複選)</h3>
+            </div>
+            <form id="date-form">
+                <div class="modal-body">
+                    <label class="modal-option-label">
+                        <input type="checkbox" name="date" value="6/13-6/14"> 6/13 (週六) - 6/14 (週日)
+                    </label>
+                    <label class="modal-option-label">
+                        <input type="checkbox" name="date" value="6/27-6/28"> 6/27 (週六) - 6/28 (週日)
+                    </label>
+                    <label class="modal-option-label" style="display:flex; align-items:center;">
+                        <input type="checkbox" name="date" value="其他">
+                        其他時間：<input type="text" placeholder="例如：7月中旬" id="other-date-text" style="width:100px; padding:5px; border-radius:4px; border:1px solid #ddd; margin-left:10px;">
+                    </label>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="modal-btn modal-btn-cancel" id="btn-cancel-modal">取消</button>
+                    <button type="button" class="modal-btn modal-btn-confirm" id="btn-confirm-modal">確認時間並加入投票</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script>
         // ==========================================
-        // ⚠️ 你只需要修改以下兩個變數：
+        // ⚠️ 你只需要修改以下兩個核心變數：
         // ==========================================
         const LIFF_ID = "2009879130-CwjiaVKB"; 
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx4pg2qbQU2Kun4iIblBezfEvWSU59F4UzK3oyRpuOf5ESW6mMRQfsG_PTTnnBJQZfgPA/exec";
         // ==========================================
 
-        let currentUser = { name: "", id: "" };
+        // 系統變數，存儲投票狀態
+        let currentUser = { name: "", id: "", pictureUrl: "" };
+        let currentSelection = {
+            trip: "", // 儲存使用者點選的方案："選項一：宜蘭" 或 "選項二：基隆"
+            time: ""  // 儲存彈窗裡勾選的時間
+        };
 
-        // 1. 初始化 LINE LIFF
+        // DOM 元素快取
+        const els = {
+            loading: document.getElementById('loading'),
+            app: document.getElementById('app'),
+            footerBlock: document.getElementById('footer-btn-block'),
+            userAvatar: document.getElementById('user-avatar'),
+            welcomeText: document.getElementById('welcome-text'),
+            submitBtn: document.getElementById('final-submit'),
+            modal: document.getElementById('modal-overlay'),
+            tripBtns: [document.getElementById('btn-choice-1'), document.getElementById('btn-choice-2')],
+            tripCards: [document.getElementById('card-1'), document.getElementById('card-2')],
+            otherDateText: document.getElementById('other-date-text')
+        };
+
+        // 1. 初始化 LINE LIFF 與登入邏輯
         async function initializeLiff() {
             try {
                 await liff.init({ liffId: LIFF_ID });
@@ -185,41 +406,66 @@
                     const profile = await liff.getProfile();
                     currentUser.name = profile.displayName;
                     currentUser.id = profile.userId;
+                    currentUser.pictureUrl = profile.pictureUrl;
                     
-                    // 替換畫面上的名字，並顯示表單
-                    document.getElementById('user-name').innerText = currentUser.name;
-                    document.getElementById('success-name').innerText = currentUser.name;
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('app').style.display = 'block';
+                    // 替換頂部導覽列顯示
+                    els.welcomeText.innerText = `Welcome, ${currentUser.name}！`;
+                    if (currentUser.pictureUrl) {
+                        els.userAvatar.innerHTML = `<img src="${currentUser.pictureUrl}" style="width:100%; height:100%; object-fit:cover;">`;
+                    } else {
+                        // 如果沒有圖片，顯示姓氏第一個字
+                        els.userAvatar.innerText = currentUser.name.charAt(0);
+                    }
+                    
+                    // 顯示主程式內容
+                    els.loading.style.display = 'none';
+                    els.app.style.display = 'block';
+                    els.footerBlock.style.display = 'flex';
                 } else {
                     // 未登入：強制跳轉 LINE 登入畫面
                     liff.login();
                 }
             } catch (err) {
                 console.error('LIFF 初始化失敗', err);
-                document.getElementById('loading').innerHTML = '<h2 style="color:red;">登入失敗</h2><p>請確認 LIFF ID 是否設定正確，或使用 LINE 開啟此連結。</p>';
+                els.loading.innerHTML = '<h2 style="color:red;">登入失敗</h2><p>請確認 LIFF ID 是否設定正確，或使用手機 LINE 開啟此連結。</p>';
             }
         }
 
         // 當網頁載入完成時，執行初始化
         window.onload = initializeLiff;
 
-        // 2. 處理表單送出邏輯
-        document.getElementById('vote-form').addEventListener('submit', async function(e) {
-            e.preventDefault(); // 防止網頁重新整理
-            
-            const btn = document.getElementById('submit-btn');
-            btn.innerText = "資料傳送中...";
-            btn.disabled = true;
+        // 2. 彈窗互動邏輯 (核心連動)
 
-            // 抓取選項一 (單選)
-            const tripChoice = document.querySelector('input[name="trip"]:checked').value;
+        // 開啟彈窗的函式
+        function openDateModal(tripName, buttonIndex) {
+            // 存儲目前選取的方案名稱
+            currentSelection.trip = tripName;
+            currentSelection.tripIndex = buttonIndex; // 存索引方便更新卡片樣式
+            els.modal.style.display = 'flex';
+        }
+
+        // 關閉彈窗的函式
+        function closeDateModal() {
+            // 重設彈窗表單
+            document.getElementById('date-form').reset();
+            els.modal.style.display = 'none';
+        }
+
+        // 設定選項按鈕的監聽器
+        els.tripBtns[0].addEventListener('click', () => openDateModal("選項一：宜蘭深度放鬆之旅", 0));
+        els.tripBtns[1].addEventListener('click', () => openDateModal("選項二：基隆海派清涼快閃", 1));
+        
+        // 彈窗內「取消」按鈕
+        document.getElementById('btn-cancel-modal').addEventListener('click', closeDateModal);
+
+        // 彈窗內「確認時間」按鈕：完成選取，返回主畫面
+        document.getElementById('btn-confirm-modal').addEventListener('click', function() {
             
             // 抓取選項二 (複選 + 其他)
             let dateChoices = [];
             document.querySelectorAll('input[name="date"]:checked').forEach(checkbox => {
                 if(checkbox.value === "其他") {
-                    const otherText = document.getElementById('other-text').value;
+                    const otherText = els.otherDateText.value.trim();
                     dateChoices.push(otherText ? `其他(${otherText})` : "其他(未填寫)");
                 } else {
                     dateChoices.push(checkbox.value);
@@ -228,21 +474,55 @@
 
             // 如果沒勾選日期，擋下來
             if(dateChoices.length === 0) {
-                alert("請至少選擇一個活動時間！");
-                btn.innerText = "送出我的期待 ✨";
-                btn.disabled = false;
+                alert("請至少選擇一個偏好的活動時間！");
                 return;
             }
 
-            // 整理要送出的資料
+            // 選取完成！整理狀態
+            currentSelection.time = dateChoices.join(", "); // 將多個日期用逗號合併
+
+            // 關閉彈窗
+            closeDateModal();
+
+            // 更新主畫面的視覺狀態（對應 Figma）：將被選取的卡片換上打勾樣式
+            
+            // 先重設所有按鈕與卡片狀態
+            els.tripBtns.forEach(btn => {
+                btn.innerText = "選擇此方案";
+                btn.classList.remove('checked');
+            });
+            els.tripCards.forEach(card => card.classList.remove('selected'));
+
+            // 標記當前選取
+            const idx = currentSelection.tripIndex;
+            els.tripCards[idx].classList.add('selected');
+            els.tripBtns[idx].classList.add('checked');
+            els.tripBtns[idx].innerHTML = "✓ 已選取 (已確認時間)";
+
+            // 關鍵步驟：啟用下方的「提交投票」按鈕
+            els.submitBtn.disabled = false;
+        });
+
+
+        // 3. 處理最終「提交投票」邏輯 (Fetch API)
+        els.submitBtn.addEventListener('click', async function() {
+            
+            // 再次檢查狀態，防止異常
+            if(!currentSelection.trip || !currentSelection.time) return;
+
+            // 按鈕狀態更新
+            els.submitBtn.innerText = "資料傳送中...";
+            els.submitBtn.disabled = true;
+
+            // 整理要送出的資料包
             const postData = {
                 userName: currentUser.name,
                 userId: currentUser.id,
-                choice_trip: tripChoice,
-                choice_time: dateChoices.join(", ") // 將多個日期用逗號合併
+                choice_trip: currentSelection.trip, // 從狀態中拿出儲存好的方案名稱
+                choice_time: currentSelection.time  // 從狀態中拿出儲存好的彈窗日期
             };
 
-            // 3. 傳送資料到 Google Apps Script
+            // 傳送資料到 Google Apps Script 後端
             try {
                 const response = await fetch(GAS_API_URL, {
                     method: 'POST',
@@ -252,16 +532,16 @@
                 });
 
                 if(response.ok) {
-                    // 成功：隱藏表單，顯示感謝畫面
-                    document.getElementById('app').style.display = 'none';
-                    document.getElementById('success-message').style.display = 'block';
+                    // 成功：隱藏整個網頁，顯示感謝畫面（可用 Alert 簡單表示）
+                    alert(`平安！我們已經收到 ${currentUser.name} 的回覆囉。`);
+                    liff.closeWindow(); // 關閉 LIFF
                 } else {
                     throw new Error("傳送失敗");
                 }
             } catch (error) {
-                alert("傳送失敗，請稍後再試或通知同工！");
-                btn.innerText = "送出我的期待 ✨";
-                btn.disabled = false;
+                alert("傳送失敗，可能是網路不穩或伺服器忙碌中，請稍後再試！");
+                els.submitBtn.innerText = "提交投票";
+                els.submitBtn.disabled = false;
             }
         });
     </script>
