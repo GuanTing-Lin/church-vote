@@ -445,10 +445,22 @@
             }
         });
 
-        // 獨立拉出來綁定：成功彈窗的關閉按鈕
+        // 獨立拉出來綁定：成功彈窗的關閉按鈕 (智能環境判斷)
         document.getElementById('btn-close-success').addEventListener('click', function() {
             document.getElementById('success-modal').style.display = 'none';
-            liff.closeWindow(); 
+            
+            if (liff.isInClient()) {
+                liff.closeWindow(); 
+            } else {
+                window.close();
+                document.body.innerHTML = `
+                    <div style="height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; background-color: var(--bg-body); text-align: center; padding: 20px;">
+                        <div style="width: 80px; height: 80px; background-color: var(--primary-green); color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 40px; margin-bottom: 20px;">✓</div>
+                        <h2 style="color: #333; margin-bottom: 10px;">投票已成功送出！</h2>
+                        <p style="color: var(--text-muted); font-size: 16px;">感謝您的參與。<br>您可以直接關閉此瀏覽器分頁。</p>
+                    </div>
+                `;
+            }
         });
 
     </script>
