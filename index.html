@@ -134,7 +134,7 @@
         .submit-btn:not(:disabled):hover { opacity: 0.9; }
         .submit-helper { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
 
-        /* --- 4. 時間選取彈窗 --- */
+        /* --- 4. 彈窗共用樣式 --- */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background-color: rgba(0,0,0,0.4); backdrop-filter: blur(2px);
@@ -248,6 +248,15 @@
         <div class="submit-helper">請先點選其中一個方案，並確認日期，再提交投票。</div>
     </footer>
 
+    <div class="modal-overlay" id="success-modal">
+        <div class="modal" style="text-align: center; padding: 40px 25px;">
+            <div style="width: 64px; height: 64px; background-color: var(--primary-green); color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 32px; margin: 0 auto 20px;">✓</div>
+            <h3 style="margin: 0 0 10px; color: #333; font-size: 20px;">投票成功！</h3>
+            <p id="success-message" style="color: var(--text-muted); margin-bottom: 25px; line-height: 1.6; font-size: 15px;"></p>
+            <button class="submit-btn" id="btn-close-success" style="width: 100%;">確認並關閉</button>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="modal-overlay">
         <div class="modal">
             <div class="modal-header">
@@ -276,22 +285,13 @@
 
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script>
-       // ==========================================
+        // ==========================================
         const LIFF_ID = "2009879130-CwjiaVKB"; 
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx4pg2qbQU2Kun4iIblBezfEvWSU59F4UzK3oyRpuOf5ESW6mMRQfsG_PTTnnBJQZfgPA/exec";
         // ==========================================
 
         let currentUser = { name: "", id: "", pictureUrl: "" };
-        
-        // 擴充狀態記錄，獨立儲存三個時間選項
-        let currentSelection = { 
-            trip: "", 
-            time: "", 
-            time_opt1: "", 
-            time_opt2: "", 
-            time_other: "", 
-            tripIndex: null 
-        };
+        let currentSelection = { trip: "", time: "", time_opt1: "", time_opt2: "", time_other: "", tripIndex: null };
 
         const els = {
             loading: document.getElementById('loading'),
@@ -389,12 +389,9 @@
                 return;
             }
 
-            // 【重點修改】分別記錄每一個獨立的勾選狀態 (送資料庫用)
             currentSelection.time_opt1 = document.querySelector('input[value="6/13-6/14"]').checked ? "V" : "";
             currentSelection.time_opt2 = document.querySelector('input[value="6/27-6/28"]').checked ? "V" : "";
             currentSelection.time_other = document.querySelector('input[value="其他"]').checked ? els.otherDateText.value.trim() : "";
-
-            // 保留合併字串，專門給畫面上顯示用
             currentSelection.time = dateChoices.join(", "); 
             
             closeDateModal();
@@ -419,7 +416,6 @@
             els.submitBtn.innerText = "資料傳送中...";
             els.submitBtn.disabled = true;
 
-            // 【重點修改】將拆分好的三個變數打包送出
             const postData = {
                 userName: currentUser.name,
                 userId: currentUser.id,
@@ -437,8 +433,8 @@
                 });
 
                 if(response.ok) {
-                    alert(`平安！我們已經收到 ${currentUser.name} 的回覆囉。`);
-                    liff.closeWindow(); 
+                    document.getElementById('success-message').innerText = `平安！我們已經收到 ${currentUser.name} 的回覆囉。`;
+                    document.getElementById('success-modal').style.display = 'flex'; 
                 } else {
                     throw new Error("傳送失敗");
                 }
@@ -448,6 +444,13 @@
                 els.submitBtn.disabled = false;
             }
         });
+
+        // 獨立拉出來綁定：成功彈窗的關閉按鈕
+        document.getElementById('btn-close-success').addEventListener('click', function() {
+            document.getElementById('success-modal').style.display = 'none';
+            liff.closeWindow(); 
+        });
+
     </script>
 </body>
 </html>
