@@ -276,13 +276,22 @@
 
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script>
-        // ==========================================
+       // ==========================================
         const LIFF_ID = "2009879130-CwjiaVKB"; 
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx4pg2qbQU2Kun4iIblBezfEvWSU59F4UzK3oyRpuOf5ESW6mMRQfsG_PTTnnBJQZfgPA/exec";
         // ==========================================
 
         let currentUser = { name: "", id: "", pictureUrl: "" };
-        let currentSelection = { trip: "", time: "", tripIndex: null };
+        
+        // 擴充狀態記錄，獨立儲存三個時間選項
+        let currentSelection = { 
+            trip: "", 
+            time: "", 
+            time_opt1: "", 
+            time_opt2: "", 
+            time_other: "", 
+            tripIndex: null 
+        };
 
         const els = {
             loading: document.getElementById('loading'),
@@ -359,7 +368,6 @@
             els.modal.style.display = 'none';
         }
 
-        // 確保這裡傳送的字串與卡片標題完全一致
         els.tripBtns[0].addEventListener('click', () => openDateModal("方案一：宜蘭深度放鬆 (二天一夜)", 0));
         els.tripBtns[1].addEventListener('click', () => openDateModal("方案二：基隆海派清涼 (一日遊)", 1));
         
@@ -381,7 +389,14 @@
                 return;
             }
 
+            // 【重點修改】分別記錄每一個獨立的勾選狀態 (送資料庫用)
+            currentSelection.time_opt1 = document.querySelector('input[value="6/13-6/14"]').checked ? "V" : "";
+            currentSelection.time_opt2 = document.querySelector('input[value="6/27-6/28"]').checked ? "V" : "";
+            currentSelection.time_other = document.querySelector('input[value="其他"]').checked ? els.otherDateText.value.trim() : "";
+
+            // 保留合併字串，專門給畫面上顯示用
             currentSelection.time = dateChoices.join(", "); 
+            
             closeDateModal();
 
             els.tripBtns.forEach(btn => {
@@ -404,11 +419,14 @@
             els.submitBtn.innerText = "資料傳送中...";
             els.submitBtn.disabled = true;
 
+            // 【重點修改】將拆分好的三個變數打包送出
             const postData = {
                 userName: currentUser.name,
                 userId: currentUser.id,
                 choice_trip: currentSelection.trip, 
-                choice_time: currentSelection.time  
+                time_opt1: currentSelection.time_opt1,
+                time_opt2: currentSelection.time_opt2,
+                time_other: currentSelection.time_other
             };
 
             try {
