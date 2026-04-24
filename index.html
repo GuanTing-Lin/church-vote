@@ -171,6 +171,7 @@
             font-weight: 500;
             cursor: pointer;
             display: flex;
+            flex-direction: column; /* 讓內部文字可以上下排列 */
             justify-content: center;
             align-items: center;
             transition: all 0.2s;
@@ -458,6 +459,7 @@
         // 彈窗內「取消」按鈕
         document.getElementById('btn-cancel-modal').addEventListener('click', closeDateModal);
 
+
         // 彈窗內「確認時間」按鈕：完成選取，返回主畫面
         document.getElementById('btn-confirm-modal').addEventListener('click', function() {
             
@@ -497,7 +499,9 @@
             const idx = currentSelection.tripIndex;
             els.tripCards[idx].classList.add('selected');
             els.tripBtns[idx].classList.add('checked');
-            els.tripBtns[idx].innerHTML = "✓ 已選取 (已確認時間)";
+            
+            // 【更新點：修改按鈕文字與記錄時間】
+            els.tripBtns[idx].innerHTML = `✓ 已選此方案 <br><span style="font-size:12px; font-weight:normal; opacity:0.9; margin-top:4px;">已記錄時間：${currentSelection.time}</span>`;
 
             // 關鍵步驟：啟用下方的「提交投票」按鈕
             els.submitBtn.disabled = false;
