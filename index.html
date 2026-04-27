@@ -24,7 +24,6 @@
             background-color: var(--bg-body);
             margin: 0; padding: 0;
             color: var(--text-main);
-            /* 👇 修正：加大底部留白，避免卡片被固定按鈕吃掉 */
             padding-bottom: 180px; 
             overflow-y: scroll;
         }
@@ -185,7 +184,6 @@
         .nav-item.active .nav-icon { filter: none; transform: scale(1.1); }
 
         /* --- 6. 倒數計時橫幅樣式與動畫 --- */
-        /* 👇 修正：字體與內距縮小，高度更緊湊 */
         .urgent-banner {
             background: linear-gradient(135deg, #FF6B6B 0%, #E63946 100%);
             color: #FFFFFF;
@@ -236,10 +234,14 @@
         <div id="view-voting">
             <img src="banner.png" alt="活動主視覺" style="width: 100%; border-radius: 8px; margin-bottom: 15px;">
             
-            <div id="countdown-banner" class="urgent-banner">
-                <span style="font-size: 16px;">⏱️</span>
-                <span>距離投票截止還剩：</span>
-                <span id="countdown-timer" class="urgent-timer">計算中...</span>
+            <div id="countdown-banner" class="urgent-banner" style="flex-direction: column; padding: 10px; gap: 4px; margin-bottom: 15px;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="font-size: 15px;">⏱️</span>
+                    <span style="font-size: 13px; opacity: 0.9;">距離投票截止還剩：</span>
+                </div>
+                <div id="countdown-timer" class="urgent-timer" style="font-size: 16px; font-weight: 700; width: 100%; max-width: 260px; background: rgba(0,0,0,0.15); padding: 4px 0;">
+                    計算中...
+                </div>
             </div>
 
             <div class="cards-row">
@@ -442,7 +444,7 @@
         window.onload = initializeLiff;
 
         // ==========================================
-        // 📱 底部導覽列切換邏輯 (SPA 核心)
+        // 📱 底部導覽列切換邏輯
         // ==========================================
         function switchTab(targetView, element) {
             document.getElementById('view-voting').style.display = 'none';
@@ -532,7 +534,6 @@
         els.submitBtn.addEventListener('click', function() {
             if(!currentSelection.trip || !currentSelection.time) return;
 
-            // 1. 瞬間鎖定按鈕，防止重複點擊
             els.submitBtn.innerText = "資料傳送中...";
             els.submitBtn.disabled = true;
 
@@ -545,13 +546,11 @@
                 time_other: currentSelection.time_other
             };
 
-            // 2. 樂觀 UI：不等待伺服器，延遲 0.3 秒直接顯示成功 (營造快速感)
             setTimeout(() => {
                 document.getElementById('success-message').innerText = `平安！我們已經收到 ${currentUser.name} 的回覆囉。`;
                 document.getElementById('success-modal').style.display = 'flex'; 
             }, 300);
 
-            // 3. 背景默默發送資料給 GAS
             fetch(GAS_API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -559,7 +558,6 @@
             }).then(response => {
                 if (!response.ok) {
                     console.error("背景傳送可能失敗", response);
-                    // 這裡可以選擇不報錯，因為多數情況下 GAS 都能成功寫入
                 }
             }).catch(error => {
                 console.error("背景傳送網路錯誤:", error);
@@ -584,16 +582,15 @@
         });
 
         // ==========================================
-        // 📊 讀取並顯示投票結果 (優化 Loading 與淡入動畫)
+        // 📊 讀取並顯示投票結果
         // ==========================================
         async function fetchResults() {
             const resultContainer = document.getElementById('view-result');
             
-            // 1. 優化版 Loading 畫面：使用精緻的脈衝動畫
             resultContainer.innerHTML = `
                 <div style="text-align: center; margin-top: 60px; display: flex; flex-direction: column; align-items: center;">
                     <div style="width: 50px; height: 50px; border: 4px solid #eee; border-top: 4px solid var(--primary-orange); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
-                    <h2 style="color: #555; margin-bottom: 5px;">結果統計中...</h2>
+                    <h2 style="color: #555; margin-bottom: 5px;">投票結果統計中...</h2>
                     <p style="color: var(--text-muted); font-size: 14px;">正在與資料庫連線，請稍候</p>
                 </div>
                 <style>
@@ -645,10 +642,9 @@
                 const t2_d1_color = (t2_d1 === t2_max && t2_max > 0) ? 'var(--primary-blue)' : '#555';
                 const t2_d2_color = (t2_d2 === t2_max && t2_max > 0) ? 'var(--primary-blue)' : '#555';
 
-                // 2. 渲染畫面並加上 fade-in 動畫類別
                 resultContainer.innerHTML = `
                     <div class="fade-in" style="margin-top: 30px;">
-                        <h2 style="text-align: center; color: #333; margin-bottom: 25px;">目前戰況 (${totalVotes} 人已投)</h2>
+                        <h2 style="text-align: center; color: #333; margin-bottom: 25px;">投票結果</h2>
                         
                         <div style="margin-bottom: 30px; background: white; padding: 20px; border-radius: 12px; box-shadow: var(--shadow-card);">
                             <div style="margin-bottom: 15px; font-weight: 700; font-size: 16px;">
@@ -684,7 +680,7 @@
 
                         <hr style="border: 0; border-top: 1px solid #eee; margin: 25px 0;">
                         
-                        <h3 style="color: #666; font-size: 15px; margin-bottom: 15px;">已完成投票名單：</h3>
+                        <h3 style="color: #666; font-size: 15px; margin-bottom: 15px;">已完成投票名單(${totalVotes} 人已投)：</h3>
                         <div style="text-align: left;">
                             ${votersHtml || "<span style='color: #999;'>尚無人投票</span>"}
                         </div>
@@ -710,7 +706,6 @@
                 const now = new Date().getTime();
                 const distance = deadline - now;
 
-                // 如果時間到了
                 if (distance < 0) {
                     clearInterval(timerInterval);
                     // 改變橫幅樣式為紅色警告，並停止動畫
@@ -739,7 +734,6 @@
                 const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
                 const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-                // 補零讓排版不會跳動 (例如 9 秒變成 09 秒)
                 const h = hours.toString().padStart(2, '0');
                 const m = minutes.toString().padStart(2, '0');
                 const s = seconds.toString().padStart(2, '0');
