@@ -411,6 +411,7 @@
                 els.app.style.display = 'block';
                 els.footerBlock.style.display = 'flex';
                 els.bottomNavBlock.style.display = 'flex';
+                checkUserVoted(currentUser.id);
                 return;
             }
 
@@ -432,6 +433,7 @@
                     els.app.style.display = 'block';
                     els.footerBlock.style.display = 'flex';
                     els.bottomNavBlock.style.display = 'flex';
+                    checkUserVoted(currentUser.id);
                 } else {
                     liff.login();
                 }
@@ -442,6 +444,64 @@
         }
 
         window.onload = initializeLiff;
+
+        // ==========================================
+        // 🔐 權限驗證與狀態還原：檢查並載入舊投票
+        // ==========================================
+        async function checkUserVoted(userId) {
+            try {
+                const response = await fetch(GAS_API_URL);
+                const data = await response.json();
+                
+                // 🔍 找尋該使用者的投票紀錄
+                const userVote = data.find(row => row['LINE ID'] === userId);
+
+                if (userVote) {
+                    console.log("驗證通過：載入舊資料並解鎖結果頁面");
+                    
+                    // 1. 解鎖下方導覽列
+                    document.getElementById('nav-btn-result').style.display = 'flex';
+                    document.getElementById('nav-btn-itinerary').style.display = 'flex';
+
+                    // 2. 讀取舊資料並還原選擇狀態
+                    const savedTrip = userVote['偏好行程'];
+                    if (savedTrip) {
+                        const tripIndex = savedTrip.includes("方案一") ? 0 : (savedTrip.includes("方案二") ? 1 : -1);
+
+                        if (tripIndex !== -1) {
+                            currentSelection.trip = savedTrip;
+                            currentSelection.tripIndex = tripIndex;
+                            
+                            // 拼湊舊的日期字串
+                            let savedTimes = [];
+                            if (userVote['6/13-6/14'] === 'V') savedTimes.push("6/13-6/14");
+                            if (userVote['6/27-6/28'] === 'V') savedTimes.push("6/27-6/28");
+                            if (userVote['其他'] && userVote['其他'] !== "") savedTimes.push(`其他(${userVote['其他']})`);
+                            currentSelection.time = savedTimes.join(", ");
+
+                            // 更新畫面 UI (加框線、改按鈕文字)
+                            els.tripCards.forEach(card => card.classList.remove('selected'));
+                            els.tripBtns.forEach(btn => {
+                                btn.innerText = "選擇此方案";
+                                btn.classList.remove('checked');
+                            });
+
+                            els.tripCards[tripIndex].classList.add('selected');
+                            els.tripBtns[tripIndex].classList.add('checked');
+                            els.tripBtns[tripIndex].innerHTML = `✓ 你的選擇 <br><span style="font-size:12px; font-weight:normal; opacity:0.9; margin-top:4px;">已記錄時間：${currentSelection.time}</span>`;
+
+                            // 改變底部提交按鈕的狀態與文字
+                            els.submitBtn.disabled = false;
+                            els.submitBtn.innerText = "更新投票結果"; 
+                        }
+                    }
+                } else {
+                    console.log("權限受限：該用戶尚未投票");
+                }
+            } catch (error) {
+                console.error("權限檢查/資料還原失敗:", error);
+            }
+        }
 
         // ==========================================
         // 📱 底部導覽列切換邏輯
