@@ -236,10 +236,14 @@
         <div id="view-voting">
             <img src="banner.png" alt="活動主視覺" style="width: 100%; border-radius: 8px; margin-bottom: 15px;">
             
-            <div id="countdown-banner" class="urgent-banner">
-                <span style="font-size: 16px;">⏱️</span>
-                <span>距離投票截止還剩：</span>
-                <span id="countdown-timer" class="urgent-timer">計算中...</span>
+            <div id="countdown-banner" class="urgent-banner" style="flex-direction: column; padding: 12px 10px; gap: 5px;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="font-size: 18px;">⏱️</span>
+                    <span style="font-size: 14px; opacity: 0.9;">距離投票截止還剩</span>
+                </div>
+                <div id="countdown-timer" class="urgent-timer" style="font-size: 18px; width: 90%; max-width: 280px; background: rgba(0,0,0,0.15);">
+                    計算中...
+                </div>
             </div>
 
             <div class="cards-row">
