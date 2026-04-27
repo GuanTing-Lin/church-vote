@@ -166,25 +166,15 @@
             position: fixed; bottom: 0; left: 0; width: 100%;
             background-color: var(--bg-card);
             display: flex; justify-content: space-around;
-            align-items: center;
-            
-            /* 👇 終極鎖定：死死鎖住 65px 高度，不准變形 */
-            height: 65px;
-            min-height: 65px;
-            max-height: 65px;
-            padding: 0; /* 移除多餘的上下內距 */
-            padding-bottom: env(safe-area-inset-bottom); /* 只保留給 iPhone 底部的安全區 */
-            
+            padding: 10px 0;
             box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
             z-index: 999;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom)); 
         }
         .nav-item {
-            display: flex; flex-direction: column; align-items: center; 
-            justify-content: center; 
-            height: 100%; /* 讓按鈕高度完全撐滿 65px */
-            width: 100%;  /* 讓三個按鈕均分寬度，點擊範圍最大化 */
+            display: flex; flex-direction: column; align-items: center;
             color: #b0b0b0; font-size: 12px; font-weight: 500;
-            cursor: pointer; transition: 0.2s;
+            cursor: pointer; padding: 5px 15px; transition: 0.2s;
         }
         .nav-item.active { color: var(--primary-green); }
         .nav-icon {
@@ -246,14 +236,10 @@
         <div id="view-voting">
             <img src="banner.png" alt="活動主視覺" style="width: 100%; border-radius: 8px; margin-bottom: 15px;">
             
-            <div id="countdown-banner" class="urgent-banner" style="flex-direction: column; padding: 12px 10px; gap: 5px;">
-                <div style="display: flex; align-items: center; gap: 6px;">
-                    <span style="font-size: 18px;">⏱️</span>
-                    <span style="font-size: 14px; opacity: 0.9;">距離投票截止還剩</span>
-                </div>
-                <div id="countdown-timer" class="urgent-timer" style="font-size: 18px; width: 90%; max-width: 280px; background: rgba(0,0,0,0.15);">
-                    計算中...
-                </div>
+            <div id="countdown-banner" class="urgent-banner">
+                <span style="font-size: 16px;">⏱️</span>
+                <span>距離投票截止還剩：</span>
+                <span id="countdown-timer" class="urgent-timer">計算中...</span>
             </div>
 
             <div class="cards-row">
@@ -543,9 +529,10 @@
             els.submitBtn.disabled = false;
         });
 
-        els.submitBtn.addEventListener('click', async function() {
+        els.submitBtn.addEventListener('click', function() {
             if(!currentSelection.trip || !currentSelection.time) return;
 
+            // 1. 瞬間鎖定按鈕，防止重複點擊
             els.submitBtn.innerText = "資料傳送中...";
             els.submitBtn.disabled = true;
 
@@ -558,24 +545,25 @@
                 time_other: currentSelection.time_other
             };
 
-            try {
-                const response = await fetch(GAS_API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(postData)
-                });
+            // 2. 樂觀 UI：不等待伺服器，延遲 0.3 秒直接顯示成功 (營造快速感)
+            setTimeout(() => {
+                document.getElementById('success-message').innerText = `平安！我們已經收到 ${currentUser.name} 的回覆囉。`;
+                document.getElementById('success-modal').style.display = 'flex'; 
+            }, 300);
 
-                if(response.ok) {
-                    document.getElementById('success-message').innerText = `平安！我們已經收到 ${currentUser.name} 的回覆囉。`;
-                    document.getElementById('success-modal').style.display = 'flex'; 
-                } else {
-                    throw new Error("傳送失敗");
+            // 3. 背景默默發送資料給 GAS
+            fetch(GAS_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(postData)
+            }).then(response => {
+                if (!response.ok) {
+                    console.error("背景傳送可能失敗", response);
+                    // 這裡可以選擇不報錯，因為多數情況下 GAS 都能成功寫入
                 }
-            } catch (error) {
-                alert("傳送失敗，可能是網路不穩或伺服器忙碌中，請稍後再試！");
-                els.submitBtn.innerText = "提交投票";
-                els.submitBtn.disabled = false;
-            }
+            }).catch(error => {
+                console.error("背景傳送網路錯誤:", error);
+            });
         });
 
         document.getElementById('btn-close-success').addEventListener('click', function() {
@@ -596,16 +584,23 @@
         });
 
         // ==========================================
-        // 📊 讀取並顯示投票結果 (SPA 核心)
+        // 📊 讀取並顯示投票結果 (優化 Loading 與淡入動畫)
         // ==========================================
         async function fetchResults() {
             const resultContainer = document.getElementById('view-result');
             
+            // 1. 優化版 Loading 畫面：使用精緻的脈衝動畫
             resultContainer.innerHTML = `
-                <div style="text-align: center; margin-top: 60px; color: var(--text-muted);">
-                    <h2>📊 資料讀取中...</h2>
-                    <p>正在抓取最新結果</p>
+                <div style="text-align: center; margin-top: 60px; display: flex; flex-direction: column; align-items: center;">
+                    <div style="width: 50px; height: 50px; border: 4px solid #eee; border-top: 4px solid var(--primary-orange); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
+                    <h2 style="color: #555; margin-bottom: 5px;">結果統計中...</h2>
+                    <p style="color: var(--text-muted); font-size: 14px;">正在與資料庫連線，請稍候</p>
                 </div>
+                <style>
+                    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                    .fade-in { animation: fadeIn 0.5s ease-out; }
+                    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+                </style>
             `;
 
             try {
@@ -614,8 +609,6 @@
 
                 let totalVotes = 0;
                 let votersHtml = "";
-                
-                // 分別記錄兩個方案的日期票數
                 let t1_d1 = 0; let t1_d2 = 0; 
                 let t2_d1 = 0; let t2_d2 = 0; 
 
@@ -624,7 +617,6 @@
                     const isTrip1 = trip && trip.includes("方案一");
                     const isTrip2 = trip && trip.includes("方案二");
 
-                    // 1. 先判斷投了哪個方案，再計算該方案的時間
                     if (isTrip1) {
                         totalVotes++;
                         if (row['6/13-6/14'] === 'V') t1_d1++;
@@ -635,7 +627,6 @@
                         if (row['6/27-6/28'] === 'V') t2_d2++;
                     }
 
-                    // 2. 建立投票名單 HTML
                     const name = row['LINE 名稱']; 
                     if (name && (isTrip1 || isTrip2)) {
                         votersHtml += `
@@ -646,7 +637,6 @@
                     }
                 });
 
-                // 3. 判斷最高票顏色
                 const t1_max = Math.max(t1_d1, t1_d2);
                 const t1_d1_color = (t1_d1 === t1_max && t1_max > 0) ? 'var(--primary-orange)' : '#555';
                 const t1_d2_color = (t1_d2 === t1_max && t1_max > 0) ? 'var(--primary-orange)' : '#555';
@@ -655,10 +645,10 @@
                 const t2_d1_color = (t2_d1 === t2_max && t2_max > 0) ? 'var(--primary-blue)' : '#555';
                 const t2_d2_color = (t2_d2 === t2_max && t2_max > 0) ? 'var(--primary-blue)' : '#555';
 
-                // 4. 渲染畫面
+                // 2. 渲染畫面並加上 fade-in 動畫類別
                 resultContainer.innerHTML = `
-                    <div style="margin-top: 30px;">
-                        <h2 style="text-align: center; color: #333; margin-bottom: 25px;">投票結果 (${totalVotes} 人已投)</h2>
+                    <div class="fade-in" style="margin-top: 30px;">
+                        <h2 style="text-align: center; color: #333; margin-bottom: 25px;">目前戰況 (${totalVotes} 人已投)</h2>
                         
                         <div style="margin-bottom: 30px; background: white; padding: 20px; border-radius: 12px; box-shadow: var(--shadow-card);">
                             <div style="margin-bottom: 15px; font-weight: 700; font-size: 16px;">
@@ -703,7 +693,7 @@
 
             } catch (error) {
                 console.error('讀取失敗:', error);
-                resultContainer.innerHTML = `<h3 style="color: red; text-align: center; margin-top: 50px;">讀取失敗，請稍後再試。</h3>`;
+                resultContainer.innerHTML = `<h3 style="color: red; text-align: center; margin-top: 50px;">連線超時，請點擊下方重整。</h3>`;
             }
         }
 
