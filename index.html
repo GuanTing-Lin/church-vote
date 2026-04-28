@@ -140,7 +140,8 @@
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background-color: rgba(0,0,0,0.4); backdrop-filter: blur(2px);
-            z-index: 200; display: none; justify-content: center; align-items: center;
+            z-index: 1000;
+	    display: none; justify-content: center; align-items: center;
         }
         .modal { background-color: var(--bg-card); max-width: 450px; width: 90%; border-radius: 16px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .modal-header h3 { font-size: 18px; margin: 0; color: #333; }
@@ -318,7 +319,7 @@
 
         <div id="view-itinerary" style="display: none; text-align: center; margin-top: 40px;">
             <h2 style="color: var(--primary-blue);">🎒 詳細行程表</h2>
-            <p style="color: var(--text-muted);">行程待定</p>
+            <p style="color: var(--text-muted);">施工中...🚧</p>
         </div>
     </main>
 
@@ -348,11 +349,12 @@
                 <h3>📢 投票規則與注意事項</h3>
             </div>
             <div class="modal-body" style="font-size: 14px; color: var(--text-muted); line-height: 1.6;">
-                <p>平安！歡迎來到香草山小組出遊投票系統，請注意以下事項：</p>
+                <p>歡迎來到香草山小組出遊投票系統，請注意以下事項：</p>
                 <ul style="padding-left: 20px;">
                     <li>欲參加出遊者，請一定要投票。</li>
                     <li>可重複投票，時間內將以最後一次送出的結果為準。</li>
                     <li>請確認您偏好的出遊日期(可複選)。</li>
+		    <li>可於【看結果】分頁確認是否投票成功。</li>
                     <li>投票截止後系統將自動鎖定，請留意時間。</li>
                 </ul>
             </div>
@@ -643,7 +645,7 @@
 
             // 樂觀 UI：瞬間跳出成功畫面
             setTimeout(() => {
-                document.getElementById('success-message').innerText = `平安！我們已經收到 ${currentUser.name} 的回覆囉。`;
+                document.getElementById('success-message').innerText = `我們已經收到 ${currentUser.name} 的回覆囉。`;
                 document.getElementById('success-modal').style.display = 'flex'; 
             }, 300);
 
