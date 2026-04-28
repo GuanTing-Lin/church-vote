@@ -81,8 +81,8 @@
         #card-2 .card-badge { color: var(--primary-blue); background-color: rgba(240, 248, 255, 0.92); border: 1px solid rgba(0, 123, 255, 0.2); }
         #card-3 .card-badge { color: var(--primary-gray); background-color: rgba(248, 249, 250, 0.92); border: 1px solid rgba(134, 142, 150, 0.2); }
 
-        /* 🚀 修正破版：卡片內文與行程框 (將 height:100% 改為 flex-grow 彈性延伸) */
-        .card-body { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
+        /* 卡片內文與行程框 */
+        .card-body { padding: 20px 20px 12px; flex-grow: 1; display: flex; flex-direction: column; }
         .card-title { font-size: 18px; font-weight: 700; margin-bottom: 15px; color: var(--text-main); line-height: 1.4; }
         
         .itinerary-box { border-radius: 12px; padding: 18px; margin-top: 10px; flex-grow: 1; box-sizing: border-box; }
@@ -112,7 +112,7 @@
         .list-gray li::before { background-color: var(--primary-gray); }
 
         /* 卡片按鈕區 */
-        .card-footer { padding: 10px 20px 20px; }
+        .card-footer { padding: 0px 20px 20px; }
         .trip-btn {
             width: 100%; background: none; border: 1px solid transparent;
             padding: 12px; border-radius: 8px; font-size: 15px; font-weight: 500;
@@ -347,7 +347,7 @@
 
         <div id="view-itinerary" style="display: none; text-align: center; margin-top: 40px;">
             <h2 style="color: var(--primary-blue);">🎒 詳細行程表</h2>
-            <p style="color: var(--text-muted);">行程待定</p>
+            <p style="color: var(--text-muted);">施工中...🚧</p>
         </div>
     </main>
 
@@ -380,7 +380,7 @@
                 <p>歡迎來到香草山小組出遊投票系統，請注意以下事項：</p>
                 <ul style="padding-left: 20px;">
                     <li>欲參加出遊者，請一定要投票。</li>
-                    <li>可重複投票，時間內將以最後一次送出的結果為準。</li>
+                    <li>時間內可重複(更改)投票，將以最後一次送出的結果為準。</li>
                     <li>請確認您偏好的出遊日期(可複選)。</li>
                     <li>可於【看結果】分頁確認是否投票成功。</li>
                     <li>投票截止後系統將自動鎖定，請留意時間。</li>
@@ -443,6 +443,10 @@
         let cachedPollData = null; 
         let isLocalEnv = false;    
 
+        // 🚀 新增狀態：用來記住各個頁籤的滾動位置
+        let currentTab = 'voting';
+        const scrollPositions = { voting: 0, result: 0, itinerary: 0 };
+
         const els = {
             loading: document.getElementById('loading'),
             app: document.getElementById('app'),
@@ -457,7 +461,7 @@
             otherDateText: document.getElementById('other-date-text')
         };
 
-        // 🚀 網頁一開始就強制鎖定背景滑動，直到使用者點擊「我知道了」
+        // 網頁載入時鎖定背景
         document.body.style.overflow = 'hidden';
 
         async function initializeLiff() {
@@ -584,9 +588,12 @@
         }
 
         // ==========================================
-        // 📱 底部導覽列切換邏輯
+        // 📱 底部導覽列切換邏輯 (🚀 升級記憶滾動位置)
         // ==========================================
         function switchTab(targetView, element) {
+            // 1. 記錄當前頁籤的 Y 軸滾動位置
+            scrollPositions[currentTab] = window.scrollY;
+
             document.getElementById('view-voting').style.display = 'none';
             document.getElementById('view-result').style.display = 'none';
             document.getElementById('view-itinerary').style.display = 'none';
@@ -602,9 +609,21 @@
                 els.footerBlock.style.display = 'none';
             }
             
+            // 2. 切換頁籤後，強制滑到上次記錄的位置
             if (targetView === 'result') {
-                fetchResults();
+                // 如果是結果頁，等圖表畫完再滑動，確保高度足夠
+                fetchResults().then(() => {
+                    window.scrollTo(0, scrollPositions[targetView] || 0);
+                });
+            } else {
+                // 一般頁面，給一點小延遲確保 display:block 生效後再滑
+                setTimeout(() => {
+                    window.scrollTo(0, scrollPositions[targetView] || 0);
+                }, 10);
             }
+
+            // 3. 更新當前頁籤狀態
+            currentTab = targetView;
         }
 
         // 打開日期彈窗
