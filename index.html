@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>香草山小組出遊投票</title>
+    <title>香草山小組出遊</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         /* --- 🎨 視覺代幣 --- */
@@ -217,7 +217,7 @@
 <body>
 
     <header class="top-nav">
-        <h1>香草山小組出遊投票</h1>
+        <h1>香草山小組出遊</h1>
         <div class="user-info">
             <span id="welcome-text">讀取中...</span>
             <div class="avatar-placeholder" id="user-avatar">?</div>
@@ -350,9 +350,9 @@
             <div class="modal-body" style="font-size: 14px; color: var(--text-muted); line-height: 1.6;">
                 <p>平安！歡迎來到香草山小組出遊投票系統，請注意以下事項：</p>
                 <ul style="padding-left: 20px;">
-                    <li>要參加出遊者，請一定要投票。</li>
+                    <li>欲參加出遊者，請一定要投票。</li>
                     <li>可重複投票，時間內將以最後一次送出的結果為準。</li>
-                    <li>請確認您的偏好的日期，若皆可參加，可複選。</li>
+                    <li>請確認您偏好的出遊日期(可複選)。</li>
                     <li>投票截止後系統將自動鎖定，請留意時間。</li>
                 </ul>
             </div>
@@ -409,8 +409,8 @@
         let currentUser = { name: "", id: "", pictureUrl: "" };
         let currentSelection = { trip: "", time: "", time_opt1: "", time_opt2: "", time_other: "", tripIndex: null };
         
-        let cachedPollData = null; // 📦 新增快取變數，避免重複讀取
-        let isLocalEnv = false;    // 📦 新增環境變數，用來判斷是否為本地測試
+        let cachedPollData = null;
+        let isLocalEnv = false;
 
         const els = {
             loading: document.getElementById('loading'),
@@ -428,7 +428,7 @@
 
         async function initializeLiff() {
             if (window.location.href.startsWith("file://") || window.location.hostname === "localhost") {
-                isLocalEnv = true; // 🚀 標記目前為本地測試環境
+                isLocalEnv = true; // 標記目前為本地測試環境
                 console.log("本地測試模式啟動，自動跳過 LINE 驗證");
                 currentUser = { name: "開發者(測試)", id: "test_user_001", pictureUrl: "" };
                 els.welcomeText.innerHTML = `<span style="display: block; line-height: 1.3;">Welcome!<br><span style="color: var(--text-main); font-weight: 700;">${currentUser.name}</span></span>`;
