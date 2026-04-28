@@ -81,11 +81,11 @@
         #card-2 .card-badge { color: var(--primary-blue); background-color: rgba(240, 248, 255, 0.92); border: 1px solid rgba(0, 123, 255, 0.2); }
         #card-3 .card-badge { color: var(--primary-gray); background-color: rgba(248, 249, 250, 0.92); border: 1px solid rgba(134, 142, 150, 0.2); }
 
-        /* 卡片內文與行程框 */
-        .card-body { padding: 20px; flex-grow: 1; }
+        /* 🚀 修正破版：卡片內文與行程框 (將 height:100% 改為 flex-grow 彈性延伸) */
+        .card-body { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
         .card-title { font-size: 18px; font-weight: 700; margin-bottom: 15px; color: var(--text-main); line-height: 1.4; }
         
-        .itinerary-box { border-radius: 12px; padding: 18px; margin-top: 10px; height: 100%; box-sizing: border-box; }
+        .itinerary-box { border-radius: 12px; padding: 18px; margin-top: 10px; flex-grow: 1; box-sizing: border-box; }
         .box-orange { background-color: #FFF9F0; }
         .box-blue { background-color: #F0F8FF; }
         .box-gray { background-color: #f8f9fa; border: 1px dashed #dee2e6; } 
@@ -329,6 +329,7 @@
                             <div class="itinerary-subtitle" style="color: var(--primary-gray);">💡 溫馨提醒</div>
                             <ul class="itinerary-list list-gray">
                                 <li>無法與大家一同出遊。</li>
+                                <li>系統將記錄您的狀態。</li>
                             </ul>
                         </div>
                     </div>
@@ -624,13 +625,13 @@
             currentSelection.tripIndex = buttonIndex;
             
             els.modal.style.display = 'flex';
-            document.body.style.overflow = 'hidden'; // 鎖定背景
+            document.body.style.overflow = 'hidden'; 
         }
 
         function closeDateModal() {
             document.getElementById('date-form').reset();
             els.modal.style.display = 'none';
-            document.body.style.overflow = ''; // 恢復背景
+            document.body.style.overflow = ''; 
         }
 
         els.tripBtns[0].addEventListener('click', () => openDateModal("方案一：宜蘭深度放鬆 (二天一夜)", 0));
@@ -715,7 +716,7 @@
             setTimeout(() => {
                 document.getElementById('success-message').innerText = `我們已經收到 ${currentUser.name} 的回覆囉。`;
                 document.getElementById('success-modal').style.display = 'flex'; 
-                document.body.style.overflow = 'hidden'; // 鎖定背景
+                document.body.style.overflow = 'hidden'; 
             }, 300);
 
             fetch(GAS_API_URL, {
@@ -735,7 +736,7 @@
 
         document.getElementById('btn-close-success').addEventListener('click', function() {
             document.getElementById('success-modal').style.display = 'none';
-            document.body.style.overflow = ''; // 恢復背景
+            document.body.style.overflow = ''; 
             
             if (liff.isInClient()) {
                 liff.closeWindow(); 
@@ -753,7 +754,7 @@
 
         document.getElementById('btn-close-rules').addEventListener('click', function() {
             document.getElementById('rules-modal').style.display = 'none';
-            document.body.style.overflow = ''; // 🚀 恢復背景滑動
+            document.body.style.overflow = ''; 
         });
 
         // ==========================================
