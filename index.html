@@ -37,6 +37,16 @@
             overflow-y: scroll;
         }
 
+        /* --- 0. 共用動畫與載入樣式 --- */
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        .spinner {
+            width: 50px; height: 50px; border: 4px solid #eee;
+            border-top: 4px solid var(--primary-orange); border-radius: 50%;
+            animation: spin 1s linear infinite; margin-bottom: 20px;
+        }
+
         /* --- 1. 頂部導覽列 --- */
         .top-nav {
             background-color: var(--bg-card);
@@ -174,7 +184,7 @@
         .modal-btn-confirm { background-color: var(--primary-orange); color: white; }
         .modal-btn-cancel { background-color: #eee; color: #333; }
         
-        #loading { text-align: center; margin-top: 80px; color: var(--text-muted); }
+        #loading { display: flex; flex-direction: column; align-items: center; text-align: center; margin-top: 80px; color: var(--text-muted); }
 
         /* --- 5. 底部導覽列 (App 風格) --- */
         .bottom-nav {
@@ -241,8 +251,9 @@
     </header>
 
     <div id="loading">
-        <h2>系統驗證中...</h2>
-        <p>正在連動 LINE 帳號，請稍候</p>
+        <div class="spinner"></div>
+        <h2 style="color: #555; margin-bottom: 10px; margin-top: 0;">系統驗證中...</h2>
+        <p style="font-size: 14px; margin: 0;">正在連動 LINE 帳號，請稍候</p>
     </div>
 
     <main class="container" id="app" style="display:none;">
@@ -443,15 +454,25 @@
         // ==========================================
         const LIFF_ID = "2009879130-CwjiaVKB"; 
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx4pg2qbQU2Kun4iIblBezfEvWSU59F4UzK3oyRpuOf5ESW6mMRQfsG_PTTnnBJQZfgPA/exec";
+        
+        // 🚀 共用的截止時間常數
+        const DEADLINE_TIME = new Date('2026-05-01T23:59:59').getTime();
+        
+        // 🚀 VIP 隱藏密碼設定 (可隨時修改)
+        const VIP_PASSCODE = "0505";
         // ==========================================
 
         let currentUser = { name: "", id: "", pictureUrl: "" };
         let currentSelection = { trip: "", time: "", time_opt1: "", time_opt2: "", time_other: "", tripIndex: null };
         
+        let pendingTrip = "";
+        let pendingTripIndex = null;
+
         let cachedPollData = null; 
         let isLocalEnv = false;    
+        
+        let isVipMode = false;
 
-        // 🚀 新增狀態：用來記住各個頁籤的滾動位置
         let currentTab = 'voting';
         const scrollPositions = { voting: 0, result: 0, itinerary: 0 };
 
@@ -473,16 +494,14 @@
         document.body.style.overflow = 'hidden';
 
         async function initializeLiff() {
-            if (window.location.href.startsWith("file://") || window.location.hostname === "localhost") {
+            if (window.location.href.startsWith("file://") || window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
                 isLocalEnv = true; 
                 console.log("本地測試模式啟動，自動跳過 LINE 驗證");
+                // 💡 若要在本地測試「被鎖定」的畫面，可以把 test_user_001 改成一個不存在的 ID
                 currentUser = { name: "開發者(測試)", id: "test_user_001", pictureUrl: "" };
                 els.welcomeText.innerHTML = `<span style="display: block; line-height: 1.3;">Welcome!<br><span style="color: var(--text-main); font-weight: 700;">${currentUser.name}</span></span>`;
                 els.userAvatar.innerText = "測";
-                els.loading.style.display = 'none';
-                els.app.style.display = 'block';
-                els.footerBlock.style.display = 'flex';
-                els.bottomNavBlock.style.display = 'flex';
+                
                 checkUserVoted(currentUser.id);
                 return;
             }
@@ -501,10 +520,7 @@
                     } else {
                         els.userAvatar.innerText = currentUser.name.charAt(0);
                     }
-                    els.loading.style.display = 'none';
-                    els.app.style.display = 'block';
-                    els.footerBlock.style.display = 'flex';
-                    els.bottomNavBlock.style.display = 'flex';
+                    
                     checkUserVoted(currentUser.id);
                 } else {
                     liff.login();
@@ -527,63 +543,138 @@
                 cachedPollData = data; 
                 
                 const userVote = data.find(row => row['LINE ID'] === userId);
+                const now = new Date().getTime();
+                const isPastDeadline = now > DEADLINE_TIME;
 
-                if (userVote) {
-                    console.log("驗證通過：載入舊資料");
+                // 🚀 核心阻擋邏輯與 VIP 解鎖彩蛋
+                if (!userVote && isPastDeadline && !isVipMode) {
+                    els.loading.innerHTML = `
+                        <div style="padding: 40px 20px; text-align: center; margin-top: 40px;">
+                            <div id="secret-lock" style="font-size: 60px; margin-bottom: 20px; cursor: pointer; user-select: none; transition: transform 0.1s;">🔒</div>
+                            <h2 style="color: #333; margin-bottom: 10px;">投票已截止</h2>
+                            <p style="color: var(--text-muted); line-height: 1.6; font-size: 15px;">
+                                您尚未參與本次投票，<br>無法查看後續的行程資訊與結果。<br><br>期待下次與您一起出遊！
+                            </p>
+                        </div>
+                    `;
                     
-                    const savedTrip = userVote['偏好行程'];
-                    if (savedTrip) {
-                        if (savedTrip === "無法參加") {
-                            currentSelection.trip = "無法參加";
-                            currentSelection.time = "無法參加";
-                            currentSelection.tripIndex = 2;
-                            
-                            els.tripCards.forEach(card => card.classList.remove('selected'));
-                            els.tripBtns.forEach(btn => btn.classList.remove('checked'));
-                            
-                            els.tripCards[2].classList.add('selected');
-                            els.tripBtns[2].classList.add('checked');
-                            els.tripBtns[2].innerHTML = `✓ 已選擇：無法參加`;
+                    // VIP 敲擊彩蛋邏輯
+                    let clickCount = 0;
+                    let clickTimer = null;
+                    const lockIcon = document.getElementById('secret-lock');
+                    
+                    lockIcon.addEventListener('click', function() {
+                        clickCount++;
+                        // 點擊特效
+                        lockIcon.style.transform = 'scale(0.9)';
+                        setTimeout(() => lockIcon.style.transform = 'scale(1)', 100);
+                        
+                        clearTimeout(clickTimer);
+                        clickTimer = setTimeout(() => { clickCount = 0; }, 2000); // 2秒沒點滿3下就歸零
+                        
+                        if (clickCount >= 3) {
+                            clickCount = 0; 
+                            const pwd = prompt("補票模式：請輸入通關密碼");
+                            if (pwd === VIP_PASSCODE) {
+                                isVipMode = true;
+                                alert("🟢 密碼正確！補票模式已解鎖。");
+                                
+                                unlockMainApp(userVote); 
+                            } else if (pwd !== null) {
+                                alert("❌ 密碼錯誤！");
+                            }
+                        }
+                    });
+                    
+                    return; 
+                }
 
+                unlockMainApp(userVote);
+
+            } catch (error) {
+                console.error("權限檢查/資料還原失敗:", error);
+            }
+        }
+
+        // 獨立出解鎖主程式的邏輯，避免重複並完美控制「鎖定按鈕」
+        function unlockMainApp(userVote) {
+            els.loading.style.display = 'none';
+            els.app.style.display = 'block';
+            els.footerBlock.style.display = 'flex';
+            els.bottomNavBlock.style.display = 'flex';
+
+            // 🚀 關鍵判斷：如果超過時間，且不是 VIP 模式，那就代表是「已投票的人」回來查看，我們必須把他的按鈕鎖死！
+            const isPastDeadline = new Date().getTime() > DEADLINE_TIME;
+            const isLocked = isPastDeadline && !isVipMode;
+
+            if (userVote) {
+                console.log("驗證通過：載入舊資料");
+                
+                const savedTrip = userVote['偏好行程'];
+                if (savedTrip) {
+                    if (savedTrip === "無法參加") {
+                        currentSelection.trip = "無法參加";
+                        currentSelection.time = "無法參加";
+                        currentSelection.tripIndex = 2;
+                        
+                        els.tripCards.forEach(card => card.classList.remove('selected'));
+                        els.tripBtns.forEach(btn => btn.classList.remove('checked'));
+                        
+                        els.tripCards[2].classList.add('selected');
+                        els.tripBtns[2].classList.add('checked');
+                        els.tripBtns[2].innerHTML = `✓ 已選擇：無法參加`;
+
+                        if (!isLocked) {
                             els.submitBtn.disabled = false;
                             els.submitBtn.innerText = "更新投票結果"; 
-                        } else {
-                            const tripIndex = savedTrip.includes("方案一") ? 0 : (savedTrip.includes("方案二") ? 1 : -1);
+                        }
+                    } else {
+                        const tripIndex = savedTrip.includes("方案一") ? 0 : (savedTrip.includes("方案二") ? 1 : -1);
 
-                            if (tripIndex !== -1) {
-                                currentSelection.trip = savedTrip;
-                                currentSelection.tripIndex = tripIndex;
-                                
-                                let savedTimes = [];
-                                if (userVote['6/13-6/14'] === 'V') savedTimes.push("6/13-6/14");
-                                if (userVote['6/27-6/28'] === 'V') savedTimes.push("6/27-6/28");
-                                if (userVote['其他'] && userVote['其他'] !== "") savedTimes.push(`其他(${userVote['其他']})`);
-                                currentSelection.time = savedTimes.join(", ");
+                        if (tripIndex !== -1) {
+                            currentSelection.trip = savedTrip;
+                            currentSelection.tripIndex = tripIndex;
+                            
+                            let savedTimes = [];
+                            if (userVote['6/13-6/14'] === 'V') savedTimes.push("6/13-6/14");
+                            if (userVote['6/27-6/28'] === 'V') savedTimes.push("6/27-6/28");
+                            if (userVote['其他'] && userVote['其他'] !== "") savedTimes.push(`其他(${userVote['其他']})`);
+                            currentSelection.time = savedTimes.join(", ");
 
-                                els.tripCards.forEach(card => card.classList.remove('selected'));
-                                els.tripBtns.forEach(btn => {
-                                    btn.classList.remove('checked');
-                                });
+                            els.tripCards.forEach(card => card.classList.remove('selected'));
+                            els.tripBtns.forEach(btn => {
+                                btn.classList.remove('checked');
+                            });
 
-                                els.tripCards[tripIndex].classList.add('selected');
-                                els.tripBtns[tripIndex].classList.add('checked');
-                                els.tripBtns[tripIndex].innerHTML = `✓ 已選此方案 <br><span style="font-size:12px; font-weight:normal; opacity:0.9; margin-top:4px;">已選取時間：${currentSelection.time}</span>`;
+                            els.tripCards[tripIndex].classList.add('selected');
+                            els.tripBtns[tripIndex].classList.add('checked');
+                            els.tripBtns[tripIndex].innerHTML = `✓ 已選此方案 <br><span style="font-size:12px; font-weight:normal; opacity:0.9; margin-top:4px;">已選取時間：${currentSelection.time}</span>`;
 
+                            if (!isLocked) {
                                 els.submitBtn.disabled = false;
                                 els.submitBtn.innerText = "更新投票結果"; 
                             }
                         }
                     }
-                } else {
-                    console.log("該用戶尚未投票");
                 }
-            } catch (error) {
-                console.error("權限檢查/資料還原失敗:", error);
-            } finally {
-                els.tripBtns.forEach((btn, index) => {
+            } else {
+                console.log("該用戶尚未投票");
+            }
+
+            // 🚀 套用鎖定 UI
+            els.tripBtns.forEach((btn, index) => {
+                if (isLocked) {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.style.cursor = 'not-allowed';
+                    // 把沒有打勾的按鈕文字統一改成已截止
+                    if (!btn.classList.contains('checked')) {
+                        btn.innerText = "已截止";
+                    }
+                } else {
                     btn.disabled = false;
                     btn.style.opacity = '1';
-                    
+                    btn.style.cursor = 'pointer';
                     if (!btn.classList.contains('checked')) {
                         if (index === 2) {
                             btn.innerText = "選擇此選項"; 
@@ -591,15 +682,19 @@
                             btn.innerText = "選擇此方案";
                         }
                     }
-                });
+                }
+            });
+
+            if (isLocked) {
+                els.submitBtn.disabled = true;
+                els.submitBtn.innerText = "投票已截止";
             }
         }
 
         // ==========================================
-        // 📱 底部導覽列切換邏輯 (🚀 升級記憶滾動位置)
+        // 📱 底部導覽列切換邏輯
         // ==========================================
         function switchTab(targetView, element) {
-            // 1. 記錄當前頁籤的 Y 軸滾動位置
             scrollPositions[currentTab] = window.scrollY;
 
             document.getElementById('view-voting').style.display = 'none';
@@ -617,25 +712,23 @@
                 els.footerBlock.style.display = 'none';
             }
             
-            // 2. 切換頁籤後，強制滑到上次記錄的位置
             if (targetView === 'result') {
-                // 如果是結果頁，等圖表畫完再滑動，確保高度足夠
                 fetchResults().then(() => {
                     window.scrollTo(0, scrollPositions[targetView] || 0);
                 });
             } else {
-                // 一般頁面，給一點小延遲確保 display:block 生效後再滑
                 setTimeout(() => {
                     window.scrollTo(0, scrollPositions[targetView] || 0);
                 }, 10);
             }
 
-            // 3. 更新當前頁籤狀態
             currentTab = targetView;
         }
 
-        // 打開日期彈窗
         function openDateModal(tripName, buttonIndex) {
+            const isPastDeadline = new Date().getTime() > DEADLINE_TIME;
+            if (isPastDeadline && !isVipMode) return;
+
             document.getElementById('date-form').reset();
             if (currentSelection.trip === tripName && currentSelection.time) {
                 const savedTime = currentSelection.time;
@@ -647,8 +740,9 @@
                     if (match && match[1] !== "未填寫") els.otherDateText.value = match[1];
                 }
             }
-            currentSelection.trip = tripName;
-            currentSelection.tripIndex = buttonIndex;
+            
+            pendingTrip = tripName;
+            pendingTripIndex = buttonIndex;
             
             els.modal.style.display = 'flex';
             document.body.style.overflow = 'hidden'; 
@@ -663,8 +757,10 @@
         els.tripBtns[0].addEventListener('click', () => openDateModal("方案一：宜蘭深度放鬆 (二天一夜)", 0));
         els.tripBtns[1].addEventListener('click', () => openDateModal("方案二：基隆海派清涼 (一日遊)", 1));
         
-        // 點擊無法參加
         els.tripBtns[2].addEventListener('click', () => {
+            const isPastDeadline = new Date().getTime() > DEADLINE_TIME;
+            if (isPastDeadline && !isVipMode) return;
+
             currentSelection.trip = "無法參加";
             currentSelection.time = "無法參加";
             currentSelection.time_opt1 = "";
@@ -703,6 +799,8 @@
                 return;
             }
 
+            currentSelection.trip = pendingTrip;
+            currentSelection.tripIndex = pendingTripIndex;
             currentSelection.time_opt1 = document.querySelector('input[value="6/13-6/14"]').checked ? "V" : "";
             currentSelection.time_opt2 = document.querySelector('input[value="6/27-6/28"]').checked ? "V" : "";
             currentSelection.time_other = document.querySelector('input[value="其他"]').checked ? els.otherDateText.value.trim() : "";
@@ -791,15 +889,10 @@
             
             resultContainer.innerHTML = `
                 <div style="text-align: center; margin-top: 60px; display: flex; flex-direction: column; align-items: center;">
-                    <div style="width: 50px; height: 50px; border: 4px solid #eee; border-top: 4px solid var(--primary-orange); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
+                    <div class="spinner"></div>
                     <h2 style="color: #555; margin-bottom: 5px;">投票結果統計中...</h2>
                     <p style="color: var(--text-muted); font-size: 14px;">正在與資料庫連線，請稍候</p>
                 </div>
-                <style>
-                    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                    .fade-in { animation: fadeIn 0.5s ease-out; }
-                    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-                </style>
             `;
 
             try {
@@ -825,7 +918,6 @@
                         return; 
                     }
 
-                    // 任何有效回覆都計入總票數
                     totalVotes++;
 
                     const trip = row['偏好行程']; 
@@ -936,32 +1028,45 @@
         // ⏳ 倒數計時與自動鎖定邏輯
         // ==========================================
         function initCountdown() {
-            const deadline = new Date('2026-05-01T23:59:59').getTime();
             const timerElement = document.getElementById('countdown-timer');
             const bannerElement = document.getElementById('countdown-banner');
 
-            const timerInterval = setInterval(function() {
+            function updateTimer() {
                 const now = new Date().getTime();
-                const distance = deadline - now;
+                const distance = DEADLINE_TIME - now; 
 
                 if (distance < 0) {
-                    clearInterval(timerInterval);
-                    bannerElement.style.animation = 'none';
-                    bannerElement.style.background = '#FFF0F0';
-                    bannerElement.style.borderColor = '#FFCCCC';
-                    bannerElement.style.color = '#D80000';
-                    bannerElement.style.boxShadow = 'none';
-                    bannerElement.innerHTML = '⛔ 投票已截止，感謝大家的參與！';
-                    
-                    els.submitBtn.disabled = true;
-                    els.submitBtn.innerText = "投票已截止";
-                    els.tripBtns.forEach(btn => {
-                        btn.disabled = true;
-                        btn.style.opacity = "0.5";
-                        btn.style.cursor = "not-allowed";
-                        btn.innerText = "已截止";
-                    });
-                    return;
+                    if (isVipMode) {
+                        if(bannerElement) {
+                            bannerElement.style.animation = 'none';
+                            bannerElement.style.background = '#E8F5E9';
+                            bannerElement.style.borderColor = '#C8E6C9';
+                            bannerElement.style.color = '#2E7D32';
+                            bannerElement.style.boxShadow = 'none';
+                            bannerElement.innerHTML = '🟢 補票模式已開啟，請盡速完成投票！';
+                        }
+                    } else {
+                        if(bannerElement) {
+                            bannerElement.style.animation = 'none';
+                            bannerElement.style.background = '#FFF0F0';
+                            bannerElement.style.borderColor = '#FFCCCC';
+                            bannerElement.style.color = '#D80000';
+                            bannerElement.style.boxShadow = 'none';
+                            bannerElement.innerHTML = '⛔ 投票已截止，感謝大家的參與！';
+                        }
+                        
+                        els.submitBtn.disabled = true;
+                        els.submitBtn.innerText = "投票已截止";
+                        els.tripBtns.forEach(btn => {
+                            btn.disabled = true;
+                            btn.style.opacity = "0.5";
+                            btn.style.cursor = "not-allowed";
+                            if (!btn.classList.contains('checked')) {
+                                btn.innerText = "已截止";
+                            }
+                        });
+                    }
+                    return; 
                 }
 
                 const days = Math.floor(distance / (1000 * 60 * 60 * 24));
@@ -973,8 +1078,11 @@
                 const m = minutes.toString().padStart(2, '0');
                 const s = seconds.toString().padStart(2, '0');
 
-                timerElement.innerText = `${days} 天 ${h} 小時 ${m} 分 ${s} 秒`;
-            }, 1000); 
+                if(timerElement) timerElement.innerText = `${days} 天 ${h} 小時 ${m} 分 ${s} 秒`;
+            }
+
+            updateTimer(); 
+            setInterval(updateTimer, 1000); 
         }
 
         initCountdown();
