@@ -20,12 +20,16 @@
             --radius-main: 20px;
         }
 
+        /* 🍎 解決底部白邊、防止漸層產生斷層線、並禁止回彈 */
         html { 
-            overscroll-behavior-y: none; /* 單純禁止回彈就好，不亂加顏色 */
+            background: linear-gradient(to bottom, #f0f4f8, #e0f2ed);
+            background-attachment: fixed; /* 鎖死背景，不讓它跟著滾動或重複 */
+            min-height: 100vh; /* 強制畫布至少跟螢幕一樣高 */
+            overscroll-behavior-y: none; 
         }
         body { 
             font-family: 'Noto Sans TC', sans-serif; 
-            background-color: #f0f4f8; /* 恢復您原本最純粹的設定 */
+            background-color: transparent !important; /* 保持透明，讓光暈圓球透出來 */
             margin: 0; padding: 0; color: var(--text-main); padding-bottom: 110px; overflow-x: hidden; 
         }
 
@@ -215,6 +219,10 @@
         .drag-handle:active { cursor: grabbing; color: var(--primary-orange); }
         .admin-delete-btn { background: rgba(255,77,79,0.1); color: #ff4d4f; border: 1px solid rgba(255,77,79,0.2); border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s;}
         .admin-delete-btn:hover { background: #ff4d4f; color: white; }
+    
+        html {
+            background: linear-gradient(to bottom, #f0f4f8, #e0f2ed);
+        }
     </style>
 </head>
 <body>
@@ -829,6 +837,9 @@
             
             // 🚨 隱藏圈圈，確保不會殘留
             document.getElementById('modal-spinner').style.display = 'none'; 
+            
+            // 🚨 關鍵修復：確保按鈕的「外層群組」有被顯示出來！
+            document.getElementById('modal-btn-group').style.display = 'flex'; 
             
             const textarea = document.getElementById('modal-textarea');
             textarea.style.display = 'block'; textarea.value = msg.Content; 
