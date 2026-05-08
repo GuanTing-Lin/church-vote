@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>香草山小組出遊指南</title>
     <meta property="og:title" content="【出遊指南】香草山小組出遊指南">
     <meta property="og:description" content="趕快點擊查看，詳細行程、車位與住宿分配、行前準備清單都在這！">
@@ -20,7 +20,14 @@
             --radius-main: 20px;
         }
 
-        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f0f4f8; margin: 0; padding: 0; color: var(--text-main); padding-bottom: 110px; overflow-x: hidden; }
+        html { 
+            overscroll-behavior-y: none; /* 單純禁止回彈就好，不亂加顏色 */
+        }
+        body { 
+            font-family: 'Noto Sans TC', sans-serif; 
+            background-color: #f0f4f8; /* 恢復您原本最純粹的設定 */
+            margin: 0; padding: 0; color: var(--text-main); padding-bottom: 110px; overflow-x: hidden; 
+        }
 
         .bg-blobs { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; overflow: hidden; pointer-events: none; }
         .blob { position: absolute; filter: blur(80px); opacity: 0.5; animation: float 12s infinite ease-in-out alternate; }
@@ -125,6 +132,8 @@
         .prep-item-desc { font-size: 11px; color: #718096; line-height: 1.4; }
 
         .msg-input-box { display: flex; flex-direction: column; gap: 10px; background: rgba(255,255,255,0.3) !important; border: 1px solid rgba(255,255,255,0.5); box-shadow: inset 0 1px 1px rgba(255,255,255,0.4); }
+        
+        /* 🚨 恢復您喜歡的 14px 字體與 12px 內邊距，不會強制放大 */
         .msg-textarea { width: 100%; box-sizing: border-box; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.7); font-family: inherit; font-size: 14px; resize: vertical; min-height: 80px; background: rgba(255,255,255,0.5); backdrop-filter: blur(10px); transition: 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
         .msg-textarea:focus { outline: none; background: rgba(255,255,255,0.9); border-color: var(--primary-green); box-shadow: 0 0 0 3px rgba(59,208,175,0.15); }
         
@@ -164,6 +173,7 @@
         input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"] { -moz-appearance: textfield; }
 
+        /* 🚨 恢復您喜歡的 15px 字體與 12px 內邊距 */
         .modal-input { width: 100%; box-sizing: border-box; padding: 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); background: rgba(255,255,255,0.9); font-size: 15px; margin-bottom: 0; text-align: center; outline: none; transition: 0.3s; padding-right: 35px; }
         .modal-input:focus { border-color: var(--primary-green); box-shadow: 0 0 0 3px rgba(59,208,175,0.15); }
 
@@ -308,7 +318,7 @@
             <h2 style="text-align: center; color: var(--primary-orange); margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5);">💬 留言板</h2>
             
             <div class="card msg-input-box">
-                <textarea id="new-msg-text" class="msg-textarea" placeholder="想留言什麼都可以~"></textarea>
+                <textarea id="new-msg-text" class="msg-textarea" placeholder="想留什麼都可以~"></textarea>
                 <button class="btn-primary" onclick="postMessage()">送出留言</button>
             </div>
 
@@ -318,7 +328,7 @@
                     更新留言
                 </button>
             </div>
-
+            
             <div class="card" style="padding: 10px 20px;">
                 <div id="msg-list-container"></div>
             </div>
@@ -427,16 +437,13 @@
                     // 🚨 智慧比對邏輯：檢查留言是否有真正改變
                     let hasChanges = true;
                     if (allMessages.length === newMsgs.length && allMessages.length > 0) {
-                        // 如果總數量一樣，且第一筆留言的「時間」跟「內容」都一樣，就當作沒變
                         if (allMessages[0].Time === newMsgs[0].Time && allMessages[0].Content === newMsgs[0].Content) {
                             hasChanges = false;
                         }
                     } else if (allMessages.length === 0 && newMsgs.length === 0) {
-                        // 如果原本沒留言，抓下來也沒留言，就當作沒變
                         hasChanges = false;
                     }
 
-                    // 🚨 只有在「真的有新留言」時，才重新清除並繪製畫面
                     if (hasChanges) {
                         allMessages = newMsgs;
                         currentMsgPage = 1; 
@@ -476,6 +483,8 @@
         }
 
         window.isCarDragging = false;
+        
+        // 🚨 務必確保替換為您的 LIFF ID 與 GAS URL！
         const LIFF_ID = "2009879130-CwjiaVKB"; 
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxtnKFJZNfvJbGd_KBbTgV5rI-7uqlMJLVZp3dElIFFpWlbPKxEjoE5IUxS0e7eJhLBjQ/exec?v=2";
         const LATE_VOTE_PASSCODE = "0505"; const ADMIN_PASSCODE = "9999";
@@ -485,11 +494,79 @@
         let lateVoteSelection = 0; let cachedPollData = null; let countdownTargetDate = 0;
         let allMessages = []; let currentMsgPage = 1; const MSG_PER_PAGE = 10;
         let adminNoticesArray = []; 
-        
-        let userChecklistState = {};
-        let checklistData = []; 
-        let openCategories = {}; 
-        let isChecklistModified = false; 
+        let userChecklistState = {}; let checklistData = []; let openCategories = {}; let isChecklistModified = false; 
+
+        let initialDataPromise = null; // 🚀 用於儲存並行載入的 Promise
+
+        window.onload = async function() {
+            // 🚀 並行載入第一步：網頁打開瞬間，立刻發送 GAS 資料請求！
+            initialDataPromise = fetch(GAS_API_URL, { cache: 'no-store', redirect: 'follow' })
+                .then(res => res.json())
+                .catch(err => { console.error("背景抓取資料失敗", err); return null; });
+
+            if (isLocalEnv) {
+                currentUser = { name: "開發者(測試)", id: "test_user_001", pictureUrl: "", initial: "測" };
+                document.getElementById('welcome-name').innerText = currentUser.name;
+                document.getElementById('user-avatar').innerText = currentUser.initial;
+                await processLoadedData();
+                return;
+            } 
+            try {
+                // 🚀 並行載入第二步：同時開始初始化 LINE LIFF
+                await liff.init({ liffId: LIFF_ID });
+                if (liff.isLoggedIn()) {
+                    const p = await liff.getProfile();
+                    currentUser = { name: p.displayName, id: p.userId, pictureUrl: p.pictureUrl, initial: p.displayName[0] };
+                    document.getElementById('welcome-name').innerText = currentUser.name;
+                    if (p.pictureUrl) document.getElementById('user-avatar').innerHTML = `<img src="${p.pictureUrl}" style="width:100%;height:100%;object-fit:cover;">`;
+                    else document.getElementById('user-avatar').innerText = currentUser.initial;
+                    
+                    // 當 LIFF 處理完畢，接著等待剛剛發送的 GAS 資料回傳 (通常這時已經傳回來了，實現零等待！)
+                    await processLoadedData();
+                } else { liff.login(); }
+            } catch (err) { 
+                console.error('LIFF 失敗', err);
+                document.getElementById('loading').innerHTML = '<h2 style="color:red;">登入失敗</h2><p>請確認 LIFF ID 設定。</p>';
+            }
+        };
+
+        // 🚀 處理並行載入回傳資料的專用函式
+        async function processLoadedData() {
+            try {
+                const data = await initialDataPromise;
+                if (!data) throw new Error("無法取得出遊資料");
+                cachedPollData = data;
+                
+                const vArray = data.votes || [];
+                const userVote = vArray.find(row => row['LINE ID'] === currentUser.id);
+                
+                if (userVote) {
+                    currentUser.isVoted = true;
+                    const s = userVote['偏好行程'];
+                    if (s && s.includes("方案一")) currentUser.votedOption = 1;
+                    else if (s && s.includes("方案二")) currentUser.votedOption = 2;
+                    else if (s === "無法參加") currentUser.votedOption = 3;
+                    
+                    try { if(userVote['Checklist']) { userChecklistState = JSON.parse(userVote['Checklist']); } } catch(e) {}
+                } else {
+                    currentUser.isVoted = false;
+                }
+
+                renderDynamicUI(data);
+
+                document.getElementById('loading').style.display = 'none';
+
+                if (currentUser.isVoted) {
+                    unlockMainApp();
+                } else {
+                    document.getElementById('lock-screen').style.display = 'block';
+                    initLockScreen();
+                }
+            } catch (error) {
+                console.error("讀取失敗:", error);
+                document.getElementById('loading').innerHTML = '<h2 style="color:red;">資料讀取失敗</h2><p>無法連線到資料庫，請檢查網路。</p>';
+            }
+        }
 
         function toggleMenu(event) { 
             event.stopPropagation(); 
@@ -562,76 +639,12 @@
             openCarDrawer('🏠 住宿與床位分配', content);
         }
 
-        window.onload = async function() {
-            if (isLocalEnv) {
-                currentUser = { name: "開發者(測試)", id: "test_user_001", pictureUrl: "", initial: "測" };
-                document.getElementById('welcome-name').innerText = currentUser.name;
-                document.getElementById('user-avatar').innerText = currentUser.initial;
-                fetchData();
-                return;
-            } 
-            try {
-                await liff.init({ liffId: LIFF_ID });
-                if (liff.isLoggedIn()) {
-                    const p = await liff.getProfile();
-                    currentUser = { name: p.displayName, id: p.userId, pictureUrl: p.pictureUrl, initial: p.displayName[0] };
-                    document.getElementById('welcome-name').innerText = currentUser.name;
-                    if (p.pictureUrl) document.getElementById('user-avatar').innerHTML = `<img src="${p.pictureUrl}" style="width:100%;height:100%;object-fit:cover;">`;
-                    else document.getElementById('user-avatar').innerText = currentUser.initial;
-                    fetchData();
-                } else { liff.login(); }
-            } catch (err) { 
-                console.error('LIFF 失敗', err);
-                document.getElementById('loading').innerHTML = '<h2 style="color:red;">登入失敗</h2><p>請確認 LIFF ID 設定。</p>';
-            }
-        };
-
-        async function fetchData() {
-            try {
-                document.getElementById('loading').style.display = 'flex';
-                document.getElementById('app').style.display = 'none';
-
-                const response = await fetch(GAS_API_URL, { cache: 'no-store', redirect: 'follow' });
-                const data = await response.json();
-                cachedPollData = data;
-                
-                const vArray = data.votes || [];
-                const userVote = vArray.find(row => row['LINE ID'] === currentUser.id);
-                
-                if (userVote) {
-                    currentUser.isVoted = true;
-                    const s = userVote['偏好行程'];
-                    if (s && s.includes("方案一")) currentUser.votedOption = 1;
-                    else if (s && s.includes("方案二")) currentUser.votedOption = 2;
-                    else if (s === "無法參加") currentUser.votedOption = 3;
-                    
-                    try { if(userVote['Checklist']) { userChecklistState = JSON.parse(userVote['Checklist']); } } catch(e) {}
-                } else {
-                    currentUser.isVoted = false;
-                }
-
-                renderDynamicUI(data);
-
-                document.getElementById('loading').style.display = 'none';
-
-                if (currentUser.isVoted) {
-                    unlockMainApp();
-                } else {
-                    document.getElementById('lock-screen').style.display = 'block';
-                    initLockScreen();
-                }
-            } catch (error) {
-                console.error("讀取失敗:", error);
-                document.getElementById('loading').innerHTML = '<h2 style="color:red;">資料讀取失敗</h2><p>無法連線到資料庫，請檢查網路。</p>';
-            }
-        }
-
         function renderDynamicUI(data) {
-            // 🚀 漸進式渲染策略：優先處理首頁(Overview)與配置，讓使用者秒進畫面
             if (data.config) {
                 const cfg = data.config;
                 if(cfg.TripTitle) { document.getElementById('ui-trip-title').innerText = cfg.TripTitle; document.getElementById('vote-ui-title').innerText = cfg.TripTitle; }
                 if(cfg.TripDate) { document.getElementById('ui-trip-date').innerText = `🗓️ ${cfg.TripDate}`; document.getElementById('vote-ui-date').innerText = cfg.TripDate; }
+                if(cfg.InfoAcc) document.getElementById('ui-info-acc').innerText = cfg.InfoAcc;
                 if(cfg.InfoPpl) document.getElementById('ui-info-ppl').innerText = cfg.InfoPpl;
                 if(cfg.InfoPrice) document.getElementById('ui-info-price').innerText = cfg.InfoPrice;
                 if(cfg.DepartureDate) countdownTargetDate = new Date(cfg.DepartureDate).getTime();
@@ -666,7 +679,6 @@
                 document.getElementById('ui-notices-container').innerHTML = noticesHtml || '<p style="color:#888; font-size:13px;">目前無最新公告。</p>';
             }
 
-            // 🚀 第二階段背景渲染：使用 setTimeout 將較為耗能的 DOM 操作往後延 50 毫秒，不卡頓首頁
             setTimeout(() => {
                 if (data.transport && data.transport.length > 0) {
                     let carHtml = "";
@@ -814,6 +826,10 @@
             document.getElementById('modal-title').innerText = "編輯留言";
             document.getElementById('modal-desc').style.display = 'none';
             document.getElementById('modal-input-wrapper').style.display = 'none'; 
+            
+            // 🚨 隱藏圈圈，確保不會殘留
+            document.getElementById('modal-spinner').style.display = 'none'; 
+            
             const textarea = document.getElementById('modal-textarea');
             textarea.style.display = 'block'; textarea.value = msg.Content; 
             document.getElementById('modal-btn-cancel').style.display = 'block';
@@ -837,6 +853,54 @@
                 showCustomAlert("成功", "留言已更新！");
                 allMessages[index].Content = newContent; allMessages[index].IsEdited = "V"; renderMessages();
             } catch(e) { showCustomAlert("錯誤", "更新失敗，請檢查網路連線。"); }
+        }
+
+        // 🍎 樂觀 UI 升級版：送出後畫面秒更新，背景默默傳資料
+        async function postMessage() {
+            const textarea = document.getElementById('new-msg-text');
+            const text = textarea.value.trim();
+            if (!text) return showCustomAlert("提示", "請輸入內容！");
+            
+            // 1. 取得當前時間與建立新留言物件
+            const timeString = getFormattedTime();
+            const newMessage = { 
+                UserId: currentUser.id, 
+                Name: currentUser.name, 
+                AvatarText: currentUser.initial, 
+                AvatarUrl: currentUser.pictureUrl, 
+                Time: timeString, 
+                Content: text, 
+                IsEdited: "" 
+            };
+
+            // 2. 不等伺服器！直接把留言塞進前端陣列，並瞬間更新畫面
+            allMessages.unshift(newMessage);
+            textarea.value = ''; // 瞬間清空輸入框
+            renderMessages();    // 瞬間重繪留言板，使用者會立刻看到自己的留言
+
+            // 3. 在背景默默把資料傳給 Google Sheet
+            try {
+                await fetch(GAS_API_URL, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                    body: JSON.stringify({ 
+                        action: "addMessage", 
+                        userName: currentUser.name, 
+                        userId: currentUser.id, 
+                        avatarText: currentUser.initial, 
+                        pictureUrl: currentUser.pictureUrl, 
+                        timeStr: timeString, 
+                        content: text 
+                    }) 
+                });
+                console.log("留言已在背景發佈成功");
+            } catch(e) { 
+                // 🚨 萬一真的斷網失敗了：把假象收回，退還文字，並通知使用者
+                allMessages.shift(); // 移除剛剛偷偷加進去的第一筆
+                renderMessages();    // 重繪畫面
+                textarea.value = text; // 把打好的字還給輸入框，免得白打
+                showCustomAlert("錯誤", "發佈失敗，請檢查網路連線後再試一次。"); 
+            }
         }
 
         function unlockMainApp() {
@@ -871,6 +935,7 @@
             const activeTab = document.getElementById('tab-' + t);
             const indicator = document.getElementById('nav-indicator');
 
+            // 🚨 防呆機制：如果已經在該頁面，收起選單
             if (targetView && targetView.classList.contains('active')) {
                 document.getElementById('avatar-menu').style.display = 'none';
                 if (activeTab && indicator) {
@@ -957,7 +1022,7 @@
             });
             try {
                 await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "updateNotices", notices: newNotices }) });
-                closeDrawer(); setTimeout(()=> { showCustomAlert("成功", "公告已發布！"); fetchData(); }, 300);
+                closeDrawer(); setTimeout(()=> { showCustomAlert("成功", "公告已發布！"); processLoadedData(); }, 300);
             } catch(e) { btn.innerText = "💾 儲存所有變更"; btn.disabled = false; showCustomAlert("錯誤", "儲存失敗。"); }
         }
 
@@ -966,7 +1031,10 @@
             checkbox.disabled = true;
             try {
                 await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "updateConfigSingle", key: "VotingLocked", value: isLocked ? "true" : "false" }) });
-                checkbox.disabled = false; fetchData(); 
+                checkbox.disabled = false; 
+                // 發出新的背景請求重新載入
+                initialDataPromise = fetch(GAS_API_URL, { cache: 'no-store', redirect: 'follow' }).then(res => res.json());
+                processLoadedData(); 
             } catch(e) { checkbox.checked = !isLocked; checkbox.disabled = false; showCustomAlert("錯誤", "設定失敗。"); }
         }
 
@@ -995,54 +1063,6 @@
                 showCustomAlert("報名成功", "您的紀錄已儲存。");
                 currentUser.isVoted = true; currentUser.votedOption = lateVoteSelection; unlockMainApp();
             } catch(e) { showCustomAlert("錯誤", "網路異常，請稍後再試。"); }
-        }
-
-        // 🍎 樂觀 UI 升級版：送出後畫面秒更新，背景默默傳資料
-        async function postMessage() {
-            const textarea = document.getElementById('new-msg-text');
-            const text = textarea.value.trim();
-            if (!text) return showCustomAlert("提示", "請輸入內容！");
-            
-            // 1. 取得當前時間與建立新留言物件
-            const timeString = getFormattedTime();
-            const newMessage = { 
-                UserId: currentUser.id, 
-                Name: currentUser.name, 
-                AvatarText: currentUser.initial, 
-                AvatarUrl: currentUser.pictureUrl, 
-                Time: timeString, 
-                Content: text, 
-                IsEdited: "" 
-            };
-
-            // 2. 不等伺服器！直接把留言塞進前端陣列，並瞬間更新畫面
-            allMessages.unshift(newMessage);
-            textarea.value = ''; // 瞬間清空輸入框
-            renderMessages();    // 瞬間重繪留言板，使用者會立刻看到自己的留言
-
-            // 3. 在背景默默把資料傳給 Google Sheet
-            try {
-                await fetch(GAS_API_URL, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                    body: JSON.stringify({ 
-                        action: "addMessage", 
-                        userName: currentUser.name, 
-                        userId: currentUser.id, 
-                        avatarText: currentUser.initial, 
-                        pictureUrl: currentUser.pictureUrl, 
-                        timeStr: timeString, 
-                        content: text 
-                    }) 
-                });
-                console.log("留言已在背景發佈成功");
-            } catch(e) { 
-                // 🚨 萬一真的斷網失敗了：把假象收回，退還文字，並通知使用者
-                allMessages.shift(); // 移除剛剛偷偷加進去的第一筆
-                renderMessages();    // 重繪畫面
-                textarea.value = text; // 把打好的字還給輸入框，免得白打
-                showCustomAlert("錯誤", "發佈失敗，請檢查網路連線後再試一次。"); 
-            }
         }
 
         async function fetchResults() {
