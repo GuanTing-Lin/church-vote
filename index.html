@@ -23,15 +23,24 @@
             --radius-main: 20px;
         }
         html { 
-            background: linear-gradient(to bottom, #f0f4f8, #e0f2ed); /* 漸層畫在這裡 */
-            background-attachment: fixed; /* 鎖定背景不重複 */
-            min-height: 100dvh; /* 🌟 關鍵：用 dvh (動態高度) 避開 Safari 底部網址列 */
-            overscroll-behavior-y: none; /* 🔪 切斷橡皮筋回彈，保持 App 堅實手感，絕不漏白 */
+            background-color: #e0f2ed; /* 保底底色：萬一極端拉扯，也只會露出湖水綠 */
+            overscroll-behavior-y: none; /* 🔪 切斷橡皮筋回彈，保持 App 堅實手感 */
         }
         body { 
             font-family: 'Noto Sans TC', sans-serif; 
-            background-color: transparent !important; /* 🌟 關鍵：必須透明！保護您的光暈圓球透出來 */
+            background-color: transparent !important; /* 保持透明 */
             margin: 0; padding: 0; color: var(--text-main); padding-bottom: 110px; overflow-x: hidden; 
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100dvh; /* 動態高度，完美適應網址列縮放 */
+            background: linear-gradient(to bottom, #f0f4f8, #e0f2ed);
+            z-index: -2; /* 放在所有東西最底層，包含光暈圓球 (-1) 的後面 */
+            pointer-events: none; /* 確保不會阻擋使用者的點擊 */
         }
         .bg-blobs { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; overflow: hidden; pointer-events: none; }
         .blob { position: absolute; filter: blur(80px); opacity: 0.5; animation: float 12s infinite ease-in-out alternate; }
