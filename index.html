@@ -23,12 +23,12 @@
             --radius-main: 20px;
         }
         html { 
-            background-color: #e0f2ed; /* 保底底色：萬一極端拉扯，也只會露出湖水綠 */
-            overscroll-behavior-y: none; /* 🔪 切斷橡皮筋回彈，保持 App 堅實手感 */
+            background-color: #e0f2ed;
+            overscroll-behavior-y: none;
         }
         body { 
             font-family: 'Noto Sans TC', sans-serif; 
-            background-color: transparent !important; /* 保持透明 */
+            background-color: transparent !important;
             margin: 0; padding: 0; color: var(--text-main); padding-bottom: 110px; overflow-x: hidden; 
         }
         body::before {
@@ -37,12 +37,13 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 100dvh; /* 動態高度，完美適應網址列縮放 */
+            height: 100dvh;
             background: linear-gradient(to bottom, #f0f4f8, #e0f2ed);
-            z-index: -2; /* 放在所有東西最底層，包含光暈圓球 (-1) 的後面 */
-            pointer-events: none; /* 確保不會阻擋使用者的點擊 */
+            z-index: -2;
+            pointer-events: none;
         }
-        .bg-blobs { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; z-index: -1; overflow: hidden; pointer-events: none; }        .blob { position: absolute; filter: blur(80px); opacity: 0.5; animation: float 12s infinite ease-in-out alternate; }
+        .bg-blobs { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; z-index: -1; overflow: hidden; pointer-events: none; }
+        .blob { position: absolute; filter: blur(80px); opacity: 0.5; animation: float 12s infinite ease-in-out alternate; }
         .blob-1 { width: 350px; height: 350px; background: var(--primary-orange); top: -10%; left: -10%; animation-delay: 0s; }
         .blob-2 { width: 400px; height: 400px; background: var(--primary-green); bottom: -10%; right: -10%; animation-delay: -3s; }
         .blob-3 { width: 300px; height: 300px; background: var(--primary-blue); top: 40%; left: 50%; transform: translateX(-50%); animation-delay: -6s; opacity: 0.3; }
@@ -88,7 +89,8 @@
         .car-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 12px; scroll-behavior: smooth; -ms-overflow-style: none; scrollbar-width: none; cursor: grab; }
         .car-grid:active { cursor: grabbing; }
         .car-grid::-webkit-scrollbar { display: none; }
-        .car-item { background: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.9); box-shadow: 0 4px 12px rgba(0,0,0,0.03), inset 0 1px 1px rgba(255,255,255,0.5); border-radius: 14px; padding: 12px; min-width: 100px; flex-shrink: 0; cursor: pointer; transition: 0.3s; user-select: none; }        .car-item:hover { background: rgba(255,255,255,0.7); transform: translateY(-2px); }
+        .car-item { background: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.9); box-shadow: 0 4px 12px rgba(0,0,0,0.03), inset 0 1px 1px rgba(255,255,255,0.5); border-radius: 14px; padding: 12px; min-width: 100px; flex-shrink: 0; cursor: pointer; transition: 0.3s; user-select: none; }
+        .car-item:hover { background: rgba(255,255,255,0.7); transform: translateY(-2px); }
         .car-item:active { transform: scale(0.96); }
         .car-name { font-weight: 700; color: var(--primary-blue); font-size: 15px; margin-bottom: 4px; }
         .car-driver { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
@@ -125,7 +127,8 @@
         .prep-item-desc { font-size: 11px; color: #718096; line-height: 1.4; }
         .msg-input-box { display: flex; flex-direction: column; gap: 10px; background: rgba(255,255,255,0.3) !important; border: 1px solid rgba(255,255,255,0.5); box-shadow: inset 0 1px 1px rgba(255,255,255,0.4); }
         .msg-textarea { width: 100%; box-sizing: border-box; padding: 12px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.15); font-family: inherit; font-size: 14px; resize: vertical; min-height: 80px; background: rgba(255,255,255,0.5); backdrop-filter: blur(10px); transition: 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
-        .msg-textarea:focus { outline: none; background: rgba(255,255,255,0.9); border-color: #718096; box-shadow: 0 0 0 3px rgba(113, 128, 150, 0.15); }        .msg-item { display: flex; gap: 12px; padding: 16px 0; border-bottom: 1px solid rgba(0,0,0,0.05); animation: fadeIn 0.4s; }
+        .msg-textarea:focus { outline: none; background: rgba(255,255,255,0.9); border-color: #718096; box-shadow: 0 0 0 3px rgba(113, 128, 150, 0.15); }
+        .msg-item { display: flex; gap: 12px; padding: 16px 0; border-bottom: 1px solid rgba(0,0,0,0.05); animation: fadeIn 0.4s; }
         .msg-item:last-child { border-bottom: none; }
         .msg-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-orange), #ff8c00); display: flex; justify-content: center; align-items: center; color: white; font-weight: 700; font-size: 14px; flex-shrink: 0; overflow: hidden; box-shadow: 0 4px 8px rgba(249,168,38,0.25); }
         .msg-body { flex-grow: 1; background: rgba(255,255,255,0.45); padding: 12px; border-radius: 0 14px 14px 14px; border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 2px 8px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.5); }
@@ -144,15 +147,19 @@
         .nav-item.active { color: var(--primary-green); }
         .nav-icon { font-size: 20px; margin-bottom: 2px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .nav-item.active .nav-icon { transform: translateY(-2px) scale(1.05); }
-        .drawer-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background-color: rgba(0,0,0,0.4); backdrop-filter: blur(5px); z-index: 2000; display: none; opacity: 0; transition: opacity 0.3s; }        .drawer-overlay.show { display: block; opacity: 1; }
-        .drawer-content { position: absolute; bottom: -100%; left: 0; width: 100%; background: rgba(255,255,255,0.7); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border-radius: 24px 24px 0 0; padding: 15px 20px calc(30px + env(safe-area-inset-bottom)); box-sizing: border-box; transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1); max-height: 85dvh; overflow-y: auto; border-top: 1px solid rgba(255,255,255,0.8); box-shadow: 0 -10px 40px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,0.6); overscroll-behavior-y: none; }        .drawer-handler { width: 40px; height: 4px; background: rgba(0,0,0,0.15); border-radius: 4px; margin: 0 auto 20px; }
+        .drawer-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background-color: rgba(0,0,0,0.4); backdrop-filter: blur(5px); z-index: 2000; display: none; opacity: 0; transition: opacity 0.3s; }
+        .drawer-overlay.show { display: block; opacity: 1; }
+        .drawer-content { position: absolute; bottom: -100%; left: 0; width: 100%; background: rgba(255,255,255,0.7); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border-radius: 24px 24px 0 0; padding: 15px 20px calc(30px + env(safe-area-inset-bottom)); box-sizing: border-box; transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1); max-height: 85dvh; overflow-y: auto; border-top: 1px solid rgba(255,255,255,0.8); box-shadow: 0 -10px 40px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,0.6); overscroll-behavior-y: none; }
+        .drawer-handler { width: 40px; height: 4px; background: rgba(0,0,0,0.15); border-radius: 4px; margin: 0 auto 20px; }
         .drawer-overlay.show .drawer-content { bottom: 0; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background-color: rgba(0,0,0,0.4); backdrop-filter: blur(8px); z-index: 2100; display: none; justify-content: center; align-items: center; }        .custom-modal { box-sizing: border-box; background: rgba(255,255,255,0.85); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid white; max-width: 320px; width: 90%; border-radius: 20px; padding: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.15), inset 0 1px 1px rgba(255,255,255,0.6); text-align: center; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background-color: rgba(0,0,0,0.4); backdrop-filter: blur(8px); z-index: 2100; display: none; justify-content: center; align-items: center; }
+        .custom-modal { box-sizing: border-box; background: rgba(255,255,255,0.85); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid white; max-width: 320px; width: 90%; border-radius: 20px; padding: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.15), inset 0 1px 1px rgba(255,255,255,0.6); text-align: center; }
         .modal-title { font-size: 18px; font-weight: 700; margin: 0 0 12px; color: var(--text-main); }
         input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"] { -moz-appearance: textfield; }        
         .modal-input { width: 100%; box-sizing: border-box; padding: 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.15); background: rgba(255,255,255,0.9); font-size: 15px; margin-bottom: 0; text-align: center; outline: none; transition: 0.3s; padding-right: 35px; }
-        .modal-input:focus { border-color: #718096; box-shadow: 0 0 0 3px rgba(113, 128, 150, 0.15); }        .modal-btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        .modal-input:focus { border-color: #718096; box-shadow: 0 0 0 3px rgba(113, 128, 150, 0.15); }
+        .modal-btn-group { display: flex; gap: 10px; margin-top: 15px; }
         .btn-cancel { flex: 1; padding: 12px; border-radius: 12px; border: none; background: rgba(0,0,0,0.06); color: #4a5568; cursor: pointer; font-weight:600; font-size: 14px; transition: 0.2s;}
         .btn-cancel:hover { background: rgba(0,0,0,0.12); }
         .btn-confirm { flex: 1; padding: 12px; border-radius: 12px; border: none; background: linear-gradient(135deg, var(--primary-orange), #ff8c00); color: white; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 4px 12px rgba(249,168,38,0.25); transition: 0.2s;}
@@ -181,12 +188,11 @@
         input:checked + .slider:before { transform: translateX(20px); }
         .admin-notice-block { background: rgba(255,255,255,0.7); border: 1px solid white; padding: 16px; border-radius: 14px; margin-bottom: 12px; position: relative; transition: opacity 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.03); backdrop-filter: blur(10px); }
         .admin-notice-block.dragging { opacity: 0.4; border: 2px dashed var(--primary-orange); background: #fff; }
-        .drag-handle { cursor: grab; font-size: 20px; color: #a0aec0; margin-right: 8px; user-select: none; padding: 12px; margin-left: -10px; touch-action: none; display: inline-flex; align-items: center; justify-content: center; }        .drag-handle:active { cursor: grabbing; color: var(--primary-orange); }
+        .drag-handle { cursor: grab; font-size: 20px; color: #a0aec0; margin-right: 8px; user-select: none; padding: 12px; margin-left: -10px; touch-action: none; display: inline-flex; align-items: center; justify-content: center; }
+        .drag-handle:active { cursor: grabbing; color: var(--primary-orange); }
         .admin-delete-btn { background: rgba(255,77,79,0.1); color: #ff4d4f; border: 1px solid rgba(255,77,79,0.2); border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s;}
         .admin-delete-btn:hover { background: #ff4d4f; color: white; }
-        body.no-scroll {
-            overflow: hidden !important;
-        }
+        body.no-scroll { overflow: hidden !important; }
     </style>
 </head>
 <body>
@@ -209,11 +215,14 @@
             </div>
         </div>
     </header>
+
     <div id="loading" style="display: flex; flex-direction: column; align-items: center; margin-top: 120px;">
         <div class="spinner"></div>
         <h2 style="color: #4a5568; margin-bottom: 10px; margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5);">系統驗證中...</h2>
         <p style="font-size: 14px; margin: 0; color: #718096;" id="loading-subtext">正在連線資料庫，請稍候</p>
     </div>
+
+    <!-- 一般未報名者的鎖定畫面 -->
     <div id="lock-screen" style="display: none; text-align: center; margin-top: 100px; padding: 20px;">
         <div class="card" style="display: inline-block; padding: 40px 40px;">
             <div id="secret-lock" style="font-size: 70px; margin-bottom: 16px; cursor: pointer; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));">🔒</div>
@@ -221,6 +230,16 @@
             <p style="color: var(--text-muted); line-height: 1.6; font-size: 15px;">僅開放給有報名的組員</p>
         </div>
     </div>
+
+    <!-- 訪客專用的鎖定畫面 -->
+    <div id="guest-lock-screen" style="display: none; text-align: center; margin-top: 100px; padding: 20px;">
+        <div class="card" style="display: inline-block; padding: 40px 40px;">
+            <div style="font-size: 70px; margin-bottom: 16px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));">🚷</div>
+            <h2 style="color: var(--text-main); margin-bottom: 10px;">訪客模式尚未開放</h2>
+            <p style="color: var(--text-muted); line-height: 1.6; font-size: 15px;">主辦人目前暫時隱藏了行程細節，<br>請等候開放通知。</p>
+        </div>
+    </div>
+
     <main class="container" id="app" style="display:none;">
         <div id="view-overview" class="view-section active">
             <div class="card" style="text-align: center;">
@@ -248,6 +267,7 @@
             </div>
             <div id="ui-notices-container"></div>
         </div>
+        
         <div id="view-itinerary" class="view-section">
             <h2 style="text-align: center; color: var(--primary-blue); margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5);">📍 詳細行程</h2>
             <div class="card">
@@ -260,6 +280,7 @@
             </div>
             <div id="ui-timeline-wrapper"></div> 
         </div>
+        
         <div id="view-prep" class="view-section">
             <h2 style="text-align: center; color: var(--primary-gray); margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5);">🎒 攜帶物品</h2>
             <div class="prep-progress-card">
@@ -273,6 +294,7 @@
             </div>
             <div id="prep-checklist-container"></div>
         </div>
+        
         <div id="view-board" class="view-section">
             <h2 style="text-align: center; color: var(--primary-orange); margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5);">💬 留言板</h2>
             <div class="card msg-input-box">
@@ -289,6 +311,7 @@
                 <div id="msg-list-container"></div>
             </div>
         </div>
+        
         <div id="view-voting" class="view-section">
             <h2 style="text-align: center; color: var(--primary-green); margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5);">補報名系統</h2>
             <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 20px;">
@@ -307,9 +330,10 @@
                 </div>
             </div>
             <div class="trip-card-vote" id="vote-opt-1" onclick="selectVote(1)"><div><strong style="font-size: 15px; color: var(--text-main);">🙋‍♂️ 我要參加</strong></div><div class="vote-check" style="display:none; color:var(--primary-green); font-weight: 800; font-size: 16px;">✔</div></div>
-            <div class="trip-card-vote" id="vote-opt-3" onclick="selectVote(3)"><div><strong style="font-size: 15px; color: var(--text-main);">🚷 無法參加(我想偷看行程)</strong></div><div class="vote-check" style="display:none; color:var(--primary-green); font-weight: 800; font-size: 16px;">✔</div></div>
+            <div class="trip-card-vote" id="vote-opt-3" onclick="selectVote(3)"><div><strong style="font-size: 15px; color: var(--text-main);">🚷 無法參加(訪客查看)</strong></div><div class="vote-check" style="display:none; color:var(--primary-green); font-weight: 800; font-size: 16px;">✔</div></div>
             <button class="btn-primary" id="btn-submit-vote" style="margin-top: 20px;" onclick="submitLateVote()">確認提交</button>
         </div>
+        
         <div id="view-archive" class="view-section">
             <h2 style="text-align: center; color: var(--primary-gray); margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5);">📜 歷史方案回顧</h2>
             <div class="cards-row archive-card">
@@ -318,22 +342,29 @@
                 <div class="trip-card" id="archive-card-3"><div class="card-img-block"><img src="pass.png" style="filter: grayscale(60%);" onerror="this.style.display='none'"></div><div class="card-body"><div class="card-title" style="font-weight:700; font-size:15px; color: #888;">無法參加</div></div></div>
             </div>
         </div>
+        
         <div id="view-result" class="view-section">
             <div id="result-chart-area"></div>
         </div>
+
         <div id="view-admin" class="view-section">
             <h2 style="text-align: center; color: var(--text-main); margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5);">⚙️ 後台管理</h2>
             <div class="card">
                 <div class="admin-menu-item" onclick="openAdminNotices()">
-                    <div style="font-size: 15px; font-weight: 600; color: var(--text-main);">編輯公告</div>
+                    <div style="font-size: 15px; font-weight: 600; color: var(--text-main);">編輯首頁公告</div>
                     <div style="color: #cbd5e0; font-weight: 700;">></div>
                 </div>
                 <div class="admin-menu-item">
                     <div style="font-size: 15px; font-weight: 600; color: var(--text-main);">鎖定投票系統</div>
                     <label class="switch"><input type="checkbox" id="admin-lock-toggle" onchange="toggleVotingLock(this)"><span class="slider"></span></label>
                 </div>
+                <div class="admin-menu-item">
+                    <div style="font-size: 15px; font-weight: 600; color: var(--text-main);">開放訪客查看</div>
+                    <label class="switch"><input type="checkbox" id="admin-guest-toggle" onchange="toggleGuestViewLock(this)"><span class="slider"></span></label>
+                </div>
             </div>
         </div>
+
         <div id="view-admin-notices" class="view-section">
             <div style="display: flex; align-items: center; margin-bottom: 20px; position: relative; justify-content: center; height: 40px;">
                 <div onclick="switchView('admin')" style="position: absolute; left: 0; color: var(--text-main); font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 6px 12px; background: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.9); border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); transition: 0.2s; backdrop-filter: blur(10px);">
@@ -345,10 +376,11 @@
             <div class="card">
                 <div id="admin-notice-list-container" style="text-align:left;"></div>
                 <button class="btn-primary" style="background:rgba(255,255,255,0.4); color:var(--text-main); margin-bottom:15px; border: 1px solid rgba(255,255,255,0.6); box-shadow: inset 0 1px 1px rgba(255,255,255,0.5);" onclick="addAdminNoticeField()">+ 新增公告</button>
-                <button class="btn-primary" id="btn-save-notices" onclick="saveAdminNotices()">儲存所有變更</button>
+                <button class="btn-primary" id="btn-save-notices" onclick="saveAdminNotices()">💾 儲存所有變更</button>
             </div>
         </div>
     </main>
+
     <div class="bottom-blur-mask" id="bottom-blur-mask"></div>
     <nav class="bottom-nav" id="bottom-nav-block" style="display:none;">
         <div class="nav-indicator" id="nav-indicator"></div> 
@@ -357,7 +389,9 @@
         <div class="nav-item" id="tab-prep" onclick="switchView('prep')"><span class="nav-icon">🎒</span><span>攜帶物品</span></div>
         <div class="nav-item" id="tab-board" onclick="switchView('board')"><span class="nav-icon">💬</span><span>留言板</span></div>
     </nav>
+
     <div class="drawer-overlay" id="custom-drawer" onclick="closeDrawer()"><div class="drawer-content" onclick="event.stopPropagation()"><div class="drawer-handler"></div><h3 id="drawer-title" style="margin-top:0; margin-bottom:15px; font-size:18px; color:var(--text-main);"></h3><div id="drawer-body" style="font-size:14px; color:#4a5568; line-height:1.6; margin-bottom:20px;"></div></div></div>    
+    
     <div class="modal-overlay" id="custom-modal">
         <div class="custom-modal">
             <div class="modal-spinner" id="modal-spinner"></div>
@@ -376,11 +410,21 @@
             </div>
         </div>
     </div>
+
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script>
         const svgEye = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
         const svgEyeOff = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+        
+        let currentUser = { name: "", id: "", pictureUrl: "", initial: "?", isVoted: false, votedOption: null }; 
+        let lateVoteSelection = 0; let cachedPollData = null; let countdownTargetDate = 0;
+        let allMessages = []; let currentMsgPage = 1; const MSG_PER_PAGE = 10;
+        let adminNoticesArray = []; 
+        let userChecklistState = {}; let checklistData = []; let openCategories = {}; let isChecklistModified = false; 
+        let initialDataPromise = null; 
+        let isGuestViewEnabled = false;
+
         async function refreshMessagesOnly(isSilent = true) {
             if (!isSilent) showCustomAlert("更新中", "正在抓取最新留言...", false);
             try {
@@ -434,14 +478,9 @@
         window.isCarDragging = false;
         const LIFF_ID = "2009879130-CwjiaVKB"; 
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxtnKFJZNfvJbGd_KBbTgV5rI-7uqlMJLVZp3dElIFFpWlbPKxEjoE5IUxS0e7eJhLBjQ/exec?v=2";
-        const LATE_VOTE_PASSCODE = "0505"; const ADMIN_PASSCODE = "9999";
+        const LATE_VOTE_PASSCODE = "062728"; const ADMIN_PASSCODE = "9999";
         const isLocalEnv = window.location.protocol === "file:" || window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
-        let currentUser = { name: "", id: "", pictureUrl: "", initial: "?", isVoted: false, votedOption: null }; 
-        let lateVoteSelection = 0; let cachedPollData = null; let countdownTargetDate = 0;
-        let allMessages = []; let currentMsgPage = 1; const MSG_PER_PAGE = 10;
-        let adminNoticesArray = []; 
-        let userChecklistState = {}; let checklistData = []; let openCategories = {}; let isChecklistModified = false; 
-        let initialDataPromise = null; 
+
         window.onload = async function() {
             initialDataPromise = fetch(GAS_API_URL, { cache: 'no-store', redirect: 'follow' })
                 .then(res => res.json())
@@ -480,7 +519,7 @@
                     const s = userVote['偏好行程'];
                     if (s && s.includes("方案一")) currentUser.votedOption = 1;
                     else if (s && s.includes("方案二")) currentUser.votedOption = 2;
-                    else if (s === "無法參加") currentUser.votedOption = 3;
+                    else if (s && s.includes("無法參加")) currentUser.votedOption = 3;
                     try { if(userVote['Checklist']) { userChecklistState = JSON.parse(userVote['Checklist']); } } catch(e) {}
                 } else {
                     currentUser.isVoted = false;
@@ -505,7 +544,7 @@
             m.style.display = (m.style.display === 'flex') ? 'none' : 'flex'; 
         }
         function closeModal() { 
-            document.body.classList.remove('no-scroll'); /* 🔓 關閉時解除背景鎖定 */
+            document.body.classList.remove('no-scroll');
             document.getElementById('custom-modal').style.display = 'none'; 
             document.getElementById('modal-input').value = ''; 
             document.getElementById('modal-textarea').value=''; 
@@ -523,7 +562,7 @@
             const btnGroup = document.getElementById('modal-btn-group');
             const btnConfirm = document.getElementById('modal-btn-confirm');
             const spinner = document.getElementById('modal-spinner');
-            document.body.classList.add('no-scroll'); /* 🔒 打開時鎖定背景 */
+            document.body.classList.add('no-scroll');
             if (showBtn) { 
                 btnGroup.style.display = 'flex'; 
                 btnConfirm.style.display = 'block'; 
@@ -560,6 +599,7 @@
         }
         function openCarDrawer(t, c) { document.body.classList.add('no-scroll'); document.getElementById('drawer-title').innerText = t; document.getElementById('drawer-body').innerHTML = c; const d = document.getElementById('custom-drawer'); d.style.display = 'block'; setTimeout(() => d.classList.add('show'), 10); }
         function closeDrawer() { document.body.classList.remove('no-scroll'); const d = document.getElementById('custom-drawer'); d.classList.remove('show'); setTimeout(() => d.style.display = 'none', 300); }
+        
         // 🍎 抽屜「下拉關閉」邏輯 (App 手感 - 阻擋原生干擾版)
         const drawerContent = document.querySelector('.drawer-content');
         let drawerStartY = 0;
@@ -567,7 +607,6 @@
         let isDraggingDrawer = false;
 
         drawerContent.addEventListener('touchstart', (e) => {
-            // 只有在內容滑到最頂端時，才允許觸發下拉關閉
             if (drawerContent.scrollTop <= 0) {
                 drawerStartY = e.touches[0].clientY;
                 drawerCurrentY = drawerStartY;
@@ -582,15 +621,13 @@
             const diffY = drawerCurrentY - drawerStartY;
             
             if (diffY > 0) {
-                // 🌟 關鍵：強制阻止手機原生的下拉橡皮筋效果
                 e.preventDefault(); 
                 drawerContent.style.transform = `translateY(${diffY}px)`;
             } else {
-                // 如果手指又往上推回去，依然阻止原生滾動干擾
                 e.preventDefault();
                 drawerContent.style.transform = `translateY(0px)`;
             }
-        }, {passive: false}); // 🌟 這裡必須設定為 false，才能使用 preventDefault()
+        }, {passive: false});
 
         drawerContent.addEventListener('touchend', (e) => {
             if (!isDraggingDrawer) return;
@@ -604,10 +641,12 @@
                 closeDrawer();
             }
         });
+
         function openAccommodationDrawer() {
             const content = cachedPollData?.config?.BedAllocation || '<p>民宿待確認！</p><p style="margin-top:10px; color:var(--primary-blue); font-weight:700;">👉 詳細房間/床位分配將於後續公佈。</p>';
             openCarDrawer('🏠 住宿與床位分配', content);
         }
+
         function renderDynamicUI(data) {
             if (data.config) {
                 const cfg = data.config;
@@ -617,14 +656,21 @@
                 if(cfg.InfoPpl) document.getElementById('ui-info-ppl').innerText = cfg.InfoPpl;
                 if(cfg.InfoPrice) document.getElementById('ui-info-price').innerText = cfg.InfoPrice;
                 if(cfg.DepartureDate) countdownTargetDate = new Date(cfg.DepartureDate).getTime();
+                
                 const isLocked = String(cfg.VotingLocked).toLowerCase() === 'true';
                 document.getElementById('admin-lock-toggle').checked = isLocked;
+                
+                isGuestViewEnabled = String(cfg.GuestViewEnabled).toLowerCase() === 'true';
+                const guestToggle = document.getElementById('admin-guest-toggle');
+                if (guestToggle) guestToggle.checked = isGuestViewEnabled;
+
                 const voteBtn = document.getElementById('btn-submit-vote');
                 if (isLocked) {
                     voteBtn.disabled = true; voteBtn.innerText = "系統已鎖定，停止報名";
                 } else {
                     voteBtn.disabled = false; voteBtn.innerText = "確認提交";
                 }
+                
                 let noticesHtml = ""; let i = 1; adminNoticesArray = [];
                 while(cfg[`Notice${i}_Title`]) {
                     let title = cfg[`Notice${i}_Title`];
@@ -842,7 +888,16 @@
             }
         }
         function unlockMainApp() {
+            if (currentUser.votedOption === 3 && !isGuestViewEnabled) {
+                document.getElementById('app').style.display = 'none';
+                document.getElementById('bottom-nav-block').style.display = 'none';
+                document.getElementById('bottom-blur-mask').style.display = 'none';
+                document.getElementById('lock-screen').style.display = 'none';
+                document.getElementById('guest-lock-screen').style.display = 'block';
+                return; 
+            }
             document.getElementById('lock-screen').style.display = 'none';
+            document.getElementById('guest-lock-screen').style.display = 'none';
             document.getElementById('app').style.display = 'block';
             if (currentUser.isVoted) {
                 document.getElementById('bottom-nav-block').style.display = 'flex';
@@ -908,10 +963,8 @@
         }
         function openAdminNotices() {
             let html = "";
-            // 生成所有公告的 HTML
             adminNoticesArray.forEach((n, idx) => { html += generateNoticeInputHTML(idx, n); });
             document.getElementById('admin-notice-list-container').innerHTML = html;
-            
             switchView('admin-notices'); 
             initAdminDragAndDrop();
         }
@@ -929,15 +982,11 @@
             const container = document.getElementById('admin-notice-list-container');
             if (window.Sortable) {
                 new Sortable(container, {
-                    handle: '.drag-handle', // 指定只有摸到 ☰ 才能拖曳
-                    animation: 150,         // 加入絲滑的交換動畫
-                    ghostClass: 'dragging'  // 拖曳時的半透明效果
+                    handle: '.drag-handle',
+                    animation: 150,         
+                    ghostClass: 'dragging'  
                 });
             }
-        }
-        function getDragAfterElement(container, y) {
-            const draggableElements = [...container.querySelectorAll('.admin-notice-block:not(.dragging)')];
-            return draggableElements.reduce((closest, child) => { const box = child.getBoundingClientRect(); const offset = y - box.top - box.height / 2; if (offset < 0 && offset > closest.offset) return { offset: offset, element: child }; else return closest; }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
         async function saveAdminNotices() {
             const btn = document.getElementById('btn-save-notices');
@@ -949,21 +998,14 @@
                 if(title) newNotices.push({title, desc: block.querySelector('.admin-n-desc').value.trim(), time});
             });
             try {
-                // 1. 存入資料庫
                 await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "updateNotices", notices: newNotices }) });
-                
-                // 2. 🌟 強制重新抓取最新資料！
                 initialDataPromise = fetch(GAS_API_URL, { cache: 'no-store', redirect: 'follow' }).then(res => res.json());
                 await processLoadedData(); 
-                
-                // 3. 🌟 切換到首頁 (overview)，讓使用者馬上看到剛剛發布的最新公告
                 switchView('overview'); 
                 showCustomAlert("成功", "公告已發布，畫面已更新！");
-                
-                // 恢復按鈕狀態
-                btn.innerText = "儲存所有變更"; btn.disabled = false;
+                btn.innerText = "💾 儲存所有變更"; btn.disabled = false;
             } catch(e) { 
-                btn.innerText = "儲存所有變更"; btn.disabled = false; 
+                btn.innerText = "💾 儲存所有變更"; btn.disabled = false; 
                 showCustomAlert("錯誤", "儲存失敗。"); 
             }
         }
@@ -976,6 +1018,15 @@
                 initialDataPromise = fetch(GAS_API_URL, { cache: 'no-store', redirect: 'follow' }).then(res => res.json());
                 processLoadedData(); 
             } catch(e) { checkbox.checked = !isLocked; checkbox.disabled = false; showCustomAlert("錯誤", "設定失敗。"); }
+        }
+        async function toggleGuestViewLock(checkbox) {
+            const isEnabled = checkbox.checked;
+            checkbox.disabled = true;
+            try {
+                await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "updateConfigSingle", key: "GuestViewEnabled", value: isEnabled ? "true" : "false" }) });
+                checkbox.disabled = false; 
+                isGuestViewEnabled = isEnabled; 
+            } catch(e) { checkbox.checked = !isEnabled; checkbox.disabled = false; showCustomAlert("錯誤", "設定失敗。"); }
         }
         function initLockScreen() {
             let c = 0; let t = null;
@@ -994,7 +1045,7 @@
             if (!lateVoteSelection) return showCustomAlert("提示", "請選擇是否參加");
             if (cachedPollData?.config?.VotingLocked === 'true') return showCustomAlert("系統已鎖定", "主辦人已關閉報名系統。");
             showCustomAlert("資料傳送中", "請稍候...", false);
-            const tripText = lateVoteSelection === 1 ? "方案一：宜蘭深度放鬆 (二天一夜)" : "無法參加";
+            const tripText = lateVoteSelection === 1 ? "方案一：宜蘭深度放鬆 (二天一夜)" : "🚷 無法參加(訪客查看)";
             try {
                 await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "vote", userName: currentUser.name, userId: currentUser.id, choice_trip: tripText, time_opt1: "V", time_opt2: "V" }) });
                 showCustomAlert("報名成功", "您的紀錄已儲存。");
@@ -1011,7 +1062,7 @@
                 data.forEach(row => {
                     if (row['LINE ID'] === "test_user_001") return;
                     totalVotes++; const trip = row['偏好行程']; const name = row['LINE 名稱']; 
-                    if (trip === "無法參加") { unableCount++; if (name) unableHtml += `<div style="display: inline-block; background: rgba(255,255,255,0.4); padding: 4px 12px; border-radius: 20px; margin: 4px 6px 4px 0; font-size: 12px; border: 1px solid rgba(255,255,255,0.6); color: var(--text-muted); box-shadow: 0 2px 5px rgba(0,0,0,0.02);">${name}</div>`; return; }
+                    if (trip && trip.includes("無法參加")) { unableCount++; if (name) unableHtml += `<div style="display: inline-block; background: rgba(255,255,255,0.4); padding: 4px 12px; border-radius: 20px; margin: 4px 6px 4px 0; font-size: 12px; border: 1px solid rgba(255,255,255,0.6); color: var(--text-muted); box-shadow: 0 2px 5px rgba(0,0,0,0.02);">${name}</div>`; return; }
                     const isTrip1 = trip && trip.includes("方案一"); const isTrip2 = trip && trip.includes("方案二");
                     if (isTrip1) { if (row['6/13-6/14'] === 'V') t1_d1++; if (row['6/27-6/28'] === 'V') t1_d2++; } else if (isTrip2) { if (row['6/13-6/14'] === 'V') t2_d1++; if (row['6/27-6/28'] === 'V') t2_d2++; }
                     if (name && (isTrip1 || isTrip2)) votersHtml += `<div style="display: inline-block; background: rgba(255,255,255,0.6); padding: 4px 12px; border-radius: 20px; margin: 4px 6px 4px 0; font-size: 12px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.6), 0 4px 10px rgba(0,0,0,0.04); color: var(--text-main); border: 1px solid rgba(255,255,255,0.8);">${name} <span style="color:var(--primary-green); font-size:11px; margin-left: 4px;">✓</span></div>`;
