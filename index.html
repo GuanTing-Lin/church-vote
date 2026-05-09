@@ -36,8 +36,8 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100dvh;
+            right: 0;
+            bottom: 0;
             background: linear-gradient(to bottom, #f0f4f8, #e0f2ed);
             z-index: -2;
             pointer-events: none;
@@ -136,6 +136,15 @@
         .msg-name { font-weight: 700; font-size: 14px; color: var(--text-main); }
         .msg-time { font-size: 11px; color: var(--text-muted); }
         .msg-text { font-size: 14px; color: #2d3748; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+        
+        /* 🍎 高質感紅色系按讚按鈕與動畫 CSS */
+        .like-btn { cursor:pointer; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); flex-shrink: 0; background: rgba(255,255,255,0.6); border: 1px solid rgba(0,0,0,0.05); }
+        .like-btn:active { transform: scale(0.7); }
+        .like-btn.liked { background: rgba(255,77,79,0.1); border: 1px solid rgba(255,77,79,0.2); }
+        .like-btn svg { width: 14px; height: 14px; transition: 0.2s; }
+        .like-btn.unliked svg { stroke: #a0aec0; fill: none; }
+        .like-btn.liked svg { stroke: #ff4d4f; fill: #ff4d4f; }
+
         .btn-primary { width: 100%; background: linear-gradient(135deg, var(--primary-green) 0%, #29b493 100%); color: white; border: none; padding: 14px; border-radius: 14px; font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(59,208,175,0.25); }
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(59,208,175,0.35); }
         .btn-primary:active { transform: translateY(1px); }
@@ -204,8 +213,9 @@
     <header class="top-nav">
         <h1 onclick="switchView('overview')" style="cursor: pointer;">香草山小組出遊指南</h1>
         <div class="user-area">
+            <!-- 🌟 修正 1：還原正確的 HTML 結構，確保名字與照片不會互相覆蓋 -->
             <div class="user-info" onclick="toggleMenu(event)">
-                <span id="welcome-name">讀取中</span>
+                <div id="welcome-name" style="display: flex; align-items: center; gap: 4px;">讀取中</div>
                 <div class="avatar-placeholder" id="user-avatar">?</div>
             </div>
             <div id="avatar-menu" class="dropdown-menu">
@@ -222,7 +232,6 @@
         <p style="font-size: 14px; margin: 0; color: #718096;" id="loading-subtext">正在連線資料庫，請稍候</p>
     </div>
 
-    <!-- 一般未報名者的鎖定畫面 -->
     <div id="lock-screen" style="display: none; text-align: center; margin-top: 100px; padding: 20px;">
         <div class="card" style="display: inline-block; padding: 40px 40px;">
             <div id="secret-lock" style="font-size: 70px; margin-bottom: 16px; cursor: pointer; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));">🔒</div>
@@ -231,12 +240,11 @@
         </div>
     </div>
 
-    <!-- 訪客專用的鎖定畫面 -->
     <div id="guest-lock-screen" style="display: none; text-align: center; margin-top: 100px; padding: 20px;">
         <div class="card" style="display: inline-block; padding: 40px 40px;">
             <div style="font-size: 70px; margin-bottom: 16px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));">🚷</div>
-            <h2 style="color: var(--text-main); margin-bottom: 10px;">訪客模式尚未開放</h2>
-            <p style="color: var(--text-muted); line-height: 1.6; font-size: 15px;">主辦人目前暫時隱藏了行程細節，<br>請等候開放通知。</p>
+            <h2 style="color: var(--text-main); margin-bottom: 10px;">不開放訪客查看內容</h2>
+            <p style="color: var(--text-muted); line-height: 1.6; font-size: 15px;">已關閉訪客查看</p>
         </div>
     </div>
 
@@ -376,7 +384,8 @@
             <div class="card">
                 <div id="admin-notice-list-container" style="text-align:left;"></div>
                 <button class="btn-primary" style="background:rgba(255,255,255,0.4); color:var(--text-main); margin-bottom:15px; border: 1px solid rgba(255,255,255,0.6); box-shadow: inset 0 1px 1px rgba(255,255,255,0.5);" onclick="addAdminNoticeField()">+ 新增公告</button>
-                <button class="btn-primary" id="btn-save-notices" onclick="saveAdminNotices()">💾 儲存所有變更</button>
+                <!-- 🌟 修正 2：徹底移除 HTML 裡的 💾 圖案 -->
+                <button class="btn-primary" id="btn-save-notices" onclick="saveAdminNotices()">儲存所有變更</button>
             </div>
         </div>
     </main>
@@ -416,6 +425,7 @@
     <script>
         const svgEye = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
         const svgEyeOff = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+        const svgHeart = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
         
         let currentUser = { name: "", id: "", pictureUrl: "", initial: "?", isVoted: false, votedOption: null }; 
         let lateVoteSelection = 0; let cachedPollData = null; let countdownTargetDate = 0;
@@ -426,27 +436,42 @@
         let isGuestViewEnabled = false;
 
         async function refreshMessagesOnly(isSilent = true) {
-            if (!isSilent) showCustomAlert("更新中", "正在抓取最新留言...", false);
+            if (!isSilent) showCustomAlert("更新中", "正在抓取最新資料...", false);
             try {
-                const response = await fetch(GAS_API_URL, { cache: 'no-store', redirect: 'follow' });
+                const cacheBuster = "&t=" + new Date().getTime();
+                const fetchUrl = GAS_API_URL.includes("?") ? GAS_API_URL + cacheBuster : GAS_API_URL + "?" + cacheBuster;
+                
+                const response = await fetch(fetchUrl, { cache: 'no-store', redirect: 'follow' });
                 const data = await response.json();
+                
                 if (data.messages) {
                     const newMsgs = [...data.messages].reverse(); 
-                    let hasChanges = true;
-                    if (allMessages.length === newMsgs.length && allMessages.length > 0) {
-                        if (allMessages[0].Time === newMsgs[0].Time && allMessages[0].Content === newMsgs[0].Content) {
-                            hasChanges = false;
+                    
+                    if (isSilent) {
+                        let hasNewTopActivity = true;
+                        if (allMessages.length === newMsgs.length && allMessages.length > 0 && newMsgs.length > 0) {
+                            if (allMessages[0].Time === newMsgs[0].Time && 
+                                allMessages[0].Content === newMsgs[0].Content && 
+                                allMessages[0].Likes === newMsgs[0].Likes) {
+                                hasNewTopActivity = false; 
+                            }
+                        } else if (allMessages.length === 0 && newMsgs.length === 0) {
+                            hasNewTopActivity = false;
                         }
-                    } else if (allMessages.length === 0 && newMsgs.length === 0) {
-                        hasChanges = false;
-                    }
-                    if (hasChanges) {
+                        allMessages = newMsgs; 
+
+                        if (hasNewTopActivity) {
+                            renderMessages();
+                            console.log("發現最新頭條，畫面已自動重繪");
+                        } else {
+                            updateExistingMessagesInPlace();
+                            console.log("無最新頭條，但已默默局部同步所有舊留言的最新狀態");
+                        }
+                    } else {
                         allMessages = newMsgs;
                         currentMsgPage = 1; 
                         renderMessages();
-                        console.log("發現新留言，畫面已更新");
-                    } else {
-                        console.log("留言無變動，維持原畫面不閃爍");
+                        console.log("使用者手動更新，強制重繪所有資料");
                     }
                 }
                 if (!isSilent) closeModal(); 
@@ -458,6 +483,7 @@
                 }
             }
         }
+
         function togglePasswordVisibility() {
             const inp = document.getElementById('modal-input');
             const toggleBtn = document.getElementById('pwd-toggle');
@@ -487,8 +513,9 @@
                 .catch(err => { console.error("背景抓取資料失敗", err); return null; });
             if (isLocalEnv) {
                 currentUser = { name: "開發者(測試)", id: "test_user_001", pictureUrl: "", initial: "測" };
-                document.getElementById('welcome-name').innerText = currentUser.name;
-                document.getElementById('user-avatar').innerText = currentUser.initial;
+                const welcomeNameEl = document.getElementById('welcome-name');
+                welcomeNameEl.innerHTML = `<span>${currentUser.name}</span>`;
+                if(document.getElementById('user-avatar')) document.getElementById('user-avatar').innerText = currentUser.initial;
                 await processLoadedData();
                 return;
             } 
@@ -497,7 +524,8 @@
                 if (liff.isLoggedIn()) {
                     const p = await liff.getProfile();
                     currentUser = { name: p.displayName, id: p.userId, pictureUrl: p.pictureUrl, initial: p.displayName[0] };
-                    document.getElementById('welcome-name').innerText = currentUser.name;
+                    const welcomeNameEl = document.getElementById('welcome-name');
+                    welcomeNameEl.innerHTML = `<span>${currentUser.name}</span>`;
                     if (p.pictureUrl) document.getElementById('user-avatar').innerHTML = `<img src="${p.pictureUrl}" style="width:100%;height:100%;object-fit:cover;">`;
                     else document.getElementById('user-avatar').innerText = currentUser.initial;
                     await processLoadedData();
@@ -526,7 +554,14 @@
                 }
                 renderDynamicUI(data);
                 document.getElementById('loading').style.display = 'none';
+                
                 if (currentUser.isVoted) {
+                    const welcomeNameEl = document.getElementById('welcome-name');
+                    if (currentUser.votedOption === 3) {
+                        welcomeNameEl.innerHTML = `<span>${currentUser.name}</span><span style="background: linear-gradient(135deg, #868e96, #a0aec0); color: white; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; box-shadow: 0 2px 6px rgba(134, 142, 150, 0.3); vertical-align: middle; transform: translateY(1px); line-height: 1.2;">訪客模式</span>`;
+                    } else {
+                        welcomeNameEl.innerHTML = `<span>${currentUser.name}</span>`;
+                    }
                     unlockMainApp();
                 } else {
                     document.getElementById('lock-screen').style.display = 'block';
@@ -600,7 +635,6 @@
         function openCarDrawer(t, c) { document.body.classList.add('no-scroll'); document.getElementById('drawer-title').innerText = t; document.getElementById('drawer-body').innerHTML = c; const d = document.getElementById('custom-drawer'); d.style.display = 'block'; setTimeout(() => d.classList.add('show'), 10); }
         function closeDrawer() { document.body.classList.remove('no-scroll'); const d = document.getElementById('custom-drawer'); d.classList.remove('show'); setTimeout(() => d.style.display = 'none', 300); }
         
-        // 🍎 抽屜「下拉關閉」邏輯 (App 手感 - 阻擋原生干擾版)
         const drawerContent = document.querySelector('.drawer-content');
         let drawerStartY = 0;
         let drawerCurrentY = 0;
@@ -801,6 +835,7 @@
             slider.addEventListener('mouseup', () => { isDown = false; slider.style.cursor = 'grab'; setTimeout(() => window.isCarDragging = false, 50); });
             slider.addEventListener('mousemove', (e) => { if (!isDown) return; e.preventDefault(); window.isCarDragging = true; const x = e.pageX - slider.offsetLeft; const walk = (x - startX) * 2; slider.scrollLeft = scrollLeft - walk; });
         }
+
         function renderMessages() {
             const container = document.getElementById('msg-list-container');
             container.innerHTML = "";
@@ -810,12 +845,171 @@
                 let timeStr = msg.Time || "剛剛"; 
                 let avatarHtml = msg.AvatarUrl ? `<img src="${msg.AvatarUrl}" style="width:100%; height:100%; object-fit:cover;">` : `${msg.AvatarText||"?"}`;
                 let isMyMessage = (msg.UserId && msg.UserId === currentUser.id) || (msg.Name === currentUser.name);
-                let isEditedHtml = (msg.IsEdited === "V" || msg.IsEdited === true || msg.IsEdited === "true") ? `<span style="font-size:11px; color:#a0aec0; margin-left:6px; font-weight: 500;">(已編輯)</span>` : "";
-                let editBtnHtml = isMyMessage ? `<div style="text-align: right; margin-top: 5px;"><span style="font-size:12px; color:#718096; cursor:pointer; background: rgba(255,255,255,0.3); padding: 4px 10px; border-radius: 10px; display: inline-block; transition: 0.2s; font-weight: 600; box-shadow: inset 0 1px 1px rgba(255,255,255,0.5);" onclick="openEditMessage(${index})">編輯</span></div>` : "";
-                container.innerHTML += `<div class="msg-item"><div class="msg-avatar">${avatarHtml}</div><div class="msg-body"><div class="msg-header"><span class="msg-name">${msg.Name}</span><div><span class="msg-time">${timeStr}</span>${isEditedHtml}</div></div><div class="msg-text">${msg.Content}</div>${editBtnHtml}</div></div>`;
+                let isEditedHtml = (msg.IsEdited === "V" || msg.IsEdited === true || msg.IsEdited === "true") ? `<span id="msg-edited-${index}" style="font-size:11px; color:#a0aec0; margin-left:6px; font-weight: 500;">(已編輯)</span>` : `<span id="msg-edited-${index}" style="display:none; font-size:11px; color:#a0aec0; margin-left:6px; font-weight: 500;">(已編輯)</span>`;                
+                let likesArray = [];
+                try {
+                    if (typeof msg.Likes === 'string') likesArray = JSON.parse(msg.Likes || "[]");
+                    else if (Array.isArray(msg.Likes)) likesArray = msg.Likes;
+                } catch(e) {}
+                let isLiked = likesArray.includes(currentUser.name);
+
+                let likesText = "";
+                if (likesArray.length > 0) {
+                    let displayNames = likesArray.slice(0, 2).join(", ");
+                    if (likesArray.length > 2) displayNames += ` 等 ${likesArray.length} 人`;
+                    likesText = `<div id="like-text-${index}" onclick="showLikesDrawer(${index})" style="font-size: 11px; color: #718096; flex-grow: 1; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 4px;"><div style="width: 12px; height: 12px; stroke: #ff4d4f; fill: #ff4d4f; display:flex; align-items:center;">${svgHeart}</div> <span style="text-decoration:underline; text-decoration-color:rgba(0,0,0,0.1); text-underline-offset:2px;">${displayNames}</span></div>`;
+                } else {
+                    likesText = `<div id="like-text-${index}" style="flex-grow: 1; display: flex; align-items: center; gap: 4px; font-size: 11px; color: #718096; text-align: left;"></div>`; 
+                }
+
+                let heartIconHtml = `<div id="like-btn-${index}" class="like-btn ${isLiked ? 'liked' : 'unliked'}" onclick="toggleLike(${index})">
+                    ${svgHeart}
+                </div>`;
+
+                let editBtnHtml = isMyMessage ? `<div style="text-align: right;"><span style="font-size:11px; color:#718096; cursor:pointer; background: rgba(255,255,255,0.4); padding: 5px 10px; border-radius: 12px; display: inline-block; transition: 0.2s; font-weight: 600; box-shadow: inset 0 1px 1px rgba(255,255,255,0.6), 0 2px 4px rgba(0,0,0,0.02);" onclick="openEditMessage(${index})">編輯</span></div>` : "";
+
+                let footerHtml = `<div style="display: flex; justify-content: flex-end; align-items: center; margin-top: 8px; gap: 8px;">
+                    ${likesText}
+                    ${heartIconHtml}
+                    ${editBtnHtml}
+                </div>`;
+
+                container.innerHTML += `<div class="msg-item"><div class="msg-avatar">${avatarHtml}</div><div class="msg-body"><div class="msg-header"><span class="msg-name">${msg.Name}</span><div><span class="msg-time">${timeStr}</span>${isEditedHtml}</div></div><div id="msg-content-${index}" class="msg-text" data-raw="${encodeURIComponent(msg.Content)}">${msg.Content}</div>${footerHtml}</div></div>`;            
             });
             if (allMessages.length > currentMsgPage * MSG_PER_PAGE) { container.innerHTML += `<button class="btn-primary" style="background: rgba(255,255,255,0.3); color: var(--text-main); margin-top: 15px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.5), 0 4px 15px rgba(0,0,0,0.02); border: 1px solid rgba(255,255,255,0.5);" onclick="loadMoreMessages()">載入較舊的留言</button>`; }
         }
+
+        function updateExistingMessagesInPlace() {
+            const msgsToShow = allMessages.slice(0, currentMsgPage * MSG_PER_PAGE);
+            msgsToShow.forEach((msgObj, index) => {
+                let likesArray = [];
+                try {
+                    if (typeof msgObj.Likes === 'string') likesArray = JSON.parse(msgObj.Likes || "[]");
+                    else if (Array.isArray(msgObj.Likes)) likesArray = msgObj.Likes;
+                } catch(e) {}
+                
+                const isLiked = likesArray.includes(currentUser.name);
+                const btnEl = document.getElementById(`like-btn-${index}`);
+                const textEl = document.getElementById(`like-text-${index}`);
+                const contentEl = document.getElementById(`msg-content-${index}`);
+                const editedEl = document.getElementById(`msg-edited-${index}`);
+
+                if (btnEl) {
+                    if (isLiked) { btnEl.classList.remove('unliked'); btnEl.classList.add('liked'); } 
+                    else { btnEl.classList.remove('liked'); btnEl.classList.add('unliked'); }
+                }
+                if (textEl) {
+                    if (likesArray.length > 0) {
+                        let displayNames = likesArray.slice(0, 2).join(", ");
+                        if (likesArray.length > 2) displayNames += ` 等 ${likesArray.length} 人`;
+                        textEl.innerHTML = `<div style="width: 12px; height: 12px; stroke: #ff4d4f; fill: #ff4d4f; display:flex; align-items:center;">${svgHeart}</div> <span style="text-decoration:underline; text-decoration-color:rgba(0,0,0,0.1); text-underline-offset:2px;">${displayNames}</span>`;
+                        textEl.style.cursor = 'pointer'; textEl.onclick = () => showLikesDrawer(index);
+                    } else {
+                        textEl.innerHTML = ""; textEl.style.cursor = 'default'; textEl.onclick = null;
+                    }
+                }
+                
+                if (contentEl) {
+                    const currentRaw = decodeURIComponent(contentEl.getAttribute('data-raw') || '');
+                    if (currentRaw !== msgObj.Content) {
+                        contentEl.innerText = msgObj.Content;
+                        contentEl.setAttribute('data-raw', encodeURIComponent(msgObj.Content));
+                    }
+                }
+                
+                if (editedEl) {
+                    if (msgObj.IsEdited === "V" || msgObj.IsEdited === true || msgObj.IsEdited === "true") {
+                        editedEl.style.display = 'inline';
+                    } else {
+                        editedEl.style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        function showLikesDrawer(index) {
+            const msgObj = allMessages[index];
+            let likesArray = [];
+            try {
+                if (typeof msgObj.Likes === 'string') likesArray = JSON.parse(msgObj.Likes || "[]");
+                else if (Array.isArray(msgObj.Likes)) likesArray = msgObj.Likes;
+            } catch(e) {}
+            if (likesArray.length === 0) return;
+
+            let html = `<div style="display:flex; flex-direction:column; gap:12px; padding: 0 10px;">`;
+            likesArray.forEach(name => {
+                html += `<div style="display:flex; align-items:center; gap:12px; padding-bottom:12px; border-bottom:1px solid rgba(0,0,0,0.05);">
+                    <div style="width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, var(--primary-orange), #ff8c00); color:white; display:flex; justify-content:center; align-items:center; font-size:14px; font-weight:700; box-shadow: 0 2px 8px rgba(249, 168, 38, 0.3);">${name[0]}</div>
+                    <span style="font-size:15px; font-weight:600; color:var(--text-main);">${name}</span>
+                </div>`;
+            });
+            html += `</div>`;
+            openCarDrawer('❤️ 說這則留言讚的人', html);
+        }
+
+        async function toggleLike(index) {
+            const msgObj = allMessages[index];
+            let likesArray = [];
+            try {
+                if (typeof msgObj.Likes === 'string') likesArray = JSON.parse(msgObj.Likes || "[]");
+                else if (Array.isArray(msgObj.Likes)) likesArray = msgObj.Likes;
+            } catch(e) {}
+
+            const nameIdx = likesArray.indexOf(currentUser.name);
+            let isAdding = false;
+            if (nameIdx > -1) {
+                likesArray.splice(nameIdx, 1); 
+            } else {
+                likesArray.push(currentUser.name); 
+                isAdding = true;
+            }
+
+            allMessages[index].Likes = JSON.stringify(likesArray);
+            
+            const btnEl = document.getElementById(`like-btn-${index}`);
+            const textEl = document.getElementById(`like-text-${index}`);
+            
+            if (btnEl) {
+                if (isAdding) {
+                    btnEl.classList.remove('unliked');
+                    btnEl.classList.add('liked');
+                } else {
+                    btnEl.classList.remove('liked');
+                    btnEl.classList.add('unliked');
+                }
+            }
+            
+            if (textEl) {
+                if (likesArray.length > 0) {
+                    let displayNames = likesArray.slice(0, 2).join(", ");
+                    if (likesArray.length > 2) displayNames += ` 等 ${likesArray.length} 人`;
+                    textEl.innerHTML = `<div style="width: 12px; height: 12px; stroke: #ff4d4f; fill: #ff4d4f; display:flex; align-items:center;">${svgHeart}</div> <span style="text-decoration:underline; text-decoration-color:rgba(0,0,0,0.1); text-underline-offset:2px;">${displayNames}</span>`;
+                    textEl.style.cursor = 'pointer';
+                    textEl.onclick = () => showLikesDrawer(index);
+                } else {
+                    textEl.innerHTML = "";
+                    textEl.style.cursor = 'default';
+                    textEl.onclick = null;
+                }
+            }
+
+            try {
+                await fetch(GAS_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: "toggleLike",
+                        timeStr: msgObj.Time,
+                        content: msgObj.Content, 
+                        userName: currentUser.name,
+                        isAdding: isAdding
+                    })
+                });
+            } catch(e) {
+                console.error("按讚狀態儲存失敗，請檢查網路");
+            }
+        }
+
         function loadMoreMessages() { currentMsgPage++; renderMessages(); }
         function openEditMessage(index) {
             document.body.classList.add('no-scroll');
@@ -860,7 +1054,8 @@
                 AvatarUrl: currentUser.pictureUrl, 
                 Time: timeString, 
                 Content: text, 
-                IsEdited: "" 
+                IsEdited: "",
+                Likes: "[]" 
             };
             allMessages.unshift(newMessage);
             textarea.value = ''; 
@@ -900,6 +1095,7 @@
             document.getElementById('guest-lock-screen').style.display = 'none';
             document.getElementById('app').style.display = 'block';
             if (currentUser.isVoted) {
+                
                 document.getElementById('bottom-nav-block').style.display = 'flex';
                 document.getElementById('bottom-blur-mask').style.display = 'block'; 
                 initDaysCountdown(); markArchive(); 
@@ -920,6 +1116,7 @@
                 card.style.borderColor = "var(--primary-green)"; card.style.borderWidth = "2px";
             }
         }
+        
         function switchView(t) {
             const targetView = document.getElementById('view-' + t);
             const activeTab = document.getElementById('tab-' + t);
@@ -936,9 +1133,14 @@
             if (currentActive && currentActive.id === 'view-prep' && t !== 'prep' && isChecklistModified) {
                 saveChecklistBackground();
             }
-            if (t === 'board' && currentActive && currentActive.id !== 'view-board') {
-                refreshMessagesOnly(true); 
+            
+            // 🌟 修正 1：徹底移除了進到 board 時的跳動觸發器，改為只在「離開留言板 / 逛其他分頁」時才靜默載入
+            if (t !== 'board') {
+                setTimeout(() => {
+                    refreshMessagesOnly(true); 
+                }, 500);
             }
+
             document.getElementById('avatar-menu').style.display = 'none';
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
             targetView.classList.add('active');
@@ -953,6 +1155,7 @@
             if (t === 'result') fetchResults();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+
         function handleAdminLogin() {
             document.getElementById('avatar-menu').style.display = 'none';
             if (document.getElementById('view-admin').classList.contains('active')) return;
@@ -1003,9 +1206,9 @@
                 await processLoadedData(); 
                 switchView('overview'); 
                 showCustomAlert("成功", "公告已發布，畫面已更新！");
-                btn.innerText = "💾 儲存所有變更"; btn.disabled = false;
+                btn.innerText = "儲存所有變更"; btn.disabled = false;
             } catch(e) { 
-                btn.innerText = "💾 儲存所有變更"; btn.disabled = false; 
+                btn.innerText = "儲存所有變更"; btn.disabled = false; 
                 showCustomAlert("錯誤", "儲存失敗。"); 
             }
         }
@@ -1062,7 +1265,7 @@
                 data.forEach(row => {
                     if (row['LINE ID'] === "test_user_001") return;
                     totalVotes++; const trip = row['偏好行程']; const name = row['LINE 名稱']; 
-                    if (trip && trip.includes("無法參加")) { unableCount++; if (name) unableHtml += `<div style="display: inline-block; background: rgba(255,255,255,0.4); padding: 4px 12px; border-radius: 20px; margin: 4px 6px 4px 0; font-size: 12px; border: 1px solid rgba(255,255,255,0.6); color: var(--text-muted); box-shadow: 0 2px 5px rgba(0,0,0,0.02);">${name}</div>`; return; }
+                    if (trip && trip.includes("無法參加")) { unableCount++; if (name) unableHtml += `<div style="display: inline-block; background: rgba(255,255,255,0.4); padding: 4px 12px; border-radius: 20px; margin: 4px 6px 4px 0; font-size: 12px; border: 1px solid rgba(255,255,255,0.6); color: var(--text-muted); box-shadow: 0 2px 5px rgba(0,0,0,0.02);">${name} <span style="font-size:10px; opacity:0.7;">(訪客模式)</span></div>`; return; }
                     const isTrip1 = trip && trip.includes("方案一"); const isTrip2 = trip && trip.includes("方案二");
                     if (isTrip1) { if (row['6/13-6/14'] === 'V') t1_d1++; if (row['6/27-6/28'] === 'V') t1_d2++; } else if (isTrip2) { if (row['6/13-6/14'] === 'V') t2_d1++; if (row['6/27-6/28'] === 'V') t2_d2++; }
                     if (name && (isTrip1 || isTrip2)) votersHtml += `<div style="display: inline-block; background: rgba(255,255,255,0.6); padding: 4px 12px; border-radius: 20px; margin: 4px 6px 4px 0; font-size: 12px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.6), 0 4px 10px rgba(0,0,0,0.04); color: var(--text-main); border: 1px solid rgba(255,255,255,0.8);">${name} <span style="color:var(--primary-green); font-size:11px; margin-left: 4px;">✓</span></div>`;
