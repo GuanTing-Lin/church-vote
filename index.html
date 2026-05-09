@@ -125,8 +125,7 @@
         .prep-item-desc { font-size: 11px; color: #718096; line-height: 1.4; }
         .msg-input-box { display: flex; flex-direction: column; gap: 10px; background: rgba(255,255,255,0.3) !important; border: 1px solid rgba(255,255,255,0.5); box-shadow: inset 0 1px 1px rgba(255,255,255,0.4); }
         .msg-textarea { width: 100%; box-sizing: border-box; padding: 12px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.15); font-family: inherit; font-size: 14px; resize: vertical; min-height: 80px; background: rgba(255,255,255,0.5); backdrop-filter: blur(10px); transition: 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
-        .msg-textarea:focus { outline: none; background: rgba(255,255,255,0.9); border-color: var(--primary-green); box-shadow: 0 0 0 3px rgba(59,208,175,0.15); }
-        .msg-item { display: flex; gap: 12px; padding: 16px 0; border-bottom: 1px solid rgba(0,0,0,0.05); animation: fadeIn 0.4s; }
+        .msg-textarea:focus { outline: none; background: rgba(255,255,255,0.9); border-color: #718096; box-shadow: 0 0 0 3px rgba(113, 128, 150, 0.15); }        .msg-item { display: flex; gap: 12px; padding: 16px 0; border-bottom: 1px solid rgba(0,0,0,0.05); animation: fadeIn 0.4s; }
         .msg-item:last-child { border-bottom: none; }
         .msg-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-orange), #ff8c00); display: flex; justify-content: center; align-items: center; color: white; font-weight: 700; font-size: 14px; flex-shrink: 0; overflow: hidden; box-shadow: 0 4px 8px rgba(249,168,38,0.25); }
         .msg-body { flex-grow: 1; background: rgba(255,255,255,0.45); padding: 12px; border-radius: 0 14px 14px 14px; border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 2px 8px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.5); }
@@ -146,15 +145,14 @@
         .nav-icon { font-size: 20px; margin-bottom: 2px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .nav-item.active .nav-icon { transform: translateY(-2px) scale(1.05); }
         .drawer-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background-color: rgba(0,0,0,0.4); backdrop-filter: blur(5px); z-index: 2000; display: none; opacity: 0; transition: opacity 0.3s; }        .drawer-overlay.show { display: block; opacity: 1; }
-        .drawer-content { position: absolute; bottom: -100%; left: 0; width: 100%; background: rgba(255,255,255,0.7); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border-radius: 24px 24px 0 0; padding: 15px 20px calc(30px + env(safe-area-inset-bottom)); box-sizing: border-box; transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1); max-height: 85dvh; overflow-y: auto; border-top: 1px solid rgba(255,255,255,0.8); box-shadow: 0 -10px 40px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,0.6); }        .drawer-overlay.show .drawer-content { bottom: 0; }
-        .drawer-handler { width: 40px; height: 4px; background: rgba(0,0,0,0.15); border-radius: 4px; margin: 0 auto 20px; }
+        .drawer-content { position: absolute; bottom: -100%; left: 0; width: 100%; background: rgba(255,255,255,0.7); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border-radius: 24px 24px 0 0; padding: 15px 20px calc(30px + env(safe-area-inset-bottom)); box-sizing: border-box; transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1); max-height: 85dvh; overflow-y: auto; border-top: 1px solid rgba(255,255,255,0.8); box-shadow: 0 -10px 40px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,0.6); overscroll-behavior-y: none; }        .drawer-handler { width: 40px; height: 4px; background: rgba(0,0,0,0.15); border-radius: 4px; margin: 0 auto 20px; }
+        .drawer-overlay.show .drawer-content { bottom: 0; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background-color: rgba(0,0,0,0.4); backdrop-filter: blur(8px); z-index: 2100; display: none; justify-content: center; align-items: center; }        .custom-modal { box-sizing: border-box; background: rgba(255,255,255,0.85); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid white; max-width: 320px; width: 90%; border-radius: 20px; padding: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.15), inset 0 1px 1px rgba(255,255,255,0.6); text-align: center; }
         .modal-title { font-size: 18px; font-weight: 700; margin: 0 0 12px; color: var(--text-main); }
         input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"] { -moz-appearance: textfield; }        
         .modal-input { width: 100%; box-sizing: border-box; padding: 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.15); background: rgba(255,255,255,0.9); font-size: 15px; margin-bottom: 0; text-align: center; outline: none; transition: 0.3s; padding-right: 35px; }
-        .modal-input:focus { border-color: var(--primary-green); box-shadow: 0 0 0 3px rgba(59,208,175,0.15); }
-        .modal-btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        .modal-input:focus { border-color: #718096; box-shadow: 0 0 0 3px rgba(113, 128, 150, 0.15); }        .modal-btn-group { display: flex; gap: 10px; margin-top: 15px; }
         .btn-cancel { flex: 1; padding: 12px; border-radius: 12px; border: none; background: rgba(0,0,0,0.06); color: #4a5568; cursor: pointer; font-weight:600; font-size: 14px; transition: 0.2s;}
         .btn-cancel:hover { background: rgba(0,0,0,0.12); }
         .btn-confirm { flex: 1; padding: 12px; border-radius: 12px; border: none; background: linear-gradient(135deg, var(--primary-orange), #ff8c00); color: white; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 4px 12px rgba(249,168,38,0.25); transition: 0.2s;}
@@ -183,8 +181,7 @@
         input:checked + .slider:before { transform: translateX(20px); }
         .admin-notice-block { background: rgba(255,255,255,0.7); border: 1px solid white; padding: 16px; border-radius: 14px; margin-bottom: 12px; position: relative; transition: opacity 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.03); backdrop-filter: blur(10px); }
         .admin-notice-block.dragging { opacity: 0.4; border: 2px dashed var(--primary-orange); background: #fff; }
-        .drag-handle { cursor: grab; font-size: 16px; color: #a0aec0; margin-right: 10px; user-select: none; padding: 4px; }
-        .drag-handle:active { cursor: grabbing; color: var(--primary-orange); }
+        .drag-handle { cursor: grab; font-size: 20px; color: #a0aec0; margin-right: 8px; user-select: none; padding: 12px; margin-left: -10px; touch-action: none; display: inline-flex; align-items: center; justify-content: center; }        .drag-handle:active { cursor: grabbing; color: var(--primary-orange); }
         .admin-delete-btn { background: rgba(255,77,79,0.1); color: #ff4d4f; border: 1px solid rgba(255,77,79,0.2); border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s;}
         .admin-delete-btn:hover { background: #ff4d4f; color: white; }
         body.no-scroll {
@@ -328,13 +325,27 @@
             <h2 style="text-align: center; color: var(--text-main); margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5);">⚙️ 後台管理</h2>
             <div class="card">
                 <div class="admin-menu-item" onclick="openAdminNotices()">
-                    <div style="font-size: 15px; font-weight: 600; color: var(--text-main);">編輯首頁公告</div>
+                    <div style="font-size: 15px; font-weight: 600; color: var(--text-main);">編輯公告</div>
                     <div style="color: #cbd5e0; font-weight: 700;">></div>
                 </div>
                 <div class="admin-menu-item">
                     <div style="font-size: 15px; font-weight: 600; color: var(--text-main);">鎖定投票系統</div>
                     <label class="switch"><input type="checkbox" id="admin-lock-toggle" onchange="toggleVotingLock(this)"><span class="slider"></span></label>
                 </div>
+            </div>
+        </div>
+        <div id="view-admin-notices" class="view-section">
+            <div style="display: flex; align-items: center; margin-bottom: 20px; position: relative; justify-content: center; height: 40px;">
+                <div onclick="switchView('admin')" style="position: absolute; left: 0; color: var(--primary-blue); font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 2px; padding: 6px 10px 6px 4px; background: rgba(0,123,255,0.06); border-radius: 20px; transition: 0.2s;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    返回
+                </div>
+                <h2 style="color: var(--text-main); margin: 0; font-size: 18px; text-shadow: 0 1px 2px rgba(255,255,255,0.5);">📝 編輯首頁公告</h2>
+            </div>
+            <div class="card">
+                <div id="admin-notice-list-container" style="text-align:left;"></div>
+                <button class="btn-primary" style="background:rgba(255,255,255,0.4); color:var(--text-main); margin-bottom:15px; border: 1px solid rgba(255,255,255,0.6); box-shadow: inset 0 1px 1px rgba(255,255,255,0.5);" onclick="addAdminNoticeField()">+ 新增一則公告</button>
+                <button class="btn-primary" id="btn-save-notices" onclick="saveAdminNotices()">儲存所有變更</button>
             </div>
         </div>
     </main>
@@ -549,17 +560,19 @@
         }
         function openCarDrawer(t, c) { document.body.classList.add('no-scroll'); document.getElementById('drawer-title').innerText = t; document.getElementById('drawer-body').innerHTML = c; const d = document.getElementById('custom-drawer'); d.style.display = 'block'; setTimeout(() => d.classList.add('show'), 10); }
         function closeDrawer() { document.body.classList.remove('no-scroll'); const d = document.getElementById('custom-drawer'); d.classList.remove('show'); setTimeout(() => d.style.display = 'none', 300); }
+        // 🍎 抽屜「下拉關閉」邏輯 (App 手感 - 阻擋原生干擾版)
         const drawerContent = document.querySelector('.drawer-content');
         let drawerStartY = 0;
         let drawerCurrentY = 0;
         let isDraggingDrawer = false;
 
         drawerContent.addEventListener('touchstart', (e) => {
+            // 只有在內容滑到最頂端時，才允許觸發下拉關閉
             if (drawerContent.scrollTop <= 0) {
                 drawerStartY = e.touches[0].clientY;
                 drawerCurrentY = drawerStartY;
                 isDraggingDrawer = true;
-                drawerContent.style.transition = 'none'; // 拖拉時暫停彈簧動畫，讓畫面跟著手指走
+                drawerContent.style.transition = 'none'; 
             }
         }, {passive: true});
 
@@ -567,22 +580,26 @@
             if (!isDraggingDrawer) return;
             drawerCurrentY = e.touches[0].clientY;
             const diffY = drawerCurrentY - drawerStartY;
+            
             if (diffY > 0) {
+                // 🌟 關鍵：強制阻止手機原生的下拉橡皮筋效果
+                e.preventDefault(); 
                 drawerContent.style.transform = `translateY(${diffY}px)`;
+            } else {
+                // 如果手指又往上推回去，依然阻止原生滾動干擾
+                e.preventDefault();
+                drawerContent.style.transform = `translateY(0px)`;
             }
-        }, {passive: true});
+        }, {passive: false}); // 🌟 這裡必須設定為 false，才能使用 preventDefault()
 
         drawerContent.addEventListener('touchend', (e) => {
             if (!isDraggingDrawer) return;
             isDraggingDrawer = false;
-            
             const diffY = drawerCurrentY - drawerStartY;
             
-            // 手指放開時，恢復動畫與重置位置
             drawerContent.style.transition = 'bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s';
             drawerContent.style.transform = ''; 
 
-            // 如果下拉超過 80px 的距離，就判定為使用者想關閉抽屜
             if (diffY > 80) {
                 closeDrawer();
             }
@@ -884,24 +901,27 @@
         function handleAdminLogin() {
             document.getElementById('avatar-menu').style.display = 'none';
             if (document.getElementById('view-admin').classList.contains('active')) return;
-            showCustomPrompt("主辦人登入", true, (pwd) => {
+            showCustomPrompt("管理員登入", true, (pwd) => {
                 if (pwd === ADMIN_PASSCODE) switchView('admin');
-                else showCustomAlert("錯誤", "密碼不正確，無權限訪問。");
+                else showCustomAlert("錯誤", "密碼不正確");
             });
         }
         function openAdminNotices() {
-            let html = `<div id="admin-notice-list-container" style="text-align:left;">`;
+            let html = "";
+            // 生成所有公告的 HTML
             adminNoticesArray.forEach((n, idx) => { html += generateNoticeInputHTML(idx, n); });
-            html += `</div><button class="btn-primary" style="background:rgba(255,255,255,0.4); color:var(--text-main); margin-bottom:15px; border: 1px solid rgba(255,255,255,0.6); box-shadow: inset 0 1px 1px rgba(255,255,255,0.5);" onclick="addAdminNoticeField()">+ 新增一則公告</button><button class="btn-primary" id="btn-save-notices" onclick="saveAdminNotices()">儲存所有變更</button>`;
-            openCarDrawer('編輯首頁公告', html);
+            document.getElementById('admin-notice-list-container').innerHTML = html;
+            
+            switchView('admin-notices'); 
             initAdminDragAndDrop();
         }
         function generateNoticeInputHTML(idx, notice = {title:'', desc:'', time:'', isTop:false}) {
             const today = new Date();
-            const defaultDate = `${today.getFullYear()}/${(today.getMonth()+1).toString().padStart(2,'0')}/${today.getDate().toString().padStart(2,'0')}`;
-            const timeVal = notice.time || defaultDate;
+            const defaultDate = `${today.getFullYear()}-${(today.getMonth()+1).toString().padStart(2,'0')}-${today.getDate().toString().padStart(2,'0')}`;
+            let timeVal = notice.time ? notice.time.replace(/\//g, '-') : defaultDate;
             const checkedStr = notice.isTop ? 'checked' : '';
-            return `<div class="admin-notice-block" id="admin-notice-item-${idx}"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;"><div style="display:flex; align-items:center;"><span class="drag-handle" title="按住拖曳可排序" onmousedown="this.closest('.admin-notice-block').setAttribute('draggable', 'true')" onmouseup="this.closest('.admin-notice-block').removeAttribute('draggable')" onmouseleave="this.closest('.admin-notice-block').removeAttribute('draggable')">☰</span><label style="font-size:12px; color:var(--text-muted); font-weight: 600; margin:0;">公告標題</label></div><button class="admin-delete-btn" style="position:static;" onclick="removeAdminNoticeField(this)">刪除</button></div><input type="text" class="msg-textarea admin-n-title" style="min-height:36px; margin-bottom:10px; background: rgba(255,255,255,0.9);" value="${notice.title}"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;"><label style="font-size:12px; color:var(--text-muted); font-weight: 600;">發布日期</label><label style="font-size:11px; color:#ff4d4f; font-weight:700; background: rgba(255,77,79,0.1); padding: 3px 8px; border-radius: 12px;"><input type="checkbox" class="admin-n-pin" ${checkedStr} style="margin-right: 4px;"> 設為置頂</label></div><input type="text" class="msg-textarea admin-n-time" style="min-height:36px; margin-bottom:10px; background: rgba(255,255,255,0.9);" value="${timeVal}"><label style="font-size:12px; color:var(--text-muted); font-weight: 600;">詳細內容</label><textarea class="msg-textarea admin-n-desc" style="background: rgba(255,255,255,0.9);">${notice.desc}</textarea></div>`;
+        
+            return `<div class="admin-notice-block" id="admin-notice-item-${idx}"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;"><div style="display:flex; align-items:center;"><span class="drag-handle" title="按住拖曳可排序" onmousedown="this.closest('.admin-notice-block').setAttribute('draggable', 'true')" onmouseup="this.closest('.admin-notice-block').removeAttribute('draggable')" onmouseleave="this.closest('.admin-notice-block').removeAttribute('draggable')" ontouchstart="this.closest('.admin-notice-block').setAttribute('draggable', 'true')" ontouchend="this.closest('.admin-notice-block').removeAttribute('draggable')" ontouchcancel="this.closest('.admin-notice-block').removeAttribute('draggable')">☰</span><label style="font-size:12px; color:var(--text-muted); font-weight: 600; margin:0;">公告標題</label></div><button class="admin-delete-btn" style="position:static;" onclick="removeAdminNoticeField(this)">刪除</button></div><input type="text" class="msg-textarea admin-n-title" style="min-height:36px; margin-bottom:10px; background: rgba(255,255,255,0.9);" value="${notice.title}"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;"><label style="font-size:12px; color:var(--text-muted); font-weight: 600;">發布日期</label><label style="font-size:11px; color:#ff4d4f; font-weight:700; background: rgba(255,77,79,0.1); padding: 3px 8px; border-radius: 12px;"><input type="checkbox" class="admin-n-pin" ${checkedStr} style="margin-right: 4px;"> 設為置頂</label></div><input type="date" class="msg-textarea admin-n-time" style="min-height:36px; margin-bottom:10px; background: rgba(255,255,255,0.9);" value="${timeVal}"><label style="font-size:12px; color:var(--text-muted); font-weight: 600;">詳細內容</label><textarea class="msg-textarea admin-n-desc" style="background: rgba(255,255,255,0.9);">${notice.desc}</textarea></div>`;
         }
         function addAdminNoticeField() { const container = document.getElementById('admin-notice-list-container'); container.insertAdjacentHTML('beforeend', generateNoticeInputHTML(container.children.length)); }
         function removeAdminNoticeField(btn) { btn.closest('.admin-notice-block').remove(); }
@@ -926,7 +946,9 @@
             });
             try {
                 await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "updateNotices", notices: newNotices }) });
-                closeDrawer(); setTimeout(()=> { showCustomAlert("成功", "公告已發布！"); processLoadedData(); }, 300);
+                
+                switchView('admin'); 
+                setTimeout(()=> { showCustomAlert("成功", "公告已發布！"); processLoadedData(); }, 300);
             } catch(e) { btn.innerText = "儲存所有變更"; btn.disabled = false; showCustomAlert("錯誤", "儲存失敗。"); }
         }
         async function toggleVotingLock(checkbox) {
