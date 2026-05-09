@@ -921,7 +921,7 @@
             let timeVal = notice.time ? notice.time.replace(/\//g, '-') : defaultDate;
             const checkedStr = notice.isTop ? 'checked' : '';
         
-            return `<div class="admin-notice-block" id="admin-notice-item-${idx}"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;"><div style="display:flex; align-items:center;"><span class="drag-handle" title="按住拖曳可排序">☰</span><label style="font-size:12px; color:var(--text-muted); font-weight: 600; margin:0;">公告標題</label></div><button class="admin-delete-btn" style="position:static;" onclick="removeAdminNoticeField(this)">刪除</button></div><input type="text" class="msg-textarea admin-n-title" style="min-height:36px; margin-bottom:10px; background: rgba(255,255,255,0.9);" value="${notice.title}"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;"><label style="font-size:12px; color:var(--text-muted); font-weight: 600;">發布日期</label><label style="font-size:11px; color:#ff4d4f; font-weight:700; background: rgba(255,77,79,0.1); padding: 3px 8px; border-radius: 12px;"><input type="checkbox" class="admin-n-pin" ${checkedStr} style="margin-right: 4px;"> 設為置頂</label></div><input type="date" class="msg-textarea admin-n-time" style="display:block; width:100%; max-width:100%; box-sizing:border-box; min-height:36px; margin-bottom:10px; background: rgba(255,255,255,0.9);" value="${timeVal}"><label style="font-size:12px; color:var(--text-muted); font-weight: 600;">詳細內容</label><textarea class="msg-textarea admin-n-desc" style="background: rgba(255,255,255,0.9);">${notice.desc}</textarea></div>`;
+            return `<div class="admin-notice-block" id="admin-notice-item-${idx}"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;"><div style="display:flex; align-items:center;"><span class="drag-handle" title="按住拖曳可排序">☰</span><label style="font-size:12px; color:var(--text-muted); font-weight: 600; margin:0;">公告標題</label></div><button class="admin-delete-btn" style="position:static;" onclick="removeAdminNoticeField(this)">刪除</button></div><input type="text" class="msg-textarea admin-n-title" style="min-height:36px; margin-bottom:10px; background: rgba(255,255,255,0.9);" value="${notice.title}"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;"><label style="font-size:12px; color:var(--text-muted); font-weight: 600;">發布日期</label><label style="font-size:11px; color:#ff4d4f; font-weight:700; background: rgba(255,77,79,0.1); padding: 3px 8px; border-radius: 12px;"><input type="checkbox" class="admin-n-pin" ${checkedStr} style="margin-right: 4px;"> 設為置頂</label></div><input type="text" onfocus="this.type='date'" onblur="this.type='text'" class="msg-textarea admin-n-time" style="width:100%; box-sizing:border-box; min-height:36px; margin-bottom:10px; background: rgba(255,255,255,0.9); -webkit-appearance:none;" value="${timeVal}"><label style="font-size:12px; color:var(--text-muted); font-weight: 600;">詳細內容</label><textarea class="msg-textarea admin-n-desc" style="background: rgba(255,255,255,0.9);">${notice.desc}</textarea></div>`;
         }
         function addAdminNoticeField() { const container = document.getElementById('admin-notice-list-container'); container.insertAdjacentHTML('beforeend', generateNoticeInputHTML(container.children.length)); }
         function removeAdminNoticeField(btn) { btn.closest('.admin-notice-block').remove(); }
@@ -949,11 +949,23 @@
                 if(title) newNotices.push({title, desc: block.querySelector('.admin-n-desc').value.trim(), time});
             });
             try {
+                // 1. 存入資料庫
                 await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "updateNotices", notices: newNotices }) });
                 
-                switchView('admin'); 
-                setTimeout(()=> { showCustomAlert("成功", "公告已發布！"); processLoadedData(); }, 300);
-            } catch(e) { btn.innerText = "儲存所有變更"; btn.disabled = false; showCustomAlert("錯誤", "儲存失敗。"); }
+                // 2. 🌟 強制重新抓取最新資料！
+                initialDataPromise = fetch(GAS_API_URL, { cache: 'no-store', redirect: 'follow' }).then(res => res.json());
+                await processLoadedData(); 
+                
+                // 3. 🌟 切換到首頁 (overview)，讓使用者馬上看到剛剛發布的最新公告
+                switchView('overview'); 
+                showCustomAlert("成功", "公告已發布，畫面已更新！");
+                
+                // 恢復按鈕狀態
+                btn.innerText = "儲存所有變更"; btn.disabled = false;
+            } catch(e) { 
+                btn.innerText = "儲存所有變更"; btn.disabled = false; 
+                showCustomAlert("錯誤", "儲存失敗。"); 
+            }
         }
         async function toggleVotingLock(checkbox) {
             const isLocked = checkbox.checked;
