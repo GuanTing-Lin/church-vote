@@ -10,6 +10,8 @@
     <meta property="og:title" content="【出遊指南】香草山小組出遊指南">
     <meta property="og:description" content="趕快點擊查看，詳細行程、車位與住宿分配、行前準備清單都在這！">
     <meta property="og:image" content="https://raw.githubusercontent.com/GuanTing-Lin/church-vote/main/banner-1.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -22,26 +24,9 @@
             --glass-shadow: 0 4px 16px rgba(31, 38, 135, 0.04), inset 0 1px 1px rgba(255,255,255,0.6);
             --radius-main: 20px;
         }
-        html { 
-            background-color: #e0f2ed;
-            overscroll-behavior-y: none;
-        }
-        body { 
-            font-family: 'Noto Sans TC', sans-serif; 
-            background-color: transparent !important;
-            margin: 0; padding: 0; color: var(--text-main); padding-bottom: 110px; overflow-x: hidden; 
-        }
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(to bottom, #f0f4f8, #e0f2ed);
-            z-index: -2;
-            pointer-events: none;
-        }
+        html { background-color: #e0f2ed; overscroll-behavior-y: none; }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: transparent !important; margin: 0; padding: 0; color: var(--text-main); padding-bottom: 110px; overflow-x: hidden; }
+        body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to bottom, #f0f4f8, #e0f2ed); z-index: -2; pointer-events: none; }
         .bg-blobs { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; z-index: -1; overflow: hidden; pointer-events: none; }
         .blob { position: absolute; filter: blur(80px); opacity: 0.5; animation: float 12s infinite ease-in-out alternate; }
         .blob-1 { width: 350px; height: 350px; background: var(--primary-orange); top: -10%; left: -10%; animation-delay: 0s; }
@@ -59,7 +44,6 @@
         .user-area { position: relative; }
         .user-info { display: flex; align-items: center; font-size: 13px; color: var(--text-main); cursor: pointer; background: rgba(255,255,255,0.4); padding: 4px 10px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.6); transition: 0.2s; box-shadow: inset 0 1px 1px rgba(255,255,255,0.5); }
         .user-info:hover { background: rgba(255,255,255,0.7); }
-        /* 移除右上角大頭貼光暈 */
         .avatar-placeholder { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-orange), #ff8c00); margin-left: 6px; display: flex; justify-content: center; align-items: center; color: white; font-size: 11px; font-weight: 700; overflow: hidden; box-shadow: none !important; }
         .dropdown-menu { position: absolute; top: 45px; right: 0; background: rgba(255,255,255,0.75); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid white; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,0.6); width: 170px; display: none; flex-direction: column; overflow: hidden; animation: fadeIn 0.2s ease-out; z-index: 1000; padding: 4px; }
         .menu-item { padding: 10px 12px; font-size: 13px; font-weight: 500; color: var(--text-main); border-radius: 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.2s; margin-bottom: 2px; }
@@ -130,10 +114,8 @@
         .msg-textarea { width: 100%; box-sizing: border-box; padding: 12px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.15); font-family: inherit; font-size: 14px; resize: vertical; min-height: 80px; background: rgba(255,255,255,0.5); backdrop-filter: blur(10px); transition: 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
         .msg-textarea:focus { outline: none; background: rgba(255,255,255,0.9); border-color: #718096; box-shadow: 0 0 0 3px rgba(113, 128, 150, 0.15); }
         
-        /* 留言板佈局優化 */
         .msg-item { display: flex; gap: 12px; padding: 16px 0; border-bottom: 1px solid rgba(0,0,0,0.05); animation: fadeIn 0.4s; }
         .msg-item:last-child { border-bottom: none; }
-        /* 移除留言大頭貼光暈 */
         .msg-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-orange), #ff8c00); display: flex; justify-content: center; align-items: center; color: white; font-weight: 700; font-size: 14px; flex-shrink: 0; overflow: hidden; box-shadow: none !important; }
         .msg-body { flex-grow: 1; background: rgba(255,255,255,0.45); padding: 12px; border-radius: 0 14px 14px 14px; border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 2px 8px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.5); }
         .msg-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -148,17 +130,11 @@
         .like-btn.unliked svg { stroke: #a0aec0; fill: none; }
         .like-btn.liked svg { stroke: #ff4d4f; fill: #ff4d4f; }
 
-        /* 🌟 IG 風格按讚疊加 UI 與編輯按鈕 */
         .msg-header-right { display: flex; align-items: center; gap: 8px; }
         .msg-edit-link { font-size: 11px; color: var(--primary-blue); cursor: pointer; font-weight: 700; opacity: 0.8; }
         .msg-edit-link:hover { opacity: 1; text-decoration: underline; }
         .like-avatar-stack { display: flex; align-items: center; margin-right: 6px; }
-        .like-avatar-tiny { 
-            width: 18px; height: 18px; border-radius: 50%; background: #eee; 
-            margin-left: -5px; box-shadow: 0 0 3px rgba(0,0,0,0.2); 
-            display: flex; justify-content: center; align-items: center; 
-            overflow: hidden; position: relative; border: none !important;
-        }
+        .like-avatar-tiny { width: 18px; height: 18px; border-radius: 50%; background: #eee; margin-left: -5px; box-shadow: 0 0 3px rgba(0,0,0,0.2); display: flex; justify-content: center; align-items: center; overflow: hidden; position: relative; border: none !important; }
         .like-avatar-tiny:first-child { margin-left: 0; }
         .like-avatar-tiny img { width: 100%; height: 100%; object-fit: cover; }
         .like-avatar-tiny span { font-size: 9px; font-weight: 800; color: white; }
@@ -178,7 +154,6 @@
         .nav-icon { font-size: 20px; margin-bottom: 2px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .nav-item.active .nav-icon { transform: translateY(-2px) scale(1.05); }
         
-        /* 🌟 小紅點樣式：正圓形無白框 */
         .nav-badge { position: absolute; top: -2px; right: 15%; background-color: #FF3B30; color: white; font-size: 9px; font-weight: 700; width: 18px; height: 18px; line-height: 18px; text-align: center; border-radius: 50%; box-shadow: 0 2px 4px rgba(255, 59, 48, 0.4); display: none; z-index: 10; letter-spacing: -0.5px; border: none; padding: 0; }
 
         .drawer-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background-color: rgba(0,0,0,0.4); backdrop-filter: blur(5px); z-index: 2000; display: none; opacity: 0; transition: opacity 0.3s; }
@@ -226,6 +201,16 @@
         .drag-handle:active { cursor: grabbing; color: var(--primary-orange); }
         .admin-delete-btn { background: rgba(255,77,79,0.1); color: #ff4d4f; border: 1px solid rgba(255,77,79,0.2); border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s;}
         .admin-delete-btn:hover { background: #ff4d4f; color: white; }
+        #user-avatar img, 
+        .msg-avatar img, 
+        .like-avatar-tiny img, 
+        #drawer-body img {
+            -webkit-touch-callout: none; /* 禁用 iOS 長按彈出選單 */
+            -webkit-user-select: none;   /* 禁用反白選取 */
+            user-select: none;
+            -webkit-user-drag: none;     /* 禁用電腦版拖曳圖片 */
+            pointer-events: none;        /* 徹底讓圖片「失去實體觸感」，防堵任何另存圖片操作 */
+        }
         body.no-scroll { overflow: hidden !important; }
     </style>
 </head>
@@ -275,7 +260,7 @@
     <main class="container" id="app" style="display:none;">
         <div id="view-overview" class="view-section active">
             <div class="card" style="text-align: center;">
-                <img src="yilan.png" class="hero-image-compact" onerror="this.style.display='none'">
+                <img src="yilan.png" class="hero-image-compact" onerror="this.style.display='none'" loading="lazy">
                 <h2 class="hero-title-new" id="ui-trip-title">載入中...</h2>
                 <div class="hero-date-new" id="ui-trip-date">🗓️ 載入中...</div>
                 <hr style="border: 0; border-top: 1px solid rgba(0,0,0,0.05); margin: 20px 0 15px;">
@@ -347,7 +332,7 @@
         <div id="view-voting" class="view-section">
             <h2 style="text-align: center; color: var(--primary-green); margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5);">補報名系統</h2>
             <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 20px;">
-                <img src="yilan.png" style="width: 100%; height: 160px; object-fit: cover;" onerror="this.style.display='none'">
+                <img src="yilan.png" style="width: 100%; height: 160px; object-fit: cover;" onerror="this.style.display='none'" loading="lazy">
                 <div style="padding: 20px; text-align: center;">
                     <div style="font-weight: 800; color: var(--primary-green); margin-bottom: 6px; font-size: 13px; letter-spacing: 1px;">🏆 確定出遊方案</div>
                     <h3 style="margin: 0 0 8px; font-size: 20px; color: var(--text-main);" id="vote-ui-title">方案一：宜蘭深度放鬆</h3>
@@ -369,9 +354,9 @@
         <div id="view-archive" class="view-section">
             <h2 style="text-align: center; color: var(--primary-gray); margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5);">📜 歷史方案回顧</h2>
             <div class="cards-row archive-card">
-                <div class="trip-card" id="archive-card-1"><div class="card-img-block"><img src="yilan.png" onerror="this.style.display='none'"><div class="card-badge-container"><span class="card-badge">勝出方案</span></div></div><div class="card-body"><div class="card-title" style="font-weight:700; font-size:15px;">方案一：宜蘭深度放鬆</div></div></div>
-                <div class="trip-card" id="archive-card-2"><div class="card-img-block"><img src="keelung.png" style="filter: grayscale(60%);" onerror="this.style.display='none'"></div><div class="card-body"><div class="card-title" style="font-weight:700; font-size:15px; color: #888;">方案二：基隆海派清涼</div></div></div>
-                <div class="trip-card" id="archive-card-3"><div class="card-img-block"><img src="pass.png" style="filter: grayscale(60%);" onerror="this.style.display='none'"></div><div class="card-body"><div class="card-title" style="font-weight:700; font-size:15px; color: #888;">無法參加</div></div></div>
+                <div class="trip-card" id="archive-card-1"><div class="card-img-block"><img src="yilan.png" onerror="this.style.display='none'" loading="lazy"><div class="card-badge-container"><span class="card-badge">勝出方案</span></div></div><div class="card-body"><div class="card-title" style="font-weight:700; font-size:15px;">方案一：宜蘭深度放鬆</div></div></div>
+                <div class="trip-card" id="archive-card-2"><div class="card-img-block"><img src="keelung.png" style="filter: grayscale(60%);" onerror="this.style.display='none'" loading="lazy"></div><div class="card-body"><div class="card-title" style="font-weight:700; font-size:15px; color: #888;">方案二：基隆海派清涼</div></div></div>
+                <div class="trip-card" id="archive-card-3"><div class="card-img-block"><img src="pass.png" style="filter: grayscale(60%);" onerror="this.style.display='none'" loading="lazy"></div><div class="card-body"><div class="card-title" style="font-weight:700; font-size:15px; color: #888;">無法參加</div></div></div>
             </div>
         </div>
         
@@ -446,12 +431,16 @@
         </div>
     </div>
 
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js" defer></script>
     <script>
         const svgEye = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
         const svgEyeOff = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
         const svgHeart = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="100%" height="100%"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
+        
+        const LIFF_ID = "2009879130-CwjiaVKB"; 
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxtnKFJZNfvJbGd_KBbTgV5rI-7uqlMJLVZp3dElIFFpWlbPKxEjoE5IUxS0e7eJhLBjQ/exec";
+        const LATE_VOTE_PASSCODE = "062728"; const ADMIN_PASSCODE = "9999";
         
         let currentUser = { name: "", id: "", pictureUrl: "", initial: "?", isVoted: false, votedOption: null }; 
         let lateVoteSelection = 0; let cachedPollData = null; let countdownTargetDate = 0;
@@ -464,6 +453,13 @@
         window.userAvatarMap = {};
         window.userNameMap = {};        
         window.likeTimers = {};
+
+        // 🌟 提前拉取資料 (不在 window.onload 裡面等)
+        const isLocalEnv = window.location.protocol === "file:" || window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
+        const cacheBuster = "&t=" + new Date().getTime();
+        initialDataPromise = fetch(GAS_API_URL + "?v=2" + cacheBuster, { cache: 'no-store', redirect: 'follow' })
+            .then(res => res.json())
+            .catch(err => { console.error("背景抓取資料失敗", err); return null; });
 
         function updateBadgeCount() {
             if (!allMessages || allMessages.length === 0) return;
@@ -529,9 +525,7 @@
         async function refreshMessagesOnly(isSilent = true) {
             if (!isSilent) showCustomAlert("更新中", "正在抓取最新資料...", false);
             try {
-                const cacheBuster = "&t=" + new Date().getTime();
                 const fetchUrl = GAS_API_URL.includes("?") ? GAS_API_URL + cacheBuster : GAS_API_URL + "?v=2" + cacheBuster;
-                
                 const response = await fetch(fetchUrl, { cache: 'no-store', redirect: 'follow' });
                 const data = await response.json();
                 
@@ -548,6 +542,7 @@
                     const newMsgs = [...data.messages].reverse(); 
                     
                     if (isSilent) {
+                        // 🌟 防錯位修復
                         let isStructuralChange = true;
                         if (allMessages.length === newMsgs.length && allMessages.length > 0) {
                             let match = true;
@@ -608,19 +603,8 @@
             const h12 = hours % 12 || 12; 
             return `${y}/${m}/${d} ${ampm} ${h12}:${mins}`;
         }
-        window.isCarDragging = false;
-        const LIFF_ID = "2009879130-CwjiaVKB"; 
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxtnKFJZNfvJbGd_KBbTgV5rI-7uqlMJLVZp3dElIFFpWlbPKxEjoE5IUxS0e7eJhLBjQ/exec";
-        const LATE_VOTE_PASSCODE = "062728"; const ADMIN_PASSCODE = "9999";
-        const isLocalEnv = window.location.protocol === "file:" || window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
 
         window.onload = async function() {
-            // 🌟 強制打破快取，確保一進首頁就抓取最新留言
-            const cacheBuster = "&t=" + new Date().getTime();
-            initialDataPromise = fetch(GAS_API_URL + "?v=2" + cacheBuster, { cache: 'no-store', redirect: 'follow' })
-                .then(res => res.json())
-                .catch(err => { console.error("背景抓取資料失敗", err); return null; });
-            
             if (isLocalEnv) {
                 currentUser = { name: "開發者(測試)", id: "test_user_001", pictureUrl: "", initial: "測" };
                 window.userNameMap[currentUser.id] = currentUser.name;
@@ -630,33 +614,40 @@
                 await processLoadedData();
                 return;
             } 
-            try {
-                await liff.init({ liffId: LIFF_ID });
-                if (liff.isLoggedIn()) {
-                    const p = await liff.getProfile();
-                    currentUser = { name: p.displayName, id: p.userId, pictureUrl: p.pictureUrl, initial: p.displayName[0] };
-                    
-                    window.userNameMap[currentUser.id] = currentUser.name;
-                    if (currentUser.pictureUrl) window.userAvatarMap[currentUser.id] = currentUser.pictureUrl;
+            
+            // 🌟 等待外部資源載入完成
+            const checkLiff = setInterval(async () => {
+                if (typeof liff !== 'undefined') {
+                    clearInterval(checkLiff);
+                    try {
+                        await liff.init({ liffId: LIFF_ID });
+                        if (liff.isLoggedIn()) {
+                            const p = await liff.getProfile();
+                            currentUser = { name: p.displayName, id: p.userId, pictureUrl: p.pictureUrl, initial: p.displayName[0] };
+                            
+                            window.userNameMap[currentUser.id] = currentUser.name;
+                            if (currentUser.pictureUrl) window.userAvatarMap[currentUser.id] = currentUser.pictureUrl;
 
-                    if (currentUser.pictureUrl) {
-                        fetch(GAS_API_URL, {
-                            method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                            body: JSON.stringify({ action: "updateAvatar", userId: currentUser.id, pictureUrl: currentUser.pictureUrl })
-                        }).catch(e => console.log("靜默同步大頭照"));
+                            if (currentUser.pictureUrl) {
+                                fetch(GAS_API_URL, {
+                                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                                    body: JSON.stringify({ action: "updateAvatar", userId: currentUser.id, pictureUrl: currentUser.pictureUrl })
+                                }).catch(e => console.log("靜默同步大頭照"));
+                            }
+
+                            const welcomeNameEl = document.getElementById('welcome-name');
+                            welcomeNameEl.innerHTML = `<span>${currentUser.name}</span>`;
+                            if (p.pictureUrl) document.getElementById('user-avatar').innerHTML = `<img src="${p.pictureUrl}" style="width:100%;height:100%;object-fit:cover;">`;
+                            else document.getElementById('user-avatar').innerText = currentUser.initial;
+                            
+                            await processLoadedData();
+                        } else { liff.login(); }
+                    } catch (err) { 
+                        console.error('LIFF 失敗', err);
+                        document.getElementById('loading').innerHTML = '<h2 style="color:red;">登入失敗</h2><p>請確認 LIFF ID 設定。</p>';
                     }
-
-                    const welcomeNameEl = document.getElementById('welcome-name');
-                    welcomeNameEl.innerHTML = `<span>${currentUser.name}</span>`;
-                    if (p.pictureUrl) document.getElementById('user-avatar').innerHTML = `<img src="${p.pictureUrl}" style="width:100%;height:100%;object-fit:cover;">`;
-                    else document.getElementById('user-avatar').innerText = currentUser.initial;
-                    
-                    await processLoadedData();
-                } else { liff.login(); }
-            } catch (err) { 
-                console.error('LIFF 失敗', err);
-                document.getElementById('loading').innerHTML = '<h2 style="color:red;">登入失敗</h2><p>請確認 LIFF ID 設定。</p>';
-            }
+                }
+            }, 100);
         };
 
         async function processLoadedData() {
@@ -990,7 +981,8 @@
 
         function renderMessages() {
             const container = document.getElementById('msg-list-container');
-            container.innerHTML = "";
+            // 🌟 效能優化：使用字串拼接，一次性寫入 DOM，大幅提升渲染速度
+            let htmlStr = "";
             const msgsToShow = allMessages.slice(0, currentMsgPage * MSG_PER_PAGE);
             if (msgsToShow.length === 0) { container.innerHTML = `<p style="text-align:center; color:#718096; font-size:14px; margin: 20px 0;">目前沒有留言，來搶頭香吧！ 🥳</p>`; return; }
             
@@ -1033,7 +1025,7 @@
                     ${heartIconHtml}
                 </div>`;
 
-                container.innerHTML += `
+                htmlStr += `
                     <div class="msg-item">
                         <div class="msg-avatar">${avatarHtml}</div>
                         <div class="msg-body">
@@ -1050,7 +1042,12 @@
                         </div>
                     </div>`;            
             });
-            if (allMessages.length > msgsToShow.length) { container.innerHTML += `<button class="btn-primary" style="background: rgba(255,255,255,0.3); color: var(--text-main); margin-top: 15px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.5), 0 4px 15px rgba(0,0,0,0.02); border: 1px solid rgba(255,255,255,0.5);" onclick="loadMoreMessages()">載入較舊留言</button>`; }
+            
+            if (allMessages.length > msgsToShow.length) { 
+                htmlStr += `<button class="btn-primary" style="background: rgba(255,255,255,0.3); color: var(--text-main); margin-top: 15px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.5), 0 4px 15px rgba(0,0,0,0.02); border: 1px solid rgba(255,255,255,0.5);" onclick="loadMoreMessages()">載入較舊留言</button>`; 
+            }
+            
+            container.innerHTML = htmlStr;
         }
 
         function updateExistingMessagesInPlace() {
