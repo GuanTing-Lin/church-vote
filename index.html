@@ -137,7 +137,6 @@
         .msg-time { font-size: 11px; color: var(--text-muted); }
         .msg-text { font-size: 14px; color: #2d3748; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
         
-        /* 🍎 高質感紅色系按讚按鈕與動畫 CSS */
         .like-btn { cursor:pointer; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); flex-shrink: 0; background: rgba(255,255,255,0.6); border: 1px solid rgba(0,0,0,0.05); }
         .like-btn:active { transform: scale(0.7); }
         .like-btn.liked { background: rgba(255,77,79,0.1); border: 1px solid rgba(255,77,79,0.2); }
@@ -213,7 +212,6 @@
     <header class="top-nav">
         <h1 onclick="switchView('overview')" style="cursor: pointer;">香草山小組出遊指南</h1>
         <div class="user-area">
-            <!-- 🌟 修正 1：還原正確的 HTML 結構，確保名字與照片不會互相覆蓋 -->
             <div class="user-info" onclick="toggleMenu(event)">
                 <div id="welcome-name" style="display: flex; align-items: center; gap: 4px;">讀取中</div>
                 <div class="avatar-placeholder" id="user-avatar">?</div>
@@ -384,7 +382,6 @@
             <div class="card">
                 <div id="admin-notice-list-container" style="text-align:left;"></div>
                 <button class="btn-primary" style="background:rgba(255,255,255,0.4); color:var(--text-main); margin-bottom:15px; border: 1px solid rgba(255,255,255,0.6); box-shadow: inset 0 1px 1px rgba(255,255,255,0.5);" onclick="addAdminNoticeField()">+ 新增公告</button>
-                <!-- 🌟 修正 2：徹底移除 HTML 裡的 💾 圖案 -->
                 <button class="btn-primary" id="btn-save-notices" onclick="saveAdminNotices()">儲存所有變更</button>
             </div>
         </div>
@@ -425,7 +422,7 @@
     <script>
         const svgEye = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
         const svgEyeOff = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
-        const svgHeart = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
+        const svgHeart = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="100%" height="100%"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
         
         let currentUser = { name: "", id: "", pictureUrl: "", initial: "?", isVoted: false, votedOption: null }; 
         let lateVoteSelection = 0; let cachedPollData = null; let countdownTargetDate = 0;
@@ -435,43 +432,56 @@
         let initialDataPromise = null; 
         let isGuestViewEnabled = false;
 
+        // 🌟 全域大頭貼與名字對照字典
+        window.userAvatarMap = {};
+        window.userNameMap = {};
+
         async function refreshMessagesOnly(isSilent = true) {
             if (!isSilent) showCustomAlert("更新中", "正在抓取最新資料...", false);
             try {
                 const cacheBuster = "&t=" + new Date().getTime();
-                const fetchUrl = GAS_API_URL.includes("?") ? GAS_API_URL + cacheBuster : GAS_API_URL + "?" + cacheBuster;
+                // 🌟 修正差異一：補上 ?v=2，確保後台回傳 messages
+                const fetchUrl = GAS_API_URL.includes("?") ? GAS_API_URL + cacheBuster : GAS_API_URL + "?v=2" + cacheBuster;
                 
                 const response = await fetch(fetchUrl, { cache: 'no-store', redirect: 'follow' });
                 const data = await response.json();
+                
+                // 動態擴充字典
+                if (data.messages) {
+                    data.messages.forEach(m => { 
+                        const id = m.LineID;
+                        if (id) window.userNameMap[id] = m.Name;
+                        if (id && m.AvatarUrl) window.userAvatarMap[id] = m.AvatarUrl; 
+                        if (m.Name && m.AvatarUrl) window.userAvatarMap[m.Name] = m.AvatarUrl; 
+                    });
+                }
                 
                 if (data.messages) {
                     const newMsgs = [...data.messages].reverse(); 
                     
                     if (isSilent) {
+                        // 🌟 修正差異二：防跳動機制，只比對 Content 和 Name，避開時間格式差異的陷阱
                         let hasNewTopActivity = true;
-                        if (allMessages.length === newMsgs.length && allMessages.length > 0 && newMsgs.length > 0) {
-                            if (allMessages[0].Time === newMsgs[0].Time && 
-                                allMessages[0].Content === newMsgs[0].Content && 
-                                allMessages[0].Likes === newMsgs[0].Likes) {
+                        if (allMessages.length > 0 && newMsgs.length > 0) {
+                            if (allMessages[0].Content === newMsgs[0].Content && 
+                                allMessages[0].Name === newMsgs[0].Name) {
                                 hasNewTopActivity = false; 
                             }
                         } else if (allMessages.length === 0 && newMsgs.length === 0) {
                             hasNewTopActivity = false;
                         }
+                        
                         allMessages = newMsgs; 
 
                         if (hasNewTopActivity) {
                             renderMessages();
-                            console.log("發現最新頭條，畫面已自動重繪");
                         } else {
                             updateExistingMessagesInPlace();
-                            console.log("無最新頭條，但已默默局部同步所有舊留言的最新狀態");
                         }
                     } else {
                         allMessages = newMsgs;
                         currentMsgPage = 1; 
                         renderMessages();
-                        console.log("使用者手動更新，強制重繪所有資料");
                     }
                 }
                 if (!isSilent) closeModal(); 
@@ -503,16 +513,22 @@
         }
         window.isCarDragging = false;
         const LIFF_ID = "2009879130-CwjiaVKB"; 
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxtnKFJZNfvJbGd_KBbTgV5rI-7uqlMJLVZp3dElIFFpWlbPKxEjoE5IUxS0e7eJhLBjQ/exec?v=2";
+        
+        // 🌟 正確的 GAS 網址已帶入
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxtnKFJZNfvJbGd_KBbTgV5rI-7uqlMJLVZp3dElIFFpWlbPKxEjoE5IUxS0e7eJhLBjQ/exec";
+        
         const LATE_VOTE_PASSCODE = "062728"; const ADMIN_PASSCODE = "9999";
         const isLocalEnv = window.location.protocol === "file:" || window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
 
         window.onload = async function() {
-            initialDataPromise = fetch(GAS_API_URL, { cache: 'no-store', redirect: 'follow' })
+            initialDataPromise = fetch(GAS_API_URL + "?v=2", { cache: 'no-store', redirect: 'follow' })
                 .then(res => res.json())
                 .catch(err => { console.error("背景抓取資料失敗", err); return null; });
+            
             if (isLocalEnv) {
+                // 測試帳號設定
                 currentUser = { name: "開發者(測試)", id: "test_user_001", pictureUrl: "", initial: "測" };
+                window.userNameMap[currentUser.id] = currentUser.name;
                 const welcomeNameEl = document.getElementById('welcome-name');
                 welcomeNameEl.innerHTML = `<span>${currentUser.name}</span>`;
                 if(document.getElementById('user-avatar')) document.getElementById('user-avatar').innerText = currentUser.initial;
@@ -524,10 +540,23 @@
                 if (liff.isLoggedIn()) {
                     const p = await liff.getProfile();
                     currentUser = { name: p.displayName, id: p.userId, pictureUrl: p.pictureUrl, initial: p.displayName[0] };
+                    
+                    window.userNameMap[currentUser.id] = currentUser.name;
+                    if (currentUser.pictureUrl) window.userAvatarMap[currentUser.id] = currentUser.pictureUrl;
+
+                    // 🌟 機制：登入時自動同步大頭貼到 Members
+                    if (currentUser.pictureUrl) {
+                        fetch(GAS_API_URL, {
+                            method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: JSON.stringify({ action: "updateAvatar", userId: currentUser.id, pictureUrl: currentUser.pictureUrl })
+                        }).catch(e => console.log("靜默同步大頭照"));
+                    }
+
                     const welcomeNameEl = document.getElementById('welcome-name');
                     welcomeNameEl.innerHTML = `<span>${currentUser.name}</span>`;
                     if (p.pictureUrl) document.getElementById('user-avatar').innerHTML = `<img src="${p.pictureUrl}" style="width:100%;height:100%;object-fit:cover;">`;
                     else document.getElementById('user-avatar').innerText = currentUser.initial;
+                    
                     await processLoadedData();
                 } else { liff.login(); }
             } catch (err) { 
@@ -535,13 +564,48 @@
                 document.getElementById('loading').innerHTML = '<h2 style="color:red;">登入失敗</h2><p>請確認 LIFF ID 設定。</p>';
             }
         };
+
         async function processLoadedData() {
             try {
                 const data = await initialDataPromise;
-                if (!data) throw new Error("無法取得出遊資料");
+                if (!data) throw new Error("資料讀取失敗");
                 cachedPollData = data;
+                
+                // 🛠️ 建立全域合成名冊 (優先權：Members > Messages)
+                window.userAvatarMap = {};
+                window.userNameMap = {};
+                
+                // 1. Messages 舊資料墊檔
+                if (data.messages) {
+                    data.messages.forEach(m => {
+                        const id = m.LineID;
+                        if (id) window.userNameMap[id] = m.Name;
+                        if (id && m.AvatarUrl) window.userAvatarMap[id] = m.AvatarUrl;
+                        if (m.Name && m.AvatarUrl) window.userAvatarMap[m.Name] = m.AvatarUrl; 
+                    });
+                }
+                
+                // 2. Members 最新資料覆蓋
+                if (data.votes) {
+                    data.votes.forEach(v => {
+                        const id = v['LINE ID'];
+                        const name = v['LINE 名稱'];
+                        // 🌟 修正：徹底移除 Object.values(v)[7] 誤抓 Checklist 的 Bug，不再破圖
+                        const pic = v['AvatarUrl'] || v['pictureUrl'] || v['照片'];
+                        if (id) {
+                            if (name) window.userNameMap[id] = name;
+                            if (pic) window.userAvatarMap[id] = pic; 
+                        }
+                        if (name && pic) window.userAvatarMap[name] = pic;
+                    });
+                }
+                
+                if (currentUser.id && currentUser.name) window.userNameMap[currentUser.id] = currentUser.name;
+                if (currentUser.id && currentUser.pictureUrl) window.userAvatarMap[currentUser.id] = currentUser.pictureUrl;
+
                 const vArray = data.votes || [];
                 const userVote = vArray.find(row => row['LINE ID'] === currentUser.id);
+                
                 if (userVote) {
                     currentUser.isVoted = true;
                     const s = userVote['偏好行程'];
@@ -549,9 +613,13 @@
                     else if (s && s.includes("方案二")) currentUser.votedOption = 2;
                     else if (s && s.includes("無法參加")) currentUser.votedOption = 3;
                     try { if(userVote['Checklist']) { userChecklistState = JSON.parse(userVote['Checklist']); } } catch(e) {}
+                } else if (currentUser.id === "test_user_001") {
+                    currentUser.isVoted = true;
+                    currentUser.votedOption = 1;
                 } else {
                     currentUser.isVoted = false;
                 }
+                
                 renderDynamicUI(data);
                 document.getElementById('loading').style.display = 'none';
                 
@@ -572,6 +640,7 @@
                 document.getElementById('loading').innerHTML = '<h2 style="color:red;">資料讀取失敗</h2><p>無法連線到資料庫，請檢查網路。</p>';
             }
         }
+
         function toggleMenu(event) { 
             event.stopPropagation(); 
             if (!currentUser.isVoted) return;
@@ -653,27 +722,17 @@
             if (!isDraggingDrawer) return;
             drawerCurrentY = e.touches[0].clientY;
             const diffY = drawerCurrentY - drawerStartY;
-            
-            if (diffY > 0) {
-                e.preventDefault(); 
-                drawerContent.style.transform = `translateY(${diffY}px)`;
-            } else {
-                e.preventDefault();
-                drawerContent.style.transform = `translateY(0px)`;
-            }
+            if (diffY > 0) { e.preventDefault(); drawerContent.style.transform = `translateY(${diffY}px)`; } 
+            else { e.preventDefault(); drawerContent.style.transform = `translateY(0px)`; }
         }, {passive: false});
 
         drawerContent.addEventListener('touchend', (e) => {
             if (!isDraggingDrawer) return;
             isDraggingDrawer = false;
             const diffY = drawerCurrentY - drawerStartY;
-            
             drawerContent.style.transition = 'bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s';
             drawerContent.style.transform = ''; 
-
-            if (diffY > 80) {
-                closeDrawer();
-            }
+            if (diffY > 80) closeDrawer();
         });
 
         function openAccommodationDrawer() {
@@ -820,9 +879,7 @@
                     method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: "updateChecklist", userId: currentUser.id, data: JSON.stringify(userChecklistState) }) 
                 });
-                console.log("行前準備進度已於背景儲存成功");
             } catch(e) { 
-                console.error("背景儲存失敗", e);
                 isChecklistModified = true; 
             }
         }
@@ -836,28 +893,45 @@
             slider.addEventListener('mousemove', (e) => { if (!isDown) return; e.preventDefault(); window.isCarDragging = true; const x = e.pageX - slider.offsetLeft; const walk = (x - startX) * 2; slider.scrollLeft = scrollLeft - walk; });
         }
 
+        // 🌟 渲染留言板，使用雙層大頭貼保險機制
         function renderMessages() {
             const container = document.getElementById('msg-list-container');
             container.innerHTML = "";
             const msgsToShow = allMessages.slice(0, currentMsgPage * MSG_PER_PAGE);
             if (msgsToShow.length === 0) { container.innerHTML = `<p style="text-align:center; color:#718096; font-size:14px; margin: 20px 0;">目前沒有留言，來搶頭香吧！ 🥳</p>`; return; }
+            
             msgsToShow.forEach((msg, index) => {
                 let timeStr = msg.Time || "剛剛"; 
-                let avatarHtml = msg.AvatarUrl ? `<img src="${msg.AvatarUrl}" style="width:100%; height:100%; object-fit:cover;">` : `${msg.AvatarText||"?"}`;
-                let isMyMessage = (msg.UserId && msg.UserId === currentUser.id) || (msg.Name === currentUser.name);
+                const id = msg.LineID;
+                
+                let picUrl = window.userAvatarMap[id] || window.userAvatarMap[msg.Name] || msg.AvatarUrl;
+                
+                let fallbackText = msg.AvatarText || (msg.Name ? msg.Name[0] : "?");
+                let avatarHtml = picUrl 
+                    ? `<div style="position:relative; width:100%; height:100%; display:flex; justify-content:center; align-items:center;">
+                         <span style="position:absolute; font-size:14px; font-weight:700;">${fallbackText}</span>
+                         <img src="${picUrl}" style="position:absolute; width:100%; height:100%; object-fit:cover; z-index:1;" onerror="this.style.display='none'">
+                       </div>` 
+                    : `<div style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;">${fallbackText}</div>`;
+                
+                let isMyMessage = (id && id === currentUser.id) || (msg.Name === currentUser.name);
                 let isEditedHtml = (msg.IsEdited === "V" || msg.IsEdited === true || msg.IsEdited === "true") ? `<span id="msg-edited-${index}" style="font-size:11px; color:#a0aec0; margin-left:6px; font-weight: 500;">(已編輯)</span>` : `<span id="msg-edited-${index}" style="display:none; font-size:11px; color:#a0aec0; margin-left:6px; font-weight: 500;">(已編輯)</span>`;                
+                
                 let likesArray = [];
                 try {
                     if (typeof msg.Likes === 'string') likesArray = JSON.parse(msg.Likes || "[]");
                     else if (Array.isArray(msg.Likes)) likesArray = msg.Likes;
                 } catch(e) {}
-                let isLiked = likesArray.includes(currentUser.name);
+                
+                // 按讚相容舊名字
+                let isLiked = likesArray.includes(currentUser.id) || likesArray.includes(currentUser.name);
 
                 let likesText = "";
                 if (likesArray.length > 0) {
-                    let displayNames = likesArray.slice(0, 2).join(", ");
-                    if (likesArray.length > 2) displayNames += ` 等 ${likesArray.length} 人`;
-                    likesText = `<div id="like-text-${index}" onclick="showLikesDrawer(${index})" style="font-size: 11px; color: #718096; flex-grow: 1; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 4px;"><div style="width: 12px; height: 12px; stroke: #ff4d4f; fill: #ff4d4f; display:flex; align-items:center;">${svgHeart}</div> <span style="text-decoration:underline; text-decoration-color:rgba(0,0,0,0.1); text-underline-offset:2px;">${displayNames}</span></div>`;
+                    let displayNamesArr = likesArray.map(likeId => window.userNameMap[likeId] || likeId);
+                    let displayStr = displayNamesArr.slice(0, 2).join(", ");
+                    if (displayNamesArr.length > 2) displayStr += ` 等 ${displayNamesArr.length} 人`;
+                    likesText = `<div id="like-text-${index}" onclick="showLikesDrawer(${index})" style="font-size: 11px; color: #718096; flex-grow: 1; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 4px;"><div style="width: 14px; height: 14px; stroke: #ff4d4f; fill: #ff4d4f; display:flex; align-items:center; justify-content:center; flex-shrink: 0;">${svgHeart}</div> <span style="text-decoration:underline; text-decoration-color:rgba(0,0,0,0.1); text-underline-offset:2px;">${displayStr}</span></div>`;
                 } else {
                     likesText = `<div id="like-text-${index}" style="flex-grow: 1; display: flex; align-items: center; gap: 4px; font-size: 11px; color: #718096; text-align: left;"></div>`; 
                 }
@@ -888,7 +962,7 @@
                     else if (Array.isArray(msgObj.Likes)) likesArray = msgObj.Likes;
                 } catch(e) {}
                 
-                const isLiked = likesArray.includes(currentUser.name);
+                const isLiked = likesArray.includes(currentUser.id) || likesArray.includes(currentUser.name);
                 const btnEl = document.getElementById(`like-btn-${index}`);
                 const textEl = document.getElementById(`like-text-${index}`);
                 const contentEl = document.getElementById(`msg-content-${index}`);
@@ -900,9 +974,10 @@
                 }
                 if (textEl) {
                     if (likesArray.length > 0) {
-                        let displayNames = likesArray.slice(0, 2).join(", ");
-                        if (likesArray.length > 2) displayNames += ` 等 ${likesArray.length} 人`;
-                        textEl.innerHTML = `<div style="width: 12px; height: 12px; stroke: #ff4d4f; fill: #ff4d4f; display:flex; align-items:center;">${svgHeart}</div> <span style="text-decoration:underline; text-decoration-color:rgba(0,0,0,0.1); text-underline-offset:2px;">${displayNames}</span>`;
+                        let displayNamesArr = likesArray.map(likeId => window.userNameMap[likeId] || likeId);
+                        let displayStr = displayNamesArr.slice(0, 2).join(", ");
+                        if (displayNamesArr.length > 2) displayStr += ` 等 ${displayNamesArr.length} 人`;
+                        textEl.innerHTML = `<div style="width: 14px; height: 14px; stroke: #ff4d4f; fill: #ff4d4f; display:flex; align-items:center; justify-content:center; flex-shrink: 0;">${svgHeart}</div> <span style="text-decoration:underline; text-decoration-color:rgba(0,0,0,0.1); text-underline-offset:2px;">${displayStr}</span>`;
                         textEl.style.cursor = 'pointer'; textEl.onclick = () => showLikesDrawer(index);
                     } else {
                         textEl.innerHTML = ""; textEl.style.cursor = 'default'; textEl.onclick = null;
@@ -937,9 +1012,20 @@
             if (likesArray.length === 0) return;
 
             let html = `<div style="display:flex; flex-direction:column; gap:12px; padding: 0 10px;">`;
-            likesArray.forEach(name => {
+            likesArray.forEach(nameOrId => {
+                let name = window.userNameMap[nameOrId] || nameOrId;
+                let picUrl = window.userAvatarMap[nameOrId] || window.userAvatarMap[name];
+                
+                let fallbackText = name[0];
+                let avHtml = picUrl 
+                    ? `<div style="position:relative; width:100%; height:100%; display:flex; justify-content:center; align-items:center;">
+                         <span style="position:absolute; font-size:14px; font-weight:700;">${fallbackText}</span>
+                         <img src="${picUrl}" style="position:absolute; width:100%; height:100%; object-fit:cover; border-radius:50%; z-index:1;" onerror="this.style.display='none'">
+                       </div>` 
+                    : `<div style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;">${fallbackText}</div>`;
+                
                 html += `<div style="display:flex; align-items:center; gap:12px; padding-bottom:12px; border-bottom:1px solid rgba(0,0,0,0.05);">
-                    <div style="width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, var(--primary-orange), #ff8c00); color:white; display:flex; justify-content:center; align-items:center; font-size:14px; font-weight:700; box-shadow: 0 2px 8px rgba(249, 168, 38, 0.3);">${name[0]}</div>
+                    <div style="width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, var(--primary-orange), #ff8c00); color:white; display:flex; justify-content:center; align-items:center; font-size:14px; font-weight:700; box-shadow: 0 2px 8px rgba(249, 168, 38, 0.3); overflow:hidden;">${avHtml}</div>
                     <span style="font-size:15px; font-weight:600; color:var(--text-main);">${name}</span>
                 </div>`;
             });
@@ -955,12 +1041,14 @@
                 else if (Array.isArray(msgObj.Likes)) likesArray = msgObj.Likes;
             } catch(e) {}
 
-            const nameIdx = likesArray.indexOf(currentUser.name);
+            let idIdx = likesArray.indexOf(currentUser.id);
+            if (idIdx === -1) idIdx = likesArray.indexOf(currentUser.name); 
+            
             let isAdding = false;
-            if (nameIdx > -1) {
-                likesArray.splice(nameIdx, 1); 
+            if (idIdx > -1) {
+                likesArray.splice(idIdx, 1); 
             } else {
-                likesArray.push(currentUser.name); 
+                likesArray.push(currentUser.id); // 新按讚強制記錄 LINE ID
                 isAdding = true;
             }
 
@@ -971,19 +1059,18 @@
             
             if (btnEl) {
                 if (isAdding) {
-                    btnEl.classList.remove('unliked');
-                    btnEl.classList.add('liked');
+                    btnEl.classList.remove('unliked'); btnEl.classList.add('liked');
                 } else {
-                    btnEl.classList.remove('liked');
-                    btnEl.classList.add('unliked');
+                    btnEl.classList.remove('liked'); btnEl.classList.add('unliked');
                 }
             }
             
             if (textEl) {
                 if (likesArray.length > 0) {
-                    let displayNames = likesArray.slice(0, 2).join(", ");
-                    if (likesArray.length > 2) displayNames += ` 等 ${likesArray.length} 人`;
-                    textEl.innerHTML = `<div style="width: 12px; height: 12px; stroke: #ff4d4f; fill: #ff4d4f; display:flex; align-items:center;">${svgHeart}</div> <span style="text-decoration:underline; text-decoration-color:rgba(0,0,0,0.1); text-underline-offset:2px;">${displayNames}</span>`;
+                    let displayNamesArr = likesArray.map(likeId => window.userNameMap[likeId] || likeId);
+                    let displayStr = displayNamesArr.slice(0, 2).join(", ");
+                    if (displayNamesArr.length > 2) displayStr += ` 等 ${displayNamesArr.length} 人`;
+                    textEl.innerHTML = `<div style="width: 14px; height: 14px; stroke: #ff4d4f; fill: #ff4d4f; display:flex; align-items:center; justify-content:center; flex-shrink: 0;">${svgHeart}</div> <span style="text-decoration:underline; text-decoration-color:rgba(0,0,0,0.1); text-underline-offset:2px;">${displayStr}</span>`;
                     textEl.style.cursor = 'pointer';
                     textEl.onclick = () => showLikesDrawer(index);
                 } else {
@@ -995,19 +1082,17 @@
 
             try {
                 await fetch(GAS_API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
                         action: "toggleLike",
                         timeStr: msgObj.Time,
                         content: msgObj.Content, 
-                        userName: currentUser.name,
+                        userId: currentUser.id,
+                        userName: currentUser.name, 
                         isAdding: isAdding
                     })
                 });
-            } catch(e) {
-                console.error("按讚狀態儲存失敗，請檢查網路");
-            }
+            } catch(e) { console.error("按讚狀態儲存失敗"); }
         }
 
         function loadMoreMessages() { currentMsgPage++; renderMessages(); }
@@ -1048,10 +1133,9 @@
             if (!text) return showCustomAlert("提示", "請輸入內容！");
             const timeString = getFormattedTime();
             const newMessage = { 
-                UserId: currentUser.id, 
+                LineID: currentUser.id, 
                 Name: currentUser.name, 
                 AvatarText: currentUser.initial, 
-                AvatarUrl: currentUser.pictureUrl, 
                 Time: timeString, 
                 Content: text, 
                 IsEdited: "",
@@ -1062,23 +1146,18 @@
             renderMessages();    
             try {
                 await fetch(GAS_API_URL, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
                     body: JSON.stringify({ 
                         action: "addMessage", 
                         userName: currentUser.name, 
                         userId: currentUser.id, 
                         avatarText: currentUser.initial, 
-                        pictureUrl: currentUser.pictureUrl, 
                         timeStr: timeString, 
                         content: text 
                     }) 
                 });
-                console.log("留言已在背景發佈成功");
             } catch(e) { 
-                allMessages.shift(); 
-                renderMessages();    
-                textarea.value = text; 
+                allMessages.shift(); renderMessages(); textarea.value = text; 
                 showCustomAlert("錯誤", "發佈失敗，請檢查網路連線後再試一次。"); 
             }
         }
@@ -1095,7 +1174,6 @@
             document.getElementById('guest-lock-screen').style.display = 'none';
             document.getElementById('app').style.display = 'block';
             if (currentUser.isVoted) {
-                
                 document.getElementById('bottom-nav-block').style.display = 'flex';
                 document.getElementById('bottom-blur-mask').style.display = 'block'; 
                 initDaysCountdown(); markArchive(); 
@@ -1134,11 +1212,9 @@
                 saveChecklistBackground();
             }
             
-            // 🌟 修正 1：徹底移除了進到 board 時的跳動觸發器，改為只在「離開留言板 / 逛其他分頁」時才靜默載入
+            // 🌟 當切換離開留言板時，背景靜默更新資料
             if (t !== 'board') {
-                setTimeout(() => {
-                    refreshMessagesOnly(true); 
-                }, 500);
+                setTimeout(() => { refreshMessagesOnly(true); }, 500);
             }
 
             document.getElementById('avatar-menu').style.display = 'none';
@@ -1183,13 +1259,7 @@
         function removeAdminNoticeField(btn) { btn.closest('.admin-notice-block').remove(); }
         function initAdminDragAndDrop() {
             const container = document.getElementById('admin-notice-list-container');
-            if (window.Sortable) {
-                new Sortable(container, {
-                    handle: '.drag-handle',
-                    animation: 150,         
-                    ghostClass: 'dragging'  
-                });
-            }
+            if (window.Sortable) { new Sortable(container, { handle: '.drag-handle', animation: 150, ghostClass: 'dragging' }); }
         }
         async function saveAdminNotices() {
             const btn = document.getElementById('btn-save-notices');
@@ -1250,11 +1320,13 @@
             showCustomAlert("資料傳送中", "請稍候...", false);
             const tripText = lateVoteSelection === 1 ? "方案一：宜蘭深度放鬆 (二天一夜)" : "🚷 無法參加(訪客查看)";
             try {
-                await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "vote", userName: currentUser.name, userId: currentUser.id, choice_trip: tripText, time_opt1: "V", time_opt2: "V" }) });
+                await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "vote", userName: currentUser.name, userId: currentUser.id, pictureUrl: currentUser.pictureUrl, choice_trip: tripText, time_opt1: "V", time_opt2: "V" }) });
                 showCustomAlert("報名成功", "您的紀錄已儲存。");
                 currentUser.isVoted = true; currentUser.votedOption = lateVoteSelection; unlockMainApp();
             } catch(e) { showCustomAlert("錯誤", "網路異常，請稍後再試。"); }
         }
+        
+        // 🌟 統計過濾：排除測試帳號
         async function fetchResults() {
             const resultContainer = document.getElementById('result-chart-area');
             resultContainer.innerHTML = `<div style="text-align: center; margin-top: 60px;"><div class="spinner" style="margin: 0 auto 15px;"></div><h2 style="color: #4a5568;">統計中...</h2></div>`;
@@ -1263,7 +1335,9 @@
                 if (!cachedPollData) { const response = await fetch(GAS_API_URL, { cache: 'no-store', redirect: 'follow' }); cachedPollData = await response.json(); data = cachedPollData.votes || []; }
                 let totalVotes = 0; let votersHtml = ""; let t1_d1 = 0; let t1_d2 = 0; let t2_d1 = 0; let t2_d2 = 0; let unableCount = 0; let unableHtml = "";
                 data.forEach(row => {
+                    // 確保不計算測試帳號
                     if (row['LINE ID'] === "test_user_001") return;
+
                     totalVotes++; const trip = row['偏好行程']; const name = row['LINE 名稱']; 
                     if (trip && trip.includes("無法參加")) { unableCount++; if (name) unableHtml += `<div style="display: inline-block; background: rgba(255,255,255,0.4); padding: 4px 12px; border-radius: 20px; margin: 4px 6px 4px 0; font-size: 12px; border: 1px solid rgba(255,255,255,0.6); color: var(--text-muted); box-shadow: 0 2px 5px rgba(0,0,0,0.02);">${name} <span style="font-size:10px; opacity:0.7;">(訪客模式)</span></div>`; return; }
                     const isTrip1 = trip && trip.includes("方案一"); const isTrip2 = trip && trip.includes("方案二");
