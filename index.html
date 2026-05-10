@@ -59,7 +59,8 @@
         .user-area { position: relative; }
         .user-info { display: flex; align-items: center; font-size: 13px; color: var(--text-main); cursor: pointer; background: rgba(255,255,255,0.4); padding: 4px 10px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.6); transition: 0.2s; box-shadow: inset 0 1px 1px rgba(255,255,255,0.5); }
         .user-info:hover { background: rgba(255,255,255,0.7); }
-        .avatar-placeholder { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-orange), #ff8c00); margin-left: 6px; display: flex; justify-content: center; align-items: center; color: white; font-size: 11px; font-weight: 700; overflow: hidden; box-shadow: 0 2px 8px rgba(249, 168, 38, 0.3); }
+        /* 移除右上角大頭貼光暈 */
+        .avatar-placeholder { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-orange), #ff8c00); margin-left: 6px; display: flex; justify-content: center; align-items: center; color: white; font-size: 11px; font-weight: 700; overflow: hidden; box-shadow: none !important; }
         .dropdown-menu { position: absolute; top: 45px; right: 0; background: rgba(255,255,255,0.75); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid white; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,0.6); width: 170px; display: none; flex-direction: column; overflow: hidden; animation: fadeIn 0.2s ease-out; z-index: 1000; padding: 4px; }
         .menu-item { padding: 10px 12px; font-size: 13px; font-weight: 500; color: var(--text-main); border-radius: 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.2s; margin-bottom: 2px; }
         .menu-item:hover { background: rgba(0,0,0,0.05); }
@@ -128,14 +129,17 @@
         .msg-input-box { display: flex; flex-direction: column; gap: 10px; background: rgba(255,255,255,0.3) !important; border: 1px solid rgba(255,255,255,0.5); box-shadow: inset 0 1px 1px rgba(255,255,255,0.4); }
         .msg-textarea { width: 100%; box-sizing: border-box; padding: 12px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.15); font-family: inherit; font-size: 14px; resize: vertical; min-height: 80px; background: rgba(255,255,255,0.5); backdrop-filter: blur(10px); transition: 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
         .msg-textarea:focus { outline: none; background: rgba(255,255,255,0.9); border-color: #718096; box-shadow: 0 0 0 3px rgba(113, 128, 150, 0.15); }
+        
+        /* 留言板佈局優化 */
         .msg-item { display: flex; gap: 12px; padding: 16px 0; border-bottom: 1px solid rgba(0,0,0,0.05); animation: fadeIn 0.4s; }
         .msg-item:last-child { border-bottom: none; }
-        .msg-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-orange), #ff8c00); display: flex; justify-content: center; align-items: center; color: white; font-weight: 700; font-size: 14px; flex-shrink: 0; overflow: hidden; box-shadow: 0 4px 8px rgba(249,168,38,0.25); }
+        /* 移除留言大頭貼光暈 */
+        .msg-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-orange), #ff8c00); display: flex; justify-content: center; align-items: center; color: white; font-weight: 700; font-size: 14px; flex-shrink: 0; overflow: hidden; box-shadow: none !important; }
         .msg-body { flex-grow: 1; background: rgba(255,255,255,0.45); padding: 12px; border-radius: 0 14px 14px 14px; border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 2px 8px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.5); }
-        .msg-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .msg-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .msg-name { font-weight: 700; font-size: 14px; color: var(--text-main); }
         .msg-time { font-size: 11px; color: var(--text-muted); }
-        .msg-text { font-size: 14px; color: #2d3748; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+        .msg-text { font-size: 14px; color: #2d3748; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
         
         .like-btn { cursor:pointer; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); flex-shrink: 0; background: rgba(255,255,255,0.6); border: 1px solid rgba(0,0,0,0.05); }
         .like-btn:active { transform: scale(0.7); }
@@ -144,10 +148,28 @@
         .like-btn.unliked svg { stroke: #a0aec0; fill: none; }
         .like-btn.liked svg { stroke: #ff4d4f; fill: #ff4d4f; }
 
+        /* 🌟 IG 風格按讚疊加 UI 與編輯按鈕 */
+        .msg-header-right { display: flex; align-items: center; gap: 8px; }
+        .msg-edit-link { font-size: 11px; color: var(--primary-blue); cursor: pointer; font-weight: 700; opacity: 0.8; }
+        .msg-edit-link:hover { opacity: 1; text-decoration: underline; }
+        .like-avatar-stack { display: flex; align-items: center; margin-right: 6px; }
+        .like-avatar-tiny { 
+            width: 18px; height: 18px; border-radius: 50%; background: #eee; 
+            margin-left: -5px; box-shadow: 0 0 3px rgba(0,0,0,0.2); 
+            display: flex; justify-content: center; align-items: center; 
+            overflow: hidden; position: relative; border: none !important;
+        }
+        .like-avatar-tiny:first-child { margin-left: 0; }
+        .like-avatar-tiny img { width: 100%; height: 100%; object-fit: cover; }
+        .like-avatar-tiny span { font-size: 9px; font-weight: 800; color: white; }
+        .like-text-style { font-size: 12px; color: #4a5568; line-height: 18px; }
+        .like-name-bold { font-weight: 700; color: #262626; }
+
         .btn-primary { width: 100%; background: linear-gradient(135deg, var(--primary-green) 0%, #29b493 100%); color: white; border: none; padding: 14px; border-radius: 14px; font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(59,208,175,0.25); }
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(59,208,175,0.35); }
         .btn-primary:active { transform: translateY(1px); }
         .btn-primary:disabled { background: rgba(255,255,255,0.4); color: #888; box-shadow: none; cursor: not-allowed; transform: none; }
+        
         .bottom-blur-mask { position: fixed; bottom: 0; left: 0; width: 100%; height: 160px; background: linear-gradient(to bottom, rgba(240,244,248,0) 0%, rgba(240,244,248,0.1) 40%, rgba(240,244,248,0.4) 100%); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); mask-image: linear-gradient(to bottom, transparent 0%, black 50%); -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 50%); z-index: 890; pointer-events: none; display: none; }
         .bottom-nav { position: fixed; bottom: 16px; left: 16px; width: calc(100% - 32px); background: rgba(255,255,255,0); backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(40px); display: flex; justify-content: space-around; padding: 8px 5px; box-shadow: 0 8px 30px rgba(0,0,0,0.1), inset 0 1.5px 0 rgba(255, 255, 255, 0.9), inset 0 -1px 0 rgba(255, 255, 255, 0.2); border-radius: 40px; border: 1px solid rgba(255, 255, 255, 0.15); z-index: 900; box-sizing: border-box; }
         .nav-indicator { position: absolute; top: 5px; bottom: 5px; left: 0; width: 0; background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.9) 0%, rgba(59, 208, 175, 0.3) 100%); backdrop-filter: blur(5px) saturate(160%); -webkit-backdrop-filter: blur(5px) saturate(160%); border-radius: 30px; z-index: 0; transition: all 0.4s cubic-bezier(0.3, 1.2, 0.5, 1); pointer-events: none; border: 1px solid rgba(255,255,255,0.6); box-shadow: inset 0 1px 2px rgba(255,255,255,1), inset 0 -2px 5px rgba(32, 160, 133, 0.1), 0 4px 15px rgba(59, 208, 175, 0.1); }
@@ -155,6 +177,10 @@
         .nav-item.active { color: var(--primary-green); }
         .nav-icon { font-size: 20px; margin-bottom: 2px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .nav-item.active .nav-icon { transform: translateY(-2px) scale(1.05); }
+        
+        /* 🌟 小紅點樣式：正圓形無白框 */
+        .nav-badge { position: absolute; top: -2px; right: 15%; background-color: #FF3B30; color: white; font-size: 9px; font-weight: 700; width: 18px; height: 18px; line-height: 18px; text-align: center; border-radius: 50%; box-shadow: 0 2px 4px rgba(255, 59, 48, 0.4); display: none; z-index: 10; letter-spacing: -0.5px; border: none; padding: 0; }
+
         .drawer-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background-color: rgba(0,0,0,0.4); backdrop-filter: blur(5px); z-index: 2000; display: none; opacity: 0; transition: opacity 0.3s; }
         .drawer-overlay.show { display: block; opacity: 1; }
         .drawer-content { position: absolute; bottom: -100%; left: 0; width: 100%; background: rgba(255,255,255,0.7); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border-radius: 24px 24px 0 0; padding: 15px 20px calc(30px + env(safe-area-inset-bottom)); box-sizing: border-box; transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1); max-height: 85dvh; overflow-y: auto; border-top: 1px solid rgba(255,255,255,0.8); box-shadow: 0 -10px 40px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,0.6); overscroll-behavior-y: none; }
@@ -210,7 +236,7 @@
         <div class="blob blob-3"></div>
     </div>
     <header class="top-nav">
-        <h1 onclick="switchView('overview')" style="cursor: pointer;">香草山小組出遊指南</h1>
+        <h1 onclick="if(currentUser.isVoted) switchView('overview')" style="cursor: pointer;">香草山小組出遊指南</h1>
         <div class="user-area">
             <div class="user-info" onclick="toggleMenu(event)">
                 <div id="welcome-name" style="display: flex; align-items: center; gap: 4px;">讀取中</div>
@@ -393,7 +419,10 @@
         <div class="nav-item active" id="tab-overview" onclick="switchView('overview')"><span class="nav-icon">🏠</span><span>首頁總覽</span></div>
         <div class="nav-item" id="tab-itinerary" onclick="switchView('itinerary')"><span class="nav-icon">📍</span><span>詳細行程</span></div>
         <div class="nav-item" id="tab-prep" onclick="switchView('prep')"><span class="nav-icon">🎒</span><span>攜帶物品</span></div>
-        <div class="nav-item" id="tab-board" onclick="switchView('board')"><span class="nav-icon">💬</span><span>留言板</span></div>
+        <div class="nav-item" id="tab-board" onclick="switchView('board')">
+            <span class="nav-icon">💬</span><span>留言板</span>
+            <div class="nav-badge" id="board-badge"></div>
+        </div>
     </nav>
 
     <div class="drawer-overlay" id="custom-drawer" onclick="closeDrawer()"><div class="drawer-content" onclick="event.stopPropagation()"><div class="drawer-handler"></div><h3 id="drawer-title" style="margin-top:0; margin-bottom:15px; font-size:18px; color:var(--text-main);"></h3><div id="drawer-body" style="font-size:14px; color:#4a5568; line-height:1.6; margin-bottom:20px;"></div></div></div>    
@@ -432,27 +461,86 @@
         let initialDataPromise = null; 
         let isGuestViewEnabled = false;
 
-        // 🌟 全域大頭貼與名字對照字典
         window.userAvatarMap = {};
-        window.userNameMap = {};
+        window.userNameMap = {};        
+        window.likeTimers = {};
+
+        function updateBadgeCount() {
+            if (!allMessages || allMessages.length === 0) return;
+            const lastReadId = localStorage.getItem('lastReadMsgId_' + currentUser.id);
+            let unreadCount = 0;
+            
+            if (!lastReadId) {
+                unreadCount = allMessages.length;
+            } else {
+                for (let i = 0; i < allMessages.length; i++) {
+                    let currentId = allMessages[i].MsgID || (allMessages[i].Time + allMessages[i].Content);
+                    if (currentId === lastReadId) break;
+                    unreadCount++;
+                }
+            }
+
+            const badge = document.getElementById('board-badge');
+            if (badge) {
+                if (unreadCount > 0) {
+                    badge.innerText = unreadCount > 99 ? '99+' : unreadCount;
+                    badge.style.display = 'block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }
+
+        function clearBadge() {
+            if (allMessages && allMessages.length > 0) {
+                let topId = allMessages[0].MsgID || (allMessages[0].Time + allMessages[0].Content);
+                localStorage.setItem('lastReadMsgId_' + currentUser.id, topId);
+            }
+            const badge = document.getElementById('board-badge');
+            if (badge) badge.style.display = 'none';
+        }
+
+        function getLikesIgStyle(likesArray) {
+            if (!likesArray || likesArray.length === 0) return "";
+            
+            let recentLikes = likesArray.slice(-3).reverse();
+            let avatarsHtml = `<div class="like-avatar-stack">`;
+            
+            recentLikes.forEach((likeId, idx) => {
+                let name = window.userNameMap[likeId] || likeId;
+                let picUrl = window.userAvatarMap[likeId] || window.userAvatarMap[name];
+                let zIndex = 3 - idx; 
+                let fbText = name ? name[0] : "?";
+                let avContent = picUrl 
+                    ? `<img src="${picUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`
+                    : `<span style="font-size:9px; font-weight:800; color:white;">${fbText}</span>`;
+                
+                avatarsHtml += `<div class="like-avatar-tiny" style="background:linear-gradient(135deg, var(--primary-orange), #ff8c00); z-index:${zIndex};">${avContent}</div>`;
+            });
+            avatarsHtml += `</div>`;
+
+            let lastNameOrId = likesArray[likesArray.length - 1];
+            let lastDisplayName = window.userNameMap[lastNameOrId] || lastNameOrId;
+            let textHtml = `<span class="like-text-style"><span class="like-name-bold">${lastDisplayName}</span> ${likesArray.length > 1 ? '和其他人都說讚' : '說讚'}</span>`;
+            
+            return avatarsHtml + textHtml;
+        }
 
         async function refreshMessagesOnly(isSilent = true) {
             if (!isSilent) showCustomAlert("更新中", "正在抓取最新資料...", false);
             try {
                 const cacheBuster = "&t=" + new Date().getTime();
-                // 🌟 修正差異一：補上 ?v=2，確保後台回傳 messages
                 const fetchUrl = GAS_API_URL.includes("?") ? GAS_API_URL + cacheBuster : GAS_API_URL + "?v=2" + cacheBuster;
                 
                 const response = await fetch(fetchUrl, { cache: 'no-store', redirect: 'follow' });
                 const data = await response.json();
                 
-                // 動態擴充字典
                 if (data.messages) {
                     data.messages.forEach(m => { 
-                        const id = m.LineID;
+                        const id = m.LineID || m.UserId;
                         if (id) window.userNameMap[id] = m.Name;
                         if (id && m.AvatarUrl) window.userAvatarMap[id] = m.AvatarUrl; 
-                        if (m.Name && m.AvatarUrl) window.userAvatarMap[m.Name] = m.AvatarUrl; 
+                        if (m.Name && m.AvatarUrl) window.userAvatarMap[m.Name] = m.AvatarUrl;
                     });
                 }
                 
@@ -460,20 +548,22 @@
                     const newMsgs = [...data.messages].reverse(); 
                     
                     if (isSilent) {
-                        // 🌟 修正差異二：防跳動機制，只比對 Content 和 Name，避開時間格式差異的陷阱
-                        let hasNewTopActivity = true;
-                        if (allMessages.length > 0 && newMsgs.length > 0) {
-                            if (allMessages[0].Content === newMsgs[0].Content && 
-                                allMessages[0].Name === newMsgs[0].Name) {
-                                hasNewTopActivity = false; 
+                        let isStructuralChange = true;
+                        if (allMessages.length === newMsgs.length && allMessages.length > 0) {
+                            let match = true;
+                            for (let i = 0; i < Math.min(10, allMessages.length); i++) {
+                                if (allMessages[i].Name !== newMsgs[i].Name || allMessages[i].Time !== newMsgs[i].Time) {
+                                    match = false; break;
+                                }
                             }
+                            if (match) isStructuralChange = false;
                         } else if (allMessages.length === 0 && newMsgs.length === 0) {
-                            hasNewTopActivity = false;
+                            isStructuralChange = false;
                         }
                         
                         allMessages = newMsgs; 
 
-                        if (hasNewTopActivity) {
+                        if (isStructuralChange) {
                             renderMessages();
                         } else {
                             updateExistingMessagesInPlace();
@@ -484,6 +574,13 @@
                         renderMessages();
                     }
                 }
+                
+                if (document.getElementById('view-board').classList.contains('active')) {
+                    clearBadge();
+                } else {
+                    updateBadgeCount();
+                }
+
                 if (!isSilent) closeModal(); 
             } catch (error) {
                 console.error("更新失敗", error);
@@ -513,20 +610,18 @@
         }
         window.isCarDragging = false;
         const LIFF_ID = "2009879130-CwjiaVKB"; 
-        
-        // 🌟 正確的 GAS 網址已帶入
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxtnKFJZNfvJbGd_KBbTgV5rI-7uqlMJLVZp3dElIFFpWlbPKxEjoE5IUxS0e7eJhLBjQ/exec";
-        
         const LATE_VOTE_PASSCODE = "062728"; const ADMIN_PASSCODE = "9999";
         const isLocalEnv = window.location.protocol === "file:" || window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
 
         window.onload = async function() {
-            initialDataPromise = fetch(GAS_API_URL + "?v=2", { cache: 'no-store', redirect: 'follow' })
+            // 🌟 強制打破快取，確保一進首頁就抓取最新留言
+            const cacheBuster = "&t=" + new Date().getTime();
+            initialDataPromise = fetch(GAS_API_URL + "?v=2" + cacheBuster, { cache: 'no-store', redirect: 'follow' })
                 .then(res => res.json())
                 .catch(err => { console.error("背景抓取資料失敗", err); return null; });
             
             if (isLocalEnv) {
-                // 測試帳號設定
                 currentUser = { name: "開發者(測試)", id: "test_user_001", pictureUrl: "", initial: "測" };
                 window.userNameMap[currentUser.id] = currentUser.name;
                 const welcomeNameEl = document.getElementById('welcome-name');
@@ -544,7 +639,6 @@
                     window.userNameMap[currentUser.id] = currentUser.name;
                     if (currentUser.pictureUrl) window.userAvatarMap[currentUser.id] = currentUser.pictureUrl;
 
-                    // 🌟 機制：登入時自動同步大頭貼到 Members
                     if (currentUser.pictureUrl) {
                         fetch(GAS_API_URL, {
                             method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -571,26 +665,22 @@
                 if (!data) throw new Error("資料讀取失敗");
                 cachedPollData = data;
                 
-                // 🛠️ 建立全域合成名冊 (優先權：Members > Messages)
                 window.userAvatarMap = {};
                 window.userNameMap = {};
                 
-                // 1. Messages 舊資料墊檔
                 if (data.messages) {
                     data.messages.forEach(m => {
-                        const id = m.LineID;
+                        const id = m.LineID || m.UserId;
                         if (id) window.userNameMap[id] = m.Name;
                         if (id && m.AvatarUrl) window.userAvatarMap[id] = m.AvatarUrl;
                         if (m.Name && m.AvatarUrl) window.userAvatarMap[m.Name] = m.AvatarUrl; 
                     });
                 }
                 
-                // 2. Members 最新資料覆蓋
                 if (data.votes) {
                     data.votes.forEach(v => {
                         const id = v['LINE ID'];
                         const name = v['LINE 名稱'];
-                        // 🌟 修正：徹底移除 Object.values(v)[7] 誤抓 Checklist 的 Bug，不再破圖
                         const pic = v['AvatarUrl'] || v['pictureUrl'] || v['照片'];
                         if (id) {
                             if (name) window.userNameMap[id] = name;
@@ -613,14 +703,16 @@
                     else if (s && s.includes("方案二")) currentUser.votedOption = 2;
                     else if (s && s.includes("無法參加")) currentUser.votedOption = 3;
                     try { if(userVote['Checklist']) { userChecklistState = JSON.parse(userVote['Checklist']); } } catch(e) {}
-                } else if (currentUser.id === "test_user_001") {
-                    currentUser.isVoted = true;
-                    currentUser.votedOption = 1;
                 } else {
                     currentUser.isVoted = false;
                 }
                 
+                allMessages = [...(data.messages || [])].reverse();
                 renderDynamicUI(data);
+                renderMessages();
+                
+                updateBadgeCount();
+
                 document.getElementById('loading').style.display = 'none';
                 
                 if (currentUser.isVoted) {
@@ -658,8 +750,12 @@
         function showCustomAlert(t, d, showBtn = true) { 
             document.getElementById('modal-title').innerText=t; 
             const descEl = document.getElementById('modal-desc');
-            descEl.innerText=d; 
-            descEl.style.display='block'; 
+            if (d) { 
+                descEl.innerText = d; 
+                descEl.style.display = 'block'; 
+            } else { 
+                descEl.style.display = 'none'; 
+            }
             document.getElementById('modal-input-wrapper').style.display='none'; 
             document.getElementById('modal-textarea').style.display='none'; 
             document.getElementById('modal-btn-cancel').style.display='none'; 
@@ -701,7 +797,7 @@
             document.getElementById('custom-modal').style.display='flex'; 
             setTimeout(()=>inp.focus(),100); 
         }
-        function openCarDrawer(t, c) { document.body.classList.add('no-scroll'); document.getElementById('drawer-title').innerText = t; document.getElementById('drawer-body').innerHTML = c; const d = document.getElementById('custom-drawer'); d.style.display = 'block'; setTimeout(() => d.classList.add('show'), 10); }
+        function openCarDrawer(t, c) { document.body.classList.add('no-scroll'); document.getElementById('drawer-title').innerHTML = t; document.getElementById('drawer-body').innerHTML = c; const d = document.getElementById('custom-drawer'); d.style.display = 'block'; setTimeout(() => d.classList.add('show'), 10); }
         function closeDrawer() { document.body.classList.remove('no-scroll'); const d = document.getElementById('custom-drawer'); d.classList.remove('show'); setTimeout(() => d.style.display = 'none', 300); }
         
         const drawerContent = document.querySelector('.drawer-content');
@@ -808,15 +904,14 @@
                     if(currentDay !== "") itinHtml += `</div></div>`; 
                     document.getElementById('ui-timeline-wrapper').innerHTML = itinHtml;
                 }
-                allMessages = data.messages || [];
-                allMessages = [...allMessages].reverse(); 
-                renderMessages();
+                
                 if (data.checklist && data.checklist.length > 0) {
                     checklistData = data.checklist;
                     checklistData.forEach(cat => {
                         if (openCategories[cat.id] === undefined) openCategories[cat.id] = true; 
                     });
                 }
+                
                 renderChecklist(); 
             }, 50);
         }
@@ -893,7 +988,6 @@
             slider.addEventListener('mousemove', (e) => { if (!isDown) return; e.preventDefault(); window.isCarDragging = true; const x = e.pageX - slider.offsetLeft; const walk = (x - startX) * 2; slider.scrollLeft = scrollLeft - walk; });
         }
 
-        // 🌟 渲染留言板，使用雙層大頭貼保險機制
         function renderMessages() {
             const container = document.getElementById('msg-list-container');
             container.innerHTML = "";
@@ -902,11 +996,11 @@
             
             msgsToShow.forEach((msg, index) => {
                 let timeStr = msg.Time || "剛剛"; 
-                const id = msg.LineID;
+                const id = msg.LineID || msg.UserId;
                 
                 let picUrl = window.userAvatarMap[id] || window.userAvatarMap[msg.Name] || msg.AvatarUrl;
-                
                 let fallbackText = msg.AvatarText || (msg.Name ? msg.Name[0] : "?");
+                
                 let avatarHtml = picUrl 
                     ? `<div style="position:relative; width:100%; height:100%; display:flex; justify-content:center; align-items:center;">
                          <span style="position:absolute; font-size:14px; font-weight:700;">${fallbackText}</span>
@@ -915,7 +1009,6 @@
                     : `<div style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;">${fallbackText}</div>`;
                 
                 let isMyMessage = (id && id === currentUser.id) || (msg.Name === currentUser.name);
-                let isEditedHtml = (msg.IsEdited === "V" || msg.IsEdited === true || msg.IsEdited === "true") ? `<span id="msg-edited-${index}" style="font-size:11px; color:#a0aec0; margin-left:6px; font-weight: 500;">(已編輯)</span>` : `<span id="msg-edited-${index}" style="display:none; font-size:11px; color:#a0aec0; margin-left:6px; font-weight: 500;">(已編輯)</span>`;                
                 
                 let likesArray = [];
                 try {
@@ -923,34 +1016,41 @@
                     else if (Array.isArray(msg.Likes)) likesArray = msg.Likes;
                 } catch(e) {}
                 
-                // 按讚相容舊名字
                 let isLiked = likesArray.includes(currentUser.id) || likesArray.includes(currentUser.name);
 
-                let likesText = "";
-                if (likesArray.length > 0) {
-                    let displayNamesArr = likesArray.map(likeId => window.userNameMap[likeId] || likeId);
-                    let displayStr = displayNamesArr.slice(0, 2).join(", ");
-                    if (displayNamesArr.length > 2) displayStr += ` 等 ${displayNamesArr.length} 人`;
-                    likesText = `<div id="like-text-${index}" onclick="showLikesDrawer(${index})" style="font-size: 11px; color: #718096; flex-grow: 1; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 4px;"><div style="width: 14px; height: 14px; stroke: #ff4d4f; fill: #ff4d4f; display:flex; align-items:center; justify-content:center; flex-shrink: 0;">${svgHeart}</div> <span style="text-decoration:underline; text-decoration-color:rgba(0,0,0,0.1); text-underline-offset:2px;">${displayStr}</span></div>`;
-                } else {
-                    likesText = `<div id="like-text-${index}" style="flex-grow: 1; display: flex; align-items: center; gap: 4px; font-size: 11px; color: #718096; text-align: left;"></div>`; 
-                }
+                let editBtnHtml = isMyMessage ? `<span class="msg-edit-link" onclick="openEditMessage(${index})">編輯</span>` : "";
+                let isEditedHtml = (msg.IsEdited === "V" || msg.IsEdited === true || msg.IsEdited === "true") ? `<span id="msg-edited-${index}" style="font-size:11px; color:#a0aec0; margin-left:6px; font-weight: 500;">(已編輯)</span>` : `<span id="msg-edited-${index}" style="display:none; font-size:11px; color:#a0aec0; margin-left:6px; font-weight: 500;">(已編輯)</span>`;                
+                
+                let likesTextInner = getLikesIgStyle(likesArray);
+                let likesText = `<div id="like-text-${index}" ${likesArray.length > 0 ? `onclick="showLikesDrawer(${index})"` : ''} style="flex-grow: 1; display: flex; align-items: center; cursor: ${likesArray.length > 0 ? 'pointer' : 'default'}; text-align: left;">${likesTextInner}</div>`;
 
                 let heartIconHtml = `<div id="like-btn-${index}" class="like-btn ${isLiked ? 'liked' : 'unliked'}" onclick="toggleLike(${index})">
                     ${svgHeart}
                 </div>`;
 
-                let editBtnHtml = isMyMessage ? `<div style="text-align: right;"><span style="font-size:11px; color:#718096; cursor:pointer; background: rgba(255,255,255,0.4); padding: 5px 10px; border-radius: 12px; display: inline-block; transition: 0.2s; font-weight: 600; box-shadow: inset 0 1px 1px rgba(255,255,255,0.6), 0 2px 4px rgba(0,0,0,0.02);" onclick="openEditMessage(${index})">編輯</span></div>` : "";
-
                 let footerHtml = `<div style="display: flex; justify-content: flex-end; align-items: center; margin-top: 8px; gap: 8px;">
                     ${likesText}
                     ${heartIconHtml}
-                    ${editBtnHtml}
                 </div>`;
 
-                container.innerHTML += `<div class="msg-item"><div class="msg-avatar">${avatarHtml}</div><div class="msg-body"><div class="msg-header"><span class="msg-name">${msg.Name}</span><div><span class="msg-time">${timeStr}</span>${isEditedHtml}</div></div><div id="msg-content-${index}" class="msg-text" data-raw="${encodeURIComponent(msg.Content)}">${msg.Content}</div>${footerHtml}</div></div>`;            
+                container.innerHTML += `
+                    <div class="msg-item">
+                        <div class="msg-avatar">${avatarHtml}</div>
+                        <div class="msg-body">
+                            <div class="msg-header">
+                                <span class="msg-name">${msg.Name}</span>
+                                <div class="msg-header-right">
+                                    <span class="msg-time">${timeStr}</span>
+                                    ${editBtnHtml}
+                                    ${isEditedHtml}
+                                </div>
+                            </div>
+                            <div id="msg-content-${index}" class="msg-text" style="margin-bottom:12px;" data-raw="${encodeURIComponent(msg.Content)}">${msg.Content}</div>
+                            ${footerHtml}
+                        </div>
+                    </div>`;            
             });
-            if (allMessages.length > currentMsgPage * MSG_PER_PAGE) { container.innerHTML += `<button class="btn-primary" style="background: rgba(255,255,255,0.3); color: var(--text-main); margin-top: 15px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.5), 0 4px 15px rgba(0,0,0,0.02); border: 1px solid rgba(255,255,255,0.5);" onclick="loadMoreMessages()">載入較舊的留言</button>`; }
+            if (allMessages.length > msgsToShow.length) { container.innerHTML += `<button class="btn-primary" style="background: rgba(255,255,255,0.3); color: var(--text-main); margin-top: 15px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.5), 0 4px 15px rgba(0,0,0,0.02); border: 1px solid rgba(255,255,255,0.5);" onclick="loadMoreMessages()">載入較舊留言</button>`; }
         }
 
         function updateExistingMessagesInPlace() {
@@ -972,15 +1072,15 @@
                     if (isLiked) { btnEl.classList.remove('unliked'); btnEl.classList.add('liked'); } 
                     else { btnEl.classList.remove('liked'); btnEl.classList.add('unliked'); }
                 }
+                
                 if (textEl) {
+                    textEl.innerHTML = getLikesIgStyle(likesArray);
                     if (likesArray.length > 0) {
-                        let displayNamesArr = likesArray.map(likeId => window.userNameMap[likeId] || likeId);
-                        let displayStr = displayNamesArr.slice(0, 2).join(", ");
-                        if (displayNamesArr.length > 2) displayStr += ` 等 ${displayNamesArr.length} 人`;
-                        textEl.innerHTML = `<div style="width: 14px; height: 14px; stroke: #ff4d4f; fill: #ff4d4f; display:flex; align-items:center; justify-content:center; flex-shrink: 0;">${svgHeart}</div> <span style="text-decoration:underline; text-decoration-color:rgba(0,0,0,0.1); text-underline-offset:2px;">${displayStr}</span>`;
-                        textEl.style.cursor = 'pointer'; textEl.onclick = () => showLikesDrawer(index);
+                        textEl.style.cursor = 'pointer';
+                        textEl.onclick = () => showLikesDrawer(index);
                     } else {
-                        textEl.innerHTML = ""; textEl.style.cursor = 'default'; textEl.onclick = null;
+                        textEl.style.cursor = 'default';
+                        textEl.onclick = null;
                     }
                 }
                 
@@ -1011,10 +1111,12 @@
             } catch(e) {}
             if (likesArray.length === 0) return;
 
+            let sortedLikes = likesArray.slice().reverse();
             let html = `<div style="display:flex; flex-direction:column; gap:12px; padding: 0 10px;">`;
-            likesArray.forEach(nameOrId => {
-                let name = window.userNameMap[nameOrId] || nameOrId;
-                let picUrl = window.userAvatarMap[nameOrId] || window.userAvatarMap[name];
+            
+            sortedLikes.forEach(likeId => {
+                let name = window.userNameMap[likeId] || likeId;
+                let picUrl = window.userAvatarMap[likeId] || window.userAvatarMap[name];
                 
                 let fallbackText = name[0];
                 let avHtml = picUrl 
@@ -1025,15 +1127,18 @@
                     : `<div style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;">${fallbackText}</div>`;
                 
                 html += `<div style="display:flex; align-items:center; gap:12px; padding-bottom:12px; border-bottom:1px solid rgba(0,0,0,0.05);">
-                    <div style="width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, var(--primary-orange), #ff8c00); color:white; display:flex; justify-content:center; align-items:center; font-size:14px; font-weight:700; box-shadow: 0 2px 8px rgba(249, 168, 38, 0.3); overflow:hidden;">${avHtml}</div>
+                    <div style="width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, var(--primary-orange), #ff8c00); color:white; display:flex; justify-content:center; align-items:center; font-size:14px; font-weight:700; overflow:hidden; box-shadow: none !important;">${avHtml}</div>
                     <span style="font-size:15px; font-weight:600; color:var(--text-main);">${name}</span>
                 </div>`;
             });
             html += `</div>`;
-            openCarDrawer('❤️ 說這則留言讚的人', html);
+            
+            openCarDrawer('<div style="text-align:center; width:100%; font-weight:700;">說這則留言讚的人</div>', html);
         }
 
         async function toggleLike(index) {
+            if (navigator.vibrate) navigator.vibrate(50);
+
             const msgObj = allMessages[index];
             let likesArray = [];
             try {
@@ -1048,7 +1153,7 @@
             if (idIdx > -1) {
                 likesArray.splice(idIdx, 1); 
             } else {
-                likesArray.push(currentUser.id); // 新按讚強制記錄 LINE ID
+                likesArray.push(currentUser.id); 
                 isAdding = true;
             }
 
@@ -1066,33 +1171,35 @@
             }
             
             if (textEl) {
+                textEl.innerHTML = getLikesIgStyle(likesArray);
                 if (likesArray.length > 0) {
-                    let displayNamesArr = likesArray.map(likeId => window.userNameMap[likeId] || likeId);
-                    let displayStr = displayNamesArr.slice(0, 2).join(", ");
-                    if (displayNamesArr.length > 2) displayStr += ` 等 ${displayNamesArr.length} 人`;
-                    textEl.innerHTML = `<div style="width: 14px; height: 14px; stroke: #ff4d4f; fill: #ff4d4f; display:flex; align-items:center; justify-content:center; flex-shrink: 0;">${svgHeart}</div> <span style="text-decoration:underline; text-decoration-color:rgba(0,0,0,0.1); text-underline-offset:2px;">${displayStr}</span>`;
                     textEl.style.cursor = 'pointer';
                     textEl.onclick = () => showLikesDrawer(index);
                 } else {
-                    textEl.innerHTML = "";
                     textEl.style.cursor = 'default';
                     textEl.onclick = null;
                 }
             }
 
-            try {
-                await fetch(GAS_API_URL, {
-                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({
-                        action: "toggleLike",
-                        timeStr: msgObj.Time,
-                        content: msgObj.Content, 
-                        userId: currentUser.id,
-                        userName: currentUser.name, 
-                        isAdding: isAdding
-                    })
-                });
-            } catch(e) { console.error("按讚狀態儲存失敗"); }
+            if (window.likeTimers[index]) {
+                clearTimeout(window.likeTimers[index]);
+            }
+
+            window.likeTimers[index] = setTimeout(async () => {
+                try {
+                    await fetch(GAS_API_URL, {
+                        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({
+                            action: "toggleLike",
+                            timeStr: msgObj.Time,
+                            content: msgObj.Content, 
+                            userId: currentUser.id,
+                            userName: currentUser.name, 
+                            isAdding: isAdding
+                        })
+                    });
+                } catch(e) { console.error("按讚狀態儲存失敗"); }
+            }, 800);
         }
 
         function loadMoreMessages() { currentMsgPage++; renderMessages(); }
@@ -1128,38 +1235,14 @@
             } catch(e) { showCustomAlert("錯誤", "更新失敗，請檢查網路連線。"); }
         }
         async function postMessage() {
-            const textarea = document.getElementById('new-msg-text');
-            const text = textarea.value.trim();
-            if (!text) return showCustomAlert("提示", "請輸入內容！");
-            const timeString = getFormattedTime();
-            const newMessage = { 
-                LineID: currentUser.id, 
-                Name: currentUser.name, 
-                AvatarText: currentUser.initial, 
-                Time: timeString, 
-                Content: text, 
-                IsEdited: "",
-                Likes: "[]" 
-            };
-            allMessages.unshift(newMessage);
-            textarea.value = ''; 
-            renderMessages();    
-            try {
-                await fetch(GAS_API_URL, { 
-                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                    body: JSON.stringify({ 
-                        action: "addMessage", 
-                        userName: currentUser.name, 
-                        userId: currentUser.id, 
-                        avatarText: currentUser.initial, 
-                        timeStr: timeString, 
-                        content: text 
-                    }) 
-                });
-            } catch(e) { 
-                allMessages.shift(); renderMessages(); textarea.value = text; 
-                showCustomAlert("錯誤", "發佈失敗，請檢查網路連線後再試一次。"); 
-            }
+            const t = document.getElementById('new-msg-text'); const val = t.value.trim(); if (!val) return;
+            const time = getFormattedTime();
+            allMessages.unshift({ LineID: currentUser.id, Name: currentUser.name, AvatarText: currentUser.initial, AvatarUrl: currentUser.pictureUrl, Time: time, Content: val, Likes: "[]" });
+            t.value = ''; renderMessages();    
+            
+            clearBadge();
+
+            try { await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "addMessage", userName: currentUser.name, userId: currentUser.id, avatarText: currentUser.initial, timeStr: time, content: val }) }); } catch(e) { allMessages.shift(); renderMessages(); t.value = val; showCustomAlert("錯誤", "發佈失敗，請檢查網路連線後再試一次。"); }
         }
         function unlockMainApp() {
             if (currentUser.votedOption === 3 && !isGuestViewEnabled) {
@@ -1212,8 +1295,9 @@
                 saveChecklistBackground();
             }
             
-            // 🌟 當切換離開留言板時，背景靜默更新資料
-            if (t !== 'board') {
+            if (t === 'board') {
+                clearBadge();
+            } else {
                 setTimeout(() => { refreshMessagesOnly(true); }, 500);
             }
 
@@ -1305,7 +1389,10 @@
             let c = 0; let t = null;
             document.getElementById('secret-lock').onclick = () => {
                 c++; clearTimeout(t); t = setTimeout(() => c = 0, 2000);
-                if (c >= 3) { c = 0; showCustomPrompt("輸入密碼", true, (pwd) => { if (pwd === LATE_VOTE_PASSCODE) unlockMainApp(); else showCustomAlert("錯誤","密碼錯誤"); }); }
+                if (c >= 4) { 
+                    c = 0; 
+                    unlockMainApp(); 
+                }
             };
         }
         function selectVote(o) { 
@@ -1321,12 +1408,11 @@
             const tripText = lateVoteSelection === 1 ? "方案一：宜蘭深度放鬆 (二天一夜)" : "🚷 無法參加(訪客查看)";
             try {
                 await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "vote", userName: currentUser.name, userId: currentUser.id, pictureUrl: currentUser.pictureUrl, choice_trip: tripText, time_opt1: "V", time_opt2: "V" }) });
-                showCustomAlert("報名成功", "您的紀錄已儲存。");
+                showCustomAlert("報名成功", "");
                 currentUser.isVoted = true; currentUser.votedOption = lateVoteSelection; unlockMainApp();
             } catch(e) { showCustomAlert("錯誤", "網路異常，請稍後再試。"); }
         }
         
-        // 🌟 統計過濾：排除測試帳號
         async function fetchResults() {
             const resultContainer = document.getElementById('result-chart-area');
             resultContainer.innerHTML = `<div style="text-align: center; margin-top: 60px;"><div class="spinner" style="margin: 0 auto 15px;"></div><h2 style="color: #4a5568;">統計中...</h2></div>`;
@@ -1335,7 +1421,6 @@
                 if (!cachedPollData) { const response = await fetch(GAS_API_URL, { cache: 'no-store', redirect: 'follow' }); cachedPollData = await response.json(); data = cachedPollData.votes || []; }
                 let totalVotes = 0; let votersHtml = ""; let t1_d1 = 0; let t1_d2 = 0; let t2_d1 = 0; let t2_d2 = 0; let unableCount = 0; let unableHtml = "";
                 data.forEach(row => {
-                    // 確保不計算測試帳號
                     if (row['LINE ID'] === "test_user_001") return;
 
                     totalVotes++; const trip = row['偏好行程']; const name = row['LINE 名稱']; 
