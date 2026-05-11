@@ -161,13 +161,13 @@
         .drawer-handler { width: 40px; height: 4px; background: rgba(0,0,0,0.15); border-radius: 4px; margin: 0 auto 20px; }
         .drawer-overlay.show .drawer-content { bottom: 0; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background-color: rgba(0,0,0,0.4); backdrop-filter: blur(8px); z-index: 2100; display: none; justify-content: center; align-items: center; }
-        .custom-modal { box-sizing: border-box; background: rgba(255,255,255,0.85); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid white; max-width: 320px; width: 90%; border-radius: 20px; padding: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.15), inset 0 1px 1px rgba(255,255,255,0.6); text-align: center; }
-        .modal-title { font-size: 18px; font-weight: 700; margin: 0 0 12px; color: var(--text-main); }
+	.custom-modal { box-sizing: border-box; background: rgba(255,255,255,0.85); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid white; max-width: 320px; width: 90%; border-radius: 24px; padding: 35px 25px 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.15), inset 0 1px 1px rgba(255,255,255,0.6); text-align: center; }
+	.modal-title { font-size: 19px; font-weight: 700; margin: 5px 0 25px; color: var(--text-main); letter-spacing: 0.5px; }
         input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"] { -moz-appearance: textfield; }        
         .modal-input { width: 100%; box-sizing: border-box; padding: 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.15); background: rgba(255,255,255,0.9); font-size: 15px; margin-bottom: 0; text-align: center; outline: none; transition: 0.3s; padding-right: 35px; }
         .modal-input:focus { border-color: #718096; box-shadow: 0 0 0 3px rgba(113, 128, 150, 0.15); }
-        .modal-btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        .modal-btn-group { display: flex; gap: 12px; margin-top: 5px; }
         .btn-cancel { flex: 1; padding: 12px; border-radius: 12px; border: none; background: rgba(0,0,0,0.06); color: #4a5568; cursor: pointer; font-weight:600; font-size: 14px; transition: 0.2s;}
         .btn-cancel:hover { background: rgba(0,0,0,0.12); }
         .btn-confirm { flex: 1; padding: 12px; border-radius: 12px; border: none; background: linear-gradient(135deg, var(--primary-orange), #ff8c00); color: white; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 4px 12px rgba(249,168,38,0.25); transition: 0.2s;}
@@ -220,11 +220,19 @@
         <div class="blob blob-3"></div>
     </div>
     <header class="top-nav">
-        <h1 onclick="if(currentUser.isVoted) switchView('overview')" style="cursor: pointer;">香草山小組出遊指南</h1>
-        <div class="user-area">
+        <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
+            
+            <h1 onclick="if(currentUser.isVoted) switchView('overview')" style="cursor: pointer; margin: 0; line-height: 1; transform: translateY(-1px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 1;">香草山小組出遊指南</h1>
+            
+            <span id="visitor-badge" style="display: none; background: linear-gradient(135deg, #868e96, #a0aec0); color: white; font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 20px; box-shadow: 0 2px 6px rgba(134, 142, 150, 0.3); flex-shrink: 0; white-space: nowrap; line-height: 1; align-items: center; justify-content: center; transform: translateY(0px);">訪客查看模式</span>
+        </div>
+        
+        <div class="user-area" style="flex-shrink: 0; margin-left: 10px;">
             <div class="user-info" onclick="toggleMenu(event)">
-                <div id="welcome-name" style="display: flex; align-items: center; gap: 4px;">讀取中</div>
+                
+                <div id="welcome-name" style="display: flex; align-items: center; gap: 4px; line-height: 1; transform: translateY(1px); white-space: nowrap;">讀取中</div>
                 <div class="avatar-placeholder" id="user-avatar">?</div>
+                
             </div>
             <div id="avatar-menu" class="dropdown-menu">
                 <div class="menu-item" onclick="switchView('result')"><span>📊</span> 投票結果統計</div>
@@ -241,7 +249,7 @@
     </div>
 
     <div id="lock-screen" style="display: none; text-align: center; margin-top: 100px; padding: 20px;">
-        <div class="card" style="display: inline-block; padding: 40px 40px;">
+        <div class="card" style="display: inline-flex; flex-direction: column; justify-content: center; align-items: center; width: 280px; height: 280px; box-sizing: border-box; padding: 20px;">
             <div id="secret-lock" style="font-size: 70px; margin-bottom: 16px; cursor: pointer; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));">🔒</div>
             <h2 style="color: var(--text-main); margin-bottom: 10px;">您未報名本次出遊</h2>
             <p style="color: var(--text-muted); line-height: 1.6; font-size: 15px;">僅開放給有報名的組員</p>
@@ -249,7 +257,7 @@
     </div>
 
     <div id="guest-lock-screen" style="display: none; text-align: center; margin-top: 100px; padding: 20px;">
-        <div class="card" style="display: inline-block; padding: 40px 40px;">
+        <div class="card" style="display: inline-flex; flex-direction: column; justify-content: center; align-items: center; width: 280px; height: 280px; box-sizing: border-box; padding: 20px;">
             <div style="font-size: 70px; margin-bottom: 16px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));">🚷</div>
             <h2 style="color: var(--text-main); margin-bottom: 10px;">不開放訪客查看內容</h2>
             <p style="color: var(--text-muted); line-height: 1.6; font-size: 15px;">已關閉訪客查看</p>
@@ -387,7 +395,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
                     返回
                 </div>
-                <h2 style="color: var(--text-main); margin: 0; font-size: 18px; text-shadow: 0 1px 2px rgba(255,255,255,0.5);">📝 編輯首頁公告</h2>
+                <h2 style="color: var(--text-main); margin: 0; font-size: 18px; text-shadow: 0 1px 2px rgba(255,255,255,0.5);"> 編輯首頁公告</h2>
             </div>
             <div class="card">
                 <div id="admin-notice-list-container" style="text-align:left;"></div>
@@ -705,13 +713,16 @@
 
                 document.getElementById('loading').style.display = 'none';
                 
-                if (currentUser.isVoted) {
+               if (currentUser.isVoted) {
                     const welcomeNameEl = document.getElementById('welcome-name');
+                    welcomeNameEl.innerHTML = `<span>${currentUser.name}</span>`;
+                    
                     if (currentUser.votedOption === 3) {
-                        welcomeNameEl.innerHTML = `<span>${currentUser.name}</span><span style="background: linear-gradient(135deg, #868e96, #a0aec0); color: white; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; box-shadow: 0 2px 6px rgba(134, 142, 150, 0.3); vertical-align: middle; transform: translateY(1px); line-height: 1.2;">訪客模式</span>`;
-                    } else {
-                        welcomeNameEl.innerHTML = `<span>${currentUser.name}</span>`;
+                document.getElementById('visitor-badge').style.display = 'inline-flex';
+            } else {
+                        document.getElementById('visitor-badge').style.display = 'none';
                     }
+
                     document.getElementById('lock-screen').style.display = 'none';
                     unlockMainApp();
                 } else {
@@ -860,6 +871,7 @@
                     let desc = cfg[`Notice${i}_Desc`] || '';
                     let rawTime = cfg[`Notice${i}_Time`] || '';
                     let isTop = rawTime.startsWith('[PIN]');
+                    
                     let cleanTime = rawTime.replace('[PIN]', '').trim();
                     if (/^\d{4}-\d{2}-\d{2}T/.test(cleanTime)) {
                         let d = new Date(cleanTime);
@@ -870,9 +882,10 @@
                         }
                     }
                     let displayTime = cleanTime.replace(/-/g, '/');
+                    
                     adminNoticesArray.push({title, desc, time: cleanTime, isTop}); 
                     let color = i % 2 !== 0 ? 'var(--primary-orange)' : 'var(--primary-blue)';
-                    noticesHtml += `<div class="notice-card-new" style="border-left-color: ${color};"><div class="notice-header"><div class="notice-title">${title}</div>${isTop ? '<div class="notice-pin-new">置頂公告</div>' : ''}</div><p class="notice-content">${desc}</p><div class="notice-footer">${displayTime}</div></div>`;                    
+                    noticesHtml += `<div class="notice-card-new" style="border-left-color: ${color};"><div class="notice-header"><div class="notice-title">${title}</div>${isTop ? '<div class="notice-pin-new">置頂公告</div>' : ''}</div><p class="notice-content">${desc}</p><div class="notice-footer">${displayTime}</div></div>`;
                     i++;
                 }
                 document.getElementById('ui-notices-container').innerHTML = noticesHtml || '<p style="color:#888; font-size:13px;">目前無最新公告。</p>';
@@ -1256,6 +1269,15 @@
                 document.getElementById('guest-lock-screen').style.display = 'block';
                 return; 
             }
+            const welcomeNameEl = document.getElementById('welcome-name');
+            welcomeNameEl.innerHTML = `<span>${currentUser.name}</span>`;
+            
+           if (currentUser.votedOption === 3) {
+                document.getElementById('visitor-badge').style.display = 'inline-flex';
+            } else {
+                document.getElementById('visitor-badge').style.display = 'none';
+            }
+
             document.getElementById('lock-screen').style.display = 'none';
             document.getElementById('guest-lock-screen').style.display = 'none';
             document.getElementById('app').style.display = 'block';
@@ -1352,41 +1374,54 @@
             const btn = document.getElementById('btn-save-notices');
             btn.innerText = "儲存中..."; btn.disabled = true;
             let newNotices = [];
-            document.querySelectorAll('.admin-notice-block').forEach(block => {
+            let noticesHtml = "";
+            
+            document.querySelectorAll('.admin-notice-block').forEach((block, idx) => {
                 const title = block.querySelector('.admin-n-title').value.trim();
-                const time = (block.querySelector('.admin-n-pin').checked ? '[PIN]' : '') + block.querySelector('.admin-n-time').value.trim();
-                if(title) newNotices.push({title, desc: block.querySelector('.admin-n-desc').value.trim(), time});
+                const isTop = block.querySelector('.admin-n-pin').checked;
+                const timeRaw = block.querySelector('.admin-n-time').value.trim();
+                const time = (isTop ? '[PIN]' : '') + timeRaw;
+                const desc = block.querySelector('.admin-n-desc').value.trim();
+                
+                if(title) {
+                    newNotices.push({title, desc, time});
+                    
+                    // 本地預先組合 HTML
+                    let displayTime = timeRaw.replace(/-/g, '/');
+                    let color = (idx + 1) % 2 !== 0 ? 'var(--primary-orange)' : 'var(--primary-blue)';
+                    noticesHtml += `<div class="notice-card-new" style="border-left-color: ${color};"><div class="notice-header"><div class="notice-title">${title}</div>${isTop ? '<div class="notice-pin-new">置頂公告</div>' : ''}</div><p class="notice-content">${desc}</p><div class="notice-footer">${displayTime}</div></div>`;
+                }
             });
-            try {
-                await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "updateNotices", notices: newNotices }) });
-                initialDataPromise = fetch(GAS_API_URL, { cache: 'no-store', redirect: 'follow' }).then(res => res.json());
-                await processLoadedData(); 
-                switchView('overview'); 
-                showCustomAlert("成功", "公告已發布，畫面已更新！");
-                btn.innerText = "儲存所有變更"; btn.disabled = false;
-            } catch(e) { 
-                btn.innerText = "儲存所有變更"; btn.disabled = false; 
-                showCustomAlert("錯誤", "儲存失敗。"); 
-            }
+            
+            document.getElementById('ui-notices-container').innerHTML = noticesHtml || '<p style="color:#888; font-size:13px;">目前無最新公告。</p>';
+            
+            fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "updateNotices", notices: newNotices }) })
+                .catch(e => console.error("公告背景儲存失敗"));
+            
+            switchView('overview'); 
+            showCustomAlert("成功", "公告已發布，畫面已更新！");
+            btn.innerText = "儲存所有變更"; btn.disabled = false;
         }
         async function toggleVotingLock(checkbox) {
             const isLocked = checkbox.checked;
             checkbox.disabled = true;
-            try {
-                await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "updateConfigSingle", key: "VotingLocked", value: isLocked ? "true" : "false" }) });
-                checkbox.disabled = false; 
-                initialDataPromise = fetch(GAS_API_URL, { cache: 'no-store', redirect: 'follow' }).then(res => res.json());
-                processLoadedData(); 
-            } catch(e) { checkbox.checked = !isLocked; checkbox.disabled = false; showCustomAlert("錯誤", "設定失敗。"); }
+            
+            // 本地瞬間更新 UI
+            const voteBtn = document.getElementById('btn-submit-vote');
+            if (isLocked) { voteBtn.disabled = true; voteBtn.innerText = "系統已鎖定，停止報名"; } 
+            else { voteBtn.disabled = false; voteBtn.innerText = "確認提交"; }
+            
+            // 背景送出，不重新驗證
+            fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "updateConfigSingle", key: "VotingLocked", value: isLocked ? "true" : "false" }) })
+                .finally(() => { checkbox.disabled = false; });
         }
-        async function toggleGuestViewLock(checkbox) {
+        
+       async function toggleGuestViewLock(checkbox) {
             const isEnabled = checkbox.checked;
             checkbox.disabled = true;
-            try {
-                await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "updateConfigSingle", key: "GuestViewEnabled", value: isEnabled ? "true" : "false" }) });
-                checkbox.disabled = false; 
-                isGuestViewEnabled = isEnabled; 
-            } catch(e) { checkbox.checked = !isEnabled; checkbox.disabled = false; showCustomAlert("錯誤", "設定失敗。"); }
+            isGuestViewEnabled = isEnabled; 
+            fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "updateConfigSingle", key: "GuestViewEnabled", value: isEnabled ? "true" : "false" }) })
+                .finally(() => { checkbox.disabled = false; });
         }
         function initLockScreen() {
             let c = 0; let t = null;
@@ -1394,8 +1429,6 @@
                 c++; clearTimeout(t); t = setTimeout(() => c = 0, 2000);
                 if (c >= 4) { 
                     c = 0; 
-                    currentUser.isVoted = true; 
-                    currentUser.votedOption = 1; 
                     unlockMainApp(); 
                 }
             };
@@ -1413,7 +1446,8 @@
             const tripText = lateVoteSelection === 1 ? "方案一：宜蘭深度放鬆 (二天一夜)" : "🚷 無法參加(訪客查看)";
             try {
                 await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "vote", userName: currentUser.name, userId: currentUser.id, pictureUrl: currentUser.pictureUrl, choice_trip: tripText, time_opt1: "V", time_opt2: "V" }) });
-                showCustomAlert("報名成功", "");
+                const alertTitle = lateVoteSelection === 1 ? "報名成功" : "訪客查看模式";
+                showCustomAlert(alertTitle, "");
                 currentUser.isVoted = true; currentUser.votedOption = lateVoteSelection; unlockMainApp();
             } catch(e) { showCustomAlert("錯誤", "網路異常，請稍後再試。"); }
         }
@@ -1429,7 +1463,7 @@
                     if (row['LINE ID'] === "test_user_001") return;
 
                     totalVotes++; const trip = row['偏好行程']; const name = row['LINE 名稱']; 
-                    if (trip && trip.includes("無法參加")) { unableCount++; if (name) unableHtml += `<div style="display: inline-block; background: rgba(255,255,255,0.4); padding: 4px 12px; border-radius: 20px; margin: 4px 6px 4px 0; font-size: 12px; border: 1px solid rgba(255,255,255,0.6); color: var(--text-muted); box-shadow: 0 2px 5px rgba(0,0,0,0.02);">${name} <span style="font-size:10px; opacity:0.7;">(訪客模式)</span></div>`; return; }
+                   if (trip && trip.includes("無法參加")) { unableCount++; if (name) unableHtml += `<div style="display: inline-block; background: rgba(255,255,255,0.4); padding: 4px 12px; border-radius: 20px; margin: 4px 6px 4px 0; font-size: 12px; border: 1px solid rgba(255,255,255,0.6); color: var(--text-muted); box-shadow: 0 2px 5px rgba(0,0,0,0.02);">${name}</div>`; return; }
                     const isTrip1 = trip && trip.includes("方案一"); const isTrip2 = trip && trip.includes("方案二");
                     if (isTrip1) { if (row['6/13-6/14'] === 'V') t1_d1++; if (row['6/27-6/28'] === 'V') t1_d2++; } else if (isTrip2) { if (row['6/13-6/14'] === 'V') t2_d1++; if (row['6/27-6/28'] === 'V') t2_d2++; }
                     if (name && (isTrip1 || isTrip2)) votersHtml += `<div style="display: inline-block; background: rgba(255,255,255,0.6); padding: 4px 12px; border-radius: 20px; margin: 4px 6px 4px 0; font-size: 12px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.6), 0 4px 10px rgba(0,0,0,0.04); color: var(--text-main); border: 1px solid rgba(255,255,255,0.8);">${name} <span style="color:var(--primary-green); font-size:11px; margin-left: 4px;">✓</span></div>`;
