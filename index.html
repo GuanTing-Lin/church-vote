@@ -291,7 +291,7 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                     後台管理
                 </div>
-                <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.0.2</div>
+                <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.0.3</div>
             </div>
     <div id="loading" style="display: flex; flex-direction: column; align-items: center; margin-top: 120px;">
         <div class="spinner"></div>
@@ -1607,11 +1607,13 @@
             if (window.Sortable) { new Sortable(container, { handle: '.drag-handle', animation: 150, ghostClass: 'dragging' }); }
         }
 
+        // 👇 替換為具備「自動置頂與日期排序」智慧邏輯的儲存函式 👇
         async function saveAdminNotices() {
             const btn = document.getElementById('btn-save-notices');
             btn.innerText = "資料儲存中..."; btn.disabled = true;
-            let newNotices = [];
+            let tempNotices = [];
             
+            // 1. 先把畫面上所有的公告抓下來
             document.querySelectorAll('.admin-notice-block').forEach((block, idx) => {
                 const title = block.querySelector('.admin-n-title').value.trim();
                 const type = block.querySelector('.admin-n-type').value;
@@ -1621,9 +1623,25 @@
                 const imgUrl = block.querySelector('.admin-n-img').value.trim();
                 
                 if(title) {
-                    newNotices.push({title, desc, imgUrl, time});
+                    // 🌟 這裡多存入 type 跟 timeRaw，方便稍後做排序判斷
+                    tempNotices.push({title, desc, imgUrl, time, type, timeRaw});
                 }
             });
+            
+            // 🌟 2. 智慧排序邏輯：分離置頂與一般公告
+            let pinnedNotices = tempNotices.filter(n => n.type === '[PIN]');
+            let normalNotices = tempNotices.filter(n => n.type !== '[PIN]');
+            
+            // 🌟 3. 將置頂公告依據「日期」進行降冪排序 (越新的日期數字越大，排越前面)
+            pinnedNotices.sort((a, b) => {
+                // 將 YYYY-MM-DD 轉為時間戳記來比較
+                let dateA = new Date(a.timeRaw.replace(/-/g, '/')).getTime() || 0;
+                let dateB = new Date(b.timeRaw.replace(/-/g, '/')).getTime() || 0;
+                return dateB - dateA; // 大的在前面 (最新)
+            });
+            
+            // 🌟 4. 把排好的置頂公告，跟一般公告(維持原本使用者拖曳的順序)合併
+            let newNotices = [...pinnedNotices, ...normalNotices];
             
             showCustomAlert("資料同步中", "正在更新公告內容...", false);
             
