@@ -45,9 +45,10 @@
         .user-info { display: flex; align-items: center; font-size: 13px; color: var(--text-main); cursor: pointer; background: rgba(255,255,255,0.4); padding: 4px 10px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.6); transition: 0.2s; box-shadow: inset 0 1px 1px rgba(255,255,255,0.5); }
         .user-info:hover { background: rgba(255,255,255,0.7); }
         .avatar-placeholder { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-orange), #ff8c00); margin-left: 6px; display: flex; justify-content: center; align-items: center; color: white; font-size: 11px; font-weight: 700; overflow: hidden; box-shadow: none !important; }
-        .dropdown-menu { position: absolute; top: 45px; right: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid rgba(255,255,255,0.15); border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); width: 170px; display: none; flex-direction: column; overflow: hidden; animation: fadeIn 0.2s ease-out; z-index: 1000; padding: 4px; }
-        .menu-item { padding: 10px 12px; font-size: 13px; font-weight: 500; color: #ffffff; border-radius: 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.2s; margin-bottom: 2px; }
-        .menu-item:hover { background: rgba(255,255,255,0.15); }
+        /* 👇 輕量清澈版毛玻璃 👇 */
+        .dropdown-menu { position: fixed; top: 60px; right: 16px; background: rgba(30, 30, 30, 0.35); backdrop-filter: blur(10px) saturate(150%); -webkit-backdrop-filter: blur(10px) saturate(150%); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.15), inset 0 1px 1px rgba(255, 255, 255, 0.2); width: 170px; display: none; flex-direction: column; overflow: hidden; animation: fadeIn 0.2s ease-out; z-index: 2500; padding: 5px; }
+        .menu-item { padding: 10px 12px; font-size: 13px; font-weight: 500; color: #ffffff; border-radius: 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: background 0.2s; margin-bottom: 2px; }
+        .menu-item:hover { background: rgba(255, 255, 255, 0.15); }
         .container { max-width: 600px; margin: 20px auto; padding: 0 16px; box-sizing: border-box; }
         .card { background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-top-color: var(--glass-border-highlight); border-left-color: var(--glass-border-highlight); border-radius: var(--radius-main); overflow: hidden; box-shadow: var(--glass-shadow); padding: 20px; margin-bottom: 16px; position: relative; }
         .section-title { font-size: 16px; font-weight: 700; margin: 25px 0 12px; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; text-shadow: 0 1px 2px rgba(255,255,255,0.6); }
@@ -257,8 +258,13 @@
             <div class="user-info" onclick="toggleMenu(event)">
                 <div id="welcome-name" style="display: flex; align-items: center; gap: 4px; line-height: 1; transform: translateY(1px); white-space: nowrap;">讀取中</div>
                 <div class="avatar-placeholder" id="user-avatar">?</div>
-            </div>
-            <div id="avatar-menu" class="dropdown-menu">
+                <!-- 🌟 新增的漢堡選單 Icon -->
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 6px;"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </div> 
+        </div>
+    </header>
+
+    <div id="avatar-menu" class="dropdown-menu">
                 <div class="menu-item" onclick="switchView('result')">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
                     投票結果統計
@@ -273,9 +279,6 @@
                 </div>
                 <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.0.1</div>
             </div>
-        </div>
-    </header>
-
     <div id="loading" style="display: flex; flex-direction: column; align-items: center; margin-top: 120px;">
         <div class="spinner"></div>
         <h2 style="color: #4a5568; margin-bottom: 10px; margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5);">系統驗證中...</h2>
@@ -1320,13 +1323,18 @@
                 else if (Array.isArray(msgObj.Likes)) likesArray = msgObj.Likes;
             } catch(e) {}
 
-            let idIdx = likesArray.indexOf(currentUser.id);
-            if (idIdx === -1) idIdx = likesArray.indexOf(currentUser.name); 
+            // 🌟 強化：不管陣列裡存的是 ID 還是名字，也不管有沒有多餘空白，都精準抓出您的紀錄
+            let idIdx = likesArray.findIndex(id => 
+                String(id).trim() === String(currentUser.id).trim() || 
+                String(id).trim() === String(currentUser.name).trim()
+            );
             
             let isAdding = false;
             if (idIdx > -1) {
+                // 如果已經按過讚，就把他從陣列中拔掉 (收回讚)
                 likesArray.splice(idIdx, 1); 
             } else {
+                // 如果還沒按過，就把他加到陣列最末端
                 likesArray.push(currentUser.id); 
                 isAdding = true;
             }
@@ -1373,7 +1381,7 @@
                         })
                     });
                 } catch(e) { console.error("按讚狀態儲存失敗"); }
-            }, 800);
+            }, 400);
         }
 
         function loadMoreMessages() { currentMsgPage++; renderMessages(); }
@@ -1418,7 +1426,6 @@
 
             try { await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "addMessage", userName: currentUser.name, userId: currentUser.id, avatarText: currentUser.initial, timeStr: time, content: val }) }); } catch(e) { allMessages.shift(); renderMessages(); t.value = val; showCustomAlert("錯誤", "發佈失敗，請檢查網路連線後再試一次。"); }
         }
-        // 👇 替換 unlockMainApp 函式 👇
         function unlockMainApp() {
             if (currentUser.votedOption === 3 && !isGuestViewEnabled) {
                 document.getElementById('app').style.display = 'none';
@@ -1434,6 +1441,12 @@
             document.getElementById('app').style.display = 'block';
             
             if (currentUser.isVoted) {
+                if (currentUser.votedOption === 3) {
+                    document.getElementById('visitor-badge').style.display = 'inline-flex';
+                } else {
+                    document.getElementById('visitor-badge').style.display = 'none';
+                }
+
                 document.getElementById('bottom-nav-block').style.display = 'flex';
                 document.getElementById('bottom-blur-mask').style.display = 'block'; 
                 initDaysCountdown(); markArchive(); 
@@ -1441,20 +1454,17 @@
                 setTimeout(() => {
                     switchView('overview');
                     
-                    // 🌟 自動定位與展開特定公告的魔法
                     const params = new URLSearchParams(window.location.search);
                     const noticeId = params.get('notice');
                     if (noticeId) {
                         setTimeout(() => {
                             const card = document.getElementById('notice-card-' + noticeId);
                             if (card) {
-                                card.classList.add('expanded'); // 觸發展開效果
-                                // 讓畫面滑順地捲動到這張卡片的中間
+                                card.classList.add('expanded');
                                 card.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             }
-                        }, 300); // 稍微延遲讓畫面先渲染好
+                        }, 300); 
                         
-                        // 看完後，將網址後的 ?notice=X 洗掉，避免重新整理又被拉下來
                         window.history.replaceState({}, document.title, window.location.pathname);
                     }
 
@@ -1654,6 +1664,18 @@
             const tripText = lateVoteSelection === 1 ? "方案一：宜蘭深度放鬆 (二天一夜)" : "🚷 無法參加(訪客查看)";
             try {
                 await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "vote", userName: currentUser.name, userId: currentUser.id, pictureUrl: currentUser.pictureUrl, choice_trip: tripText, time_opt1: "V", time_opt2: "V" }) });
+                
+                // 🌟 修復 1：報名成功並建立資料列後，立刻補送一次大頭貼與時間更新
+                fetch(GAS_API_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ 
+                          action: "updateAvatar", 
+                          userId: currentUser.id, 
+                          pictureUrl: currentUser.pictureUrl || "",
+                          loginTime: getFormattedTime() 
+                     })
+                }).catch(e => console.log("靜默同步資料"));
+
                 const alertTitle = lateVoteSelection === 1 ? "報名成功" : "訪客查看模式";
                 showCustomAlert(alertTitle, "");
                 currentUser.isVoted = true; currentUser.votedOption = lateVoteSelection; unlockMainApp();
