@@ -28,7 +28,7 @@
         body { font-family: 'Noto Sans TC', sans-serif; background-color: transparent !important; margin: 0; padding: 0; color: var(--text-main); padding-bottom: 110px; overflow-x: hidden; }
         body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to bottom, #f0f4f8, #e0f2ed); z-index: -2; pointer-events: none; }
         .bg-blobs { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; z-index: -1; overflow: hidden; pointer-events: none; }
-        .blob { position: absolute; filter: blur(80px); opacity: 0.5; animation: float 12s infinite ease-in-out alternate; }
+        .blob { position: absolute; filter: blur(80px); opacity: 0.5; animation: float 12s infinite ease-in-out alternate; will-change: transform; transform: translateZ(0); }
         .blob-1 { width: 350px; height: 350px; background: var(--primary-orange); top: -10%; left: -10%; animation-delay: 0s; }
         .blob-2 { width: 400px; height: 400px; background: var(--primary-green); bottom: -10%; right: -10%; animation-delay: -3s; }
         .blob-3 { width: 300px; height: 300px; background: var(--primary-blue); top: 40%; left: 50%; transform: translateX(-50%); animation-delay: -6s; opacity: 0.3; }
@@ -47,6 +47,13 @@
         .avatar-placeholder { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-orange), #ff8c00); margin-left: 6px; display: flex; justify-content: center; align-items: center; color: white; font-size: 11px; font-weight: 700; overflow: hidden; box-shadow: none !important; }
         /* 👇 輕量清澈版毛玻璃 👇 */
         .dropdown-menu { position: fixed; top: 60px; right: 16px; background: rgba(30, 30, 30, 0.35); backdrop-filter: blur(10px) saturate(150%); -webkit-backdrop-filter: blur(10px) saturate(150%); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.15), inset 0 1px 1px rgba(255, 255, 255, 0.2); width: 170px; display: none; flex-direction: column; overflow: hidden; animation: fadeIn 0.2s ease-out; z-index: 2500; padding: 5px; }
+        #hamburger-icon .line-top { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform-origin: 12px 6px; }
+        #hamburger-icon .line-bottom { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform-origin: 12px 18px; }
+        #hamburger-icon .line-middle { transition: opacity 0.2s ease; }
+        
+        #hamburger-icon.open .line-top { transform: translateY(6px) rotate(45deg); }
+        #hamburger-icon.open .line-bottom { transform: translateY(-6px) rotate(-45deg); }
+        #hamburger-icon.open .line-middle { opacity: 0; }
         .menu-item { padding: 10px 12px; font-size: 13px; font-weight: 500; color: #ffffff; border-radius: 10px; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: background 0.2s; margin-bottom: 2px; }
         .menu-item:hover { background: rgba(255, 255, 255, 0.15); }
         .container { max-width: 600px; margin: 20px auto; padding: 0 16px; box-sizing: border-box; }
@@ -192,8 +199,6 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background-color: rgba(0,0,0,0.4); backdrop-filter: blur(8px); z-index: 2100; display: none; justify-content: center; align-items: center; }
 	.custom-modal { box-sizing: border-box; background: rgba(255,255,255,0.85); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid white; max-width: 320px; width: 90%; border-radius: 24px; padding: 35px 25px 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.15), inset 0 1px 1px rgba(255,255,255,0.6); text-align: center; }
 	.modal-title { font-size: 19px; font-weight: 700; margin: 5px 0 25px; color: var(--text-main); letter-spacing: 0.5px; }
-        input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type="number"] { -moz-appearance: textfield; }        
         .modal-input { width: 100%; box-sizing: border-box; padding: 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.15); background: rgba(255,255,255,0.9); font-size: 15px; margin-bottom: 0; text-align: center; outline: none; transition: 0.3s; padding-right: 35px; }
         .modal-input:focus { border-color: #718096; box-shadow: 0 0 0 3px rgba(113, 128, 150, 0.15); }
         .modal-btn-group { display: flex; gap: 12px; margin-top: 5px; }
@@ -240,6 +245,11 @@
             pointer-events: none;        
         }
         body.no-scroll { overflow: hidden !important; }
+	/* 👇 新增：全螢幕圖片檢視器的 CSS 👇 */
+        .image-viewer-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: rgba(0,0,0,0.92); z-index: 9999; display: none; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s ease; touch-action: pinch-zoom; }
+        .image-viewer-overlay.show { opacity: 1; }
+        .image-viewer-img { max-width: 100vw; max-height: 100dvh; object-fit: contain; transition: transform 0.3s; }
+        .viewer-close-btn { position: fixed; top: max(20px, env(safe-area-inset-top)); right: 20px; color: white; background: rgba(255,255,255,0.25); width: 36px; height: 36px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 10000; font-size: 24px; font-weight: bold; backdrop-filter: blur(10px); }
     </style>
 </head>
 <body>
@@ -259,7 +269,11 @@
                 <div id="welcome-name" style="display: flex; align-items: center; gap: 4px; line-height: 1; transform: translateY(1px); white-space: nowrap;">讀取中</div>
                 <div class="avatar-placeholder" id="user-avatar">?</div>
                 <!-- 🌟 新增的漢堡選單 Icon -->
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 6px;"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                <svg id="hamburger-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 6px;">
+                    <line class="line-top" x1="3" y1="6" x2="21" y2="6"></line>
+                    <line class="line-middle" x1="3" y1="12" x2="21" y2="12"></line>
+                    <line class="line-bottom" x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
             </div> 
         </div>
     </header>
@@ -277,7 +291,7 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                     後台管理
                 </div>
-                <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.0.1</div>
+                <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.0.2</div>
             </div>
     <div id="loading" style="display: flex; flex-direction: column; align-items: center; margin-top: 120px;">
         <div class="spinner"></div>
@@ -514,7 +528,10 @@
     </nav>
 
     <div class="drawer-overlay" id="custom-drawer" onclick="closeDrawer()"><div class="drawer-content" onclick="event.stopPropagation()"><div class="drawer-handler"></div><h3 id="drawer-title" style="margin-top:0; margin-bottom:15px; font-size:18px; color:var(--text-main);"></h3><div id="drawer-body" style="font-size:14px; color:#4a5568; line-height:1.6; margin-bottom:20px;"></div></div></div>    
-    
+    <div class="image-viewer-overlay" id="image-viewer" onclick="closeImageViewer()">
+        <div class="viewer-close-btn" onclick="closeImageViewer()">×</div>
+        <img id="viewer-img" class="image-viewer-img" src="">
+    </div>
     <div class="modal-overlay" id="custom-modal">
         <div class="custom-modal">
             <div class="modal-spinner" id="modal-spinner"></div>
@@ -839,7 +856,15 @@
             if (currentUser.votedOption === 3 && !isGuestViewEnabled) return;
             
             const m = document.getElementById('avatar-menu'); 
-            m.style.display = (m.style.display === 'flex') ? 'none' : 'flex'; 
+            const icon = document.getElementById('hamburger-icon'); // 抓取圖示
+            
+            if (m.style.display === 'flex') {
+                m.style.display = 'none';
+                if(icon) icon.classList.remove('open'); // 關閉時恢復三條線
+            } else {
+                m.style.display = 'flex';
+                if(icon) icon.classList.add('open'); // 打開時變成叉叉
+            }
         }
         function closeModal() { 
             document.body.classList.remove('no-scroll');
@@ -939,22 +964,20 @@
         }
 
         async function shareNotice(title, id) {
-            // 在網址後面加上 ?notice=編號
             const shareUrl = window.location.href.split('?')[0] + '?notice=' + id;
-            const shareTitle = "【出遊指南公告】" + title;
+            
+            const shareTextContent = "【出遊公告轉發/分享】\n" + title + "\n👉 點擊前往出遊指南查看完整內容：";
             
             if (navigator.share) {
                 try { 
                     await navigator.share({ 
-                        title: shareTitle, 
-                        // 原生分享：text 裡面不要放網址，讓系統用 url 欄位去接，就不會重複了
-                        text: shareTitle + "\n👉 點擊前往出遊指南查看完整內容：", 
+                        title: "【出遊公告轉發/分享】", // 這個標題會顯示在某些 App 的主旨欄
+                        text: shareTextContent, 
                         url: shareUrl 
                     }); 
                 } catch (err) {}
             } else {
-                // 電腦版或不支援原生分享時：直接複製組合好的文字
-                const copyText = shareTitle + "\n👉 點擊前往出遊指南查看完整內容：\n" + shareUrl;
+                const copyText = shareTextContent + "\n" + shareUrl;
                 navigator.clipboard.writeText(copyText).then(() => { 
                     showCustomAlert("已複製", "連結已複製到剪貼簿！可以貼上分享囉！"); 
                 });
@@ -1027,7 +1050,8 @@
                     
                     let shortHtml = needsExpand ? `<div class="notice-content-short">${shortText}<span class="read-more-inline">...查看更多</span></div>` : `<div class="notice-content-full" style="display:block; opacity:1; max-height:none;">${desc}</div>`;
                     let fullHtml = needsExpand ? `<div class="notice-content-full">${desc}</div>` : '';
-                    let imgHtml = imgUrl ? `<img src="${imgUrl}" class="notice-expand-img" onerror="this.style.display='none'">` : '';
+                    // 👇 修改：替換產生圖片的 HTML 字串 👇
+                    let imgHtml = imgUrl ? `<img src="${imgUrl}" class="notice-expand-img" onclick="openImageViewer('${imgUrl}', event)" onerror="this.style.display='none'">` : '';
                     
                     let clickAttr = needsExpand ? `onclick="if(!this.classList.contains('expanded')) { this.classList.add('expanded'); }"` : '';
 
@@ -1494,6 +1518,8 @@
             const indicator = document.getElementById('nav-indicator');
             if (targetView && targetView.classList.contains('active')) {
                 document.getElementById('avatar-menu').style.display = 'none';
+		const hIcon = document.getElementById('hamburger-icon');
+            	if(hIcon) hIcon.classList.remove('open');
                 if (activeTab && indicator) {
                     indicator.style.width = activeTab.offsetWidth + 'px';
                     indicator.style.left = activeTab.offsetLeft + 'px';
@@ -1528,6 +1554,8 @@
 
         function handleAdminLogin() {
             document.getElementById('avatar-menu').style.display = 'none';
+	    const hIcon = document.getElementById('hamburger-icon');
+            if(hIcon) hIcon.classList.remove('open');
             if (document.getElementById('view-admin').classList.contains('active')) return;
             showCustomPrompt("管理員登入", true, (pwd) => {
                 if (pwd === ADMIN_PASSCODE) switchView('admin');
@@ -1710,8 +1738,37 @@
             const avatarMenu = document.getElementById('avatar-menu');
             if (avatarMenu && avatarMenu.style.display === 'flex') {
                 avatarMenu.style.display = 'none';
+                const icon = document.getElementById('hamburger-icon');
+                if (icon) icon.classList.remove('open'); 
             }
         });
+	function openImageViewer(url, event) {
+            if (event) event.stopPropagation();
+            const viewer = document.getElementById('image-viewer');
+            const img = document.getElementById('viewer-img');
+            img.src = url;
+            viewer.style.display = 'flex';
+            setTimeout(() => viewer.classList.add('show'), 10);
+            
+            const metaViewport = document.querySelector('meta[name=viewport]');
+            if (metaViewport) {
+                metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
+            }
+        }
+
+        function closeImageViewer() {
+            const viewer = document.getElementById('image-viewer');
+            viewer.classList.remove('show');
+            setTimeout(() => {
+                viewer.style.display = 'none';
+                document.getElementById('viewer-img').src = ''; 
+            }, 300);
+            
+            const metaViewport = document.querySelector('meta[name=viewport]');
+            if (metaViewport) {
+                metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+            }
+        }
         window.addEventListener('resize', function() {
             const activeTab = document.querySelector('.nav-item.active');
             const indicator = document.getElementById('nav-indicator');
