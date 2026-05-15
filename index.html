@@ -45,11 +45,9 @@
             padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; 
             border-bottom: 1px solid rgba(255,255,255,0.7); box-shadow: 0 4px 15px rgba(0,0,0,0.03); 
             position: sticky; top: 0; z-index: 900; 
-            /* 新增下面這行，讓它具備跟抽屜一樣順暢的滑動彈性 */
             transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1); 
         }
 
-        /* 👇 2. 新增隱藏狀態的 class：往上推移自身 100% 的高度 👇 */
         .top-nav.nav-hidden {
             transform: translateY(-100%);
         }
@@ -58,7 +56,6 @@
         .user-info { display: flex; align-items: center; font-size: 13px; color: var(--text-main); cursor: pointer; background: rgba(255,255,255,0.4); padding: 4px 10px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.6); transition: 0.2s; box-shadow: inset 0 1px 1px rgba(255,255,255,0.5); }
         .user-info:hover { background: rgba(255,255,255,0.7); }
         .avatar-placeholder { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-orange), #ff8c00); margin-left: 6px; display: flex; justify-content: center; align-items: center; color: white; font-size: 11px; font-weight: 700; overflow: hidden; box-shadow: none !important; }
-        /* 👇 輕量清澈版毛玻璃 👇 */
         .dropdown-menu { position: fixed; top: 60px; right: 16px; background: rgba(30, 30, 30, 0.35); backdrop-filter: blur(10px) saturate(150%); -webkit-backdrop-filter: blur(10px) saturate(150%); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.15), inset 0 1px 1px rgba(255, 255, 255, 0.2); width: 170px; display: none; flex-direction: column; overflow: hidden; animation: fadeIn 0.2s ease-out; z-index: 2500; padding: 5px; }
         #hamburger-icon .line-top { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform-origin: 12px 6px; }
         #hamburger-icon .line-bottom { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform-origin: 12px 18px; }
@@ -84,15 +81,8 @@
         .info-icon { font-size: 20px; margin-bottom: 6px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08)); color: var(--primary-blue); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .info-icon svg { flex-shrink: 0; min-width: 20px; min-height: 20px; }
         .info-label { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; font-weight: 500; }
-	.info-value { 
-  	  font-size: 13px; 
-   	 font-weight: 700; 
-   	 color: var(--text-main); 
-   	 transition: color 0.2s ease; 
-	}
-	.info-block:hover .info-value { 
-  	  color: var(--primary-blue); 
-	}
+        .info-value { font-size: 13px; font-weight: 700; color: var(--text-main); transition: color 0.2s ease; }
+        .info-block:hover .info-value { color: var(--primary-blue); }
         
         .notice-card-new { background: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.8); border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03), inset 0 1px 1px rgba(255,255,255,0.5); padding: 16px; margin-bottom: 12px; position: relative; overflow: hidden; transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer; }
         .notice-card-new:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.08), inset 0 1px 1px rgba(255,255,255,0.6); }
@@ -131,7 +121,6 @@
 
         .notice-expand-img { display: none; width: 100%; border-radius: 8px; margin-top: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .notice-card-new.expanded .notice-expand-img { display: block; animation: fadeIn 0.4s ease-out; }
-	/* 👇 新增：負責包裝「顯示較少」，並讓它在展開時才顯示出來 👇 */
         .notice-expand-footer { display: none; margin-top: 8px; text-align: left; }
         .notice-card-new.expanded .notice-expand-footer { display: block; animation: fadeIn 0.4s ease-out; }
         
@@ -160,8 +149,6 @@
             border-radius: 14px; padding: 12px 16px; margin-bottom: 16px; 
             box-shadow: 0 4px 12px rgba(0,0,0,0.05), inset 0 1px 1px white; 
             position: sticky; top: 70px; z-index: 100; border: 1px solid rgba(255,255,255,0.9); 
-            
-            /* 新增這行：讓它上下移動時，有跟上方導覽列一模一樣的絲滑感 */
             transition: top 0.65s cubic-bezier(0.4, 0, 0.2, 1); }
          .prep-progress-card.shift-up { top: 16px; }
         .prep-progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-weight: 700; }
@@ -239,8 +226,8 @@
         .drawer-handler { width: 40px; height: 4px; background: rgba(0,0,0,0.15); border-radius: 4px; margin: 0 auto 20px; }
         .drawer-overlay.show .drawer-content { bottom: 0; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background-color: rgba(0,0,0,0.4); backdrop-filter: blur(8px); z-index: 2100; display: none; justify-content: center; align-items: center; }
-	.custom-modal { box-sizing: border-box; background: rgba(255,255,255,0.85); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid white; max-width: 320px; width: 90%; border-radius: 24px; padding: 35px 25px 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.15), inset 0 1px 1px rgba(255,255,255,0.6); text-align: center; }
-	.modal-title { font-size: 19px; font-weight: 700; margin: 5px 0 25px; color: var(--text-main); letter-spacing: 0.5px; }
+        .custom-modal { box-sizing: border-box; background: rgba(255,255,255,0.85); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid white; max-width: 320px; width: 90%; border-radius: 24px; padding: 35px 25px 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.15), inset 0 1px 1px rgba(255,255,255,0.6); text-align: center; }
+        .modal-title { font-size: 19px; font-weight: 700; margin: 5px 0 25px; color: var(--text-main); letter-spacing: 0.5px; }
         .modal-input { width: 100%; box-sizing: border-box; padding: 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.15); background: rgba(255,255,255,0.9); font-size: 15px; margin-bottom: 0; text-align: center; outline: none; transition: 0.3s; padding-right: 35px; }
         .modal-input:focus { border-color: #718096; box-shadow: 0 0 0 3px rgba(113, 128, 150, 0.15); }
         .modal-btn-group { display: flex; gap: 12px; margin-top: 5px; }
@@ -294,7 +281,7 @@
         .image-viewer-overlay.show { opacity: 1; }
         .image-viewer-img { max-width: 100vw; max-height: 100dvh; object-fit: contain; transition: transform 0.3s; }
         .viewer-close-btn { position: fixed; top: max(20px, env(safe-area-inset-top)); right: 20px; color: white; background: rgba(255,255,255,0.25); width: 36px; height: 36px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 10000; font-size: 24px; font-weight: bold; backdrop-filter: blur(10px); }
-	    .acc-hero { 
+        .acc-hero { 
             position: relative; 
             margin: -20px -16px 16px; 
             height: 240px; 
@@ -306,15 +293,15 @@
             transform: translateZ(0);
             -webkit-mask-image: -webkit-radial-gradient(white, black);
         }        
-	    .acc-back-btn { position: absolute; top: 16px; left: 16px; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.9); display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 10; color: var(--text-main); box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: 0.2s; }
+        .acc-back-btn { position: absolute; top: 16px; left: 16px; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.9); display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 10; color: var(--text-main); box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: 0.2s; }
         .acc-back-btn:active { transform: scale(0.9); }
         .acc-back-btn svg { width: 18px; height: 18px; }
-	    /* 輪播圖相關樣式 */
+        /* 輪播圖相關樣式 */
         .acc-carousel-wrapper { width: 100%; height: 100%; overflow: hidden; position: absolute; top: 0; left: 0; z-index: 1; }
         .acc-carousel-track { display: flex; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1); }
         .acc-hero-img { flex-shrink: 0; width: 100%; height: 100%; object-fit: cover; }
 
-	    /* 輪播指示點樣式 */
+        /* 輪播指示點樣式 */
         .acc-carousel-dots { position: absolute; bottom: 85px; left: 0; width: 100%; display: flex; justify-content: center; gap: 6px; z-index: 5; }
         .acc-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.4); transition: 0.3s; }
         .acc-dot.active { background: white; width: 16px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
@@ -363,7 +350,7 @@
         .acc-card { background: rgba(255, 255, 255, 0.55); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.9); border-radius: 14px; padding: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.7); margin-bottom: 12px; }
         
         .acc-time-grid { display: flex; gap: 10px; margin-bottom: 16px; }
-	/* 👇 新增：服務設施 Grid 與卡片樣式 👇 */
+        /* 👇 新增：服務設施 Grid 與卡片樣式 👇 */
         .facility-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr); /* 切割成 3 個等寬直欄 */
@@ -473,7 +460,6 @@
             padding: 4px 12px; border-radius: 20px; 
             box-shadow: 0 2px 6px rgba(0,0,0,0.02); 
         }
-	
     </style>
 </head>
 <body>
@@ -492,7 +478,6 @@
             <div class="user-info" onclick="toggleMenu(event)">
                 <div id="welcome-name" style="display: flex; align-items: center; gap: 4px; line-height: 1; transform: translateY(1px); white-space: nowrap;">讀取中</div>
                 <div class="avatar-placeholder" id="user-avatar">?</div>
-                <!-- 🌟 新增的漢堡選單 Icon -->
                 <svg id="hamburger-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 6px;">
                     <line class="line-top" x1="3" y1="6" x2="21" y2="6"></line>
                     <line class="line-middle" x1="3" y1="12" x2="21" y2="12"></line>
@@ -503,20 +488,20 @@
     </header>
 
     <div id="avatar-menu" class="dropdown-menu">
-                <div class="menu-item" onclick="switchView('result')">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-                    投票結果統計
-                </div>
-                <div class="menu-item" onclick="switchView('archive')">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                    歷史方案回顧
-                </div>
-                <div class="menu-item" onclick="handleAdminLogin()" style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 2px;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                    後台管理
-                </div>
-                <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.0.8</div>
-            </div>
+        <div class="menu-item" onclick="switchView('result')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+            投票結果統計
+        </div>
+        <div class="menu-item" onclick="switchView('archive')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+            歷史方案回顧
+        </div>
+        <div class="menu-item" onclick="handleAdminLogin()" style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 2px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            後台管理
+        </div>
+        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.0.9</div>
+    </div>
     <div id="loading" style="display: flex; flex-direction: column; align-items: center; margin-top: 120px;">
         <div class="spinner"></div>
         <h2 style="color: #4a5568; margin-bottom: 10px; margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5);">系統驗證中...</h2>
@@ -592,32 +577,23 @@
             </div>
             <div id="ui-notices-container"></div>
         </div>
-	<!-- 👇 新增：民宿獨立頁面 👇 -->
+
         <div id="view-accommodation" class="view-section">
             <div class="acc-hero">
-                <!-- 返回按鈕切換回首頁 overview -->
                 <div class="acc-back-btn" onclick="switchView('overview')">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </div>
                 
-                <!-- 👇 輪播圖容器 👇 -->
                 <div class="acc-carousel-wrapper">
                     <div class="acc-carousel-track" id="acc-carousel-track">
-                        <!-- 第一張 -->
                         <img src="https://twstay.com/management/img/MYC260039/indexH/indexH0.jpg" class="acc-hero-img" onerror="this.src='yilan.png'">
-                        <!-- 第二張 (這邊我先推測網址是 H1，你可以自行替換) -->
                         <img src="https://twstay.com/management/img/MYC260039/indexH/indexH1.jpg" class="acc-hero-img" onerror="this.src='yilan.png'">
-                        <!-- 第三張 -->
                         <img src="https://twstay.com/management/img/MYC260039/indexH/indexH2.jpg" class="acc-hero-img" onerror="this.src='yilan.png'">
-			<!-- 第四張 -->
                         <img src="https://twstay.com/management/img/MYC260039/indexH/indexH3.jpg" class="acc-hero-img" onerror="this.src='yilan.png'">
-			<!-- 第五張 -->
                         <img src="https://twstay.com/management/img/MYC260039/indexH/indexH4.jpg" class="acc-hero-img" onerror="this.src='yilan.png'">
-
                     </div>
                 </div>
 
-                <!-- 輪播指示點 -->
                 <div class="acc-carousel-dots" id="acc-carousel-dots">
                     <div class="acc-dot active"></div>
                     <div class="acc-dot"></div>
@@ -626,7 +602,6 @@
                     <div class="acc-dot"></div>
                 </div>
 
-                <!-- 文字內容 -->
                 <div class="acc-hero-content">
                     <div style="display: flex; justify-content: space-between; align-items: flex-end;">
                         <div>
@@ -651,18 +626,15 @@
                                 </svg>
                             </a>
                         </div>
-                        
                     </div>
                 </div>
             </div>
 
-            <!-- 頁籤切換器 -->
             <div class="acc-tabs-container">
                 <div class="acc-tab active" onclick="switchAccTab('info')" id="tab-acc-info">民宿資訊</div>
                 <div class="acc-tab" onclick="switchAccTab('rooms')" id="tab-acc-rooms">房型床位</div>
             </div>
 
-           <!-- 分頁 1：民宿資訊 -->
             <div id="acc-content-info" class="acc-content-section active">
                 
                 <div class="acc-time-grid">
@@ -724,18 +696,15 @@
                 </div>
             </div>
 
-            <!-- 分頁 2：分房分配 -->
             <div id="acc-content-rooms" class="acc-content-section">
                 <div class="acc-section-title">房型 / 床位</div>
-                <!-- 👇 改成這個空容器 👇 -->
                 <div id="acc-rooms-container">
                     <p style="color:var(--text-muted); font-size:13px; text-align:center;">載入中...</p>
                 </div>
             </div>
         </div>
 
-			
-	<div id="view-people" class="view-section">
+        <div id="view-people" class="view-section">
             <div class="card">
                 <div class="acc-back-btn" onclick="switchView('overview')" style="position: static; margin-bottom: 20px;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -758,8 +727,8 @@
                 </div>
             </div>
         </div>
-	
-	<div id="view-guest-locked" class="view-section">
+    
+        <div id="view-guest-locked" class="view-section">
             <div style="display: flex; justify-content: center; align-items: center; height: 60vh;">
                 <div class="card" style="display: inline-flex; flex-direction: column; justify-content: center; align-items: center; width: 280px; padding: 40px 20px; text-align: center;">
                     <div style="margin-bottom: 16px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));">
@@ -804,6 +773,7 @@
             </div>
             <div id="prep-checklist-container"></div>
         </div>
+        
         <div id="view-board" class="view-section">
         <h2 style="text-align: center; color: var(--primary-green); margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; gap: 8px;">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> 留言板
@@ -1061,7 +1031,6 @@
             if (badge) badge.style.display = 'none';
         }
 
-        // 🌟 已修復的按讚頭像渲染函式
         function getLikesIgStyle(likesArray) {
             if (!likesArray || likesArray.length === 0) return "";
             
@@ -1088,6 +1057,18 @@
             return avatarsHtml + textHtml;
         }
 
+        // 🌟 超級防彈「設定值解析器」
+        function getConfigBool(cfg, key, defaultVal = true) {
+            if (!cfg || cfg[key] === undefined || cfg[key] === null) return defaultVal;
+            const str = String(cfg[key]).trim().toLowerCase();
+            if (str === 'true' || str === 'v' || str === '1') return true;
+            if (str === 'false' || str === '0' || str === '') return false;
+            return defaultVal;
+        }
+
+        // 🌟 防止背景跟操作者搶方向盤的鎖定閥
+        let activeConfigUpdates = 0;
+
         async function refreshMessagesOnly(isSilent = true) {
             if (!isSilent) showCustomAlert("更新中", "正在抓取最新資料...", false);
             try {
@@ -1095,59 +1076,64 @@
                 const response = await fetch(fetchUrl, { cache: 'no-store', redirect: 'follow' });
                 const data = await response.json();
                 
-                if (data.messages) {
-                    data.messages.forEach(m => { 
-                        const id = m.LineID || m.UserId;
-                        if (id) window.userNameMap[id] = m.Name;
-                        if (id && m.AvatarUrl) window.userAvatarMap[id] = m.AvatarUrl; 
-                        if (m.Name && m.AvatarUrl) window.userAvatarMap[m.Name] = m.AvatarUrl;
-                    });
-                }
-                
-                if (data.messages) {
-                    const newMsgs = [...data.messages].reverse(); 
-                    
-                    if (isSilent) {
-                        let isStructuralChange = true;
-                        if (allMessages.length === newMsgs.length && allMessages.length > 0) {
-                            let match = true;
-                            for (let i = 0; i < Math.min(10, allMessages.length); i++) {
-                                if (allMessages[i].Name !== newMsgs[i].Name || allMessages[i].Time !== newMsgs[i].Time) {
-                                    match = false; break;
-                                }
-                            }
-                            if (match) isStructuralChange = false;
-                        } else if (allMessages.length === 0 && newMsgs.length === 0) {
-                            isStructuralChange = false;
-                        }
-                        
-                        allMessages = newMsgs; 
+                if (!data) return;
 
-                        if (isStructuralChange) {
-                            renderMessages();
-                        } else {
-                            updateExistingMessagesInPlace();
-                        }
-                    } else {
-                        allMessages = newMsgs;
-                        currentMsgPage = 1; 
-                        renderMessages();
+                // 🚨 核心防禦：只有當你「沒有」在點擊開關時，背景才允許覆蓋設定檔
+                if (activeConfigUpdates === 0) {
+                    const oldConfig = JSON.stringify(cachedPollData?.config || {});
+                    const newConfig = JSON.stringify(data.config || {});
+                    
+                    if (oldConfig !== newConfig) {
+                        cachedPollData.config = data.config;
+                        renderDynamicUI(data); 
                     }
                 }
-                
-                if (document.getElementById('view-board').classList.contains('active')) {
-                    clearBadge();
-                } else {
-                    updateBadgeCount();
+
+                if (data.messages) {
+                    data.messages.forEach(m => {
+                        const id = m.LineID || m.UserId;
+                        if (id) window.userNameMap[id] = m.Name;
+                        if (id && m.AvatarUrl) window.userAvatarMap[id] = m.AvatarUrl;
+                        if (m.Name && m.AvatarUrl) window.userAvatarMap[m.Name] = m.AvatarUrl; 
+                    });
+
+                    const newMsgs = [...data.messages].reverse();
+                    
+                    // 🌟 核心修復：智慧判斷是「有新留言擠進來」還是「舊留言被按讚/編輯」
+                    let isStructuralChange = true;
+                    if (allMessages.length === newMsgs.length && allMessages.length > 0) {
+                        let match = true;
+                        // 檢查最前面的留言有沒有換人，如果沒有，代表只是有人按讚或編輯
+                        for (let i = 0; i < Math.min(10, allMessages.length); i++) {
+                            if (allMessages[i].Name !== newMsgs[i].Name || allMessages[i].Time !== newMsgs[i].Time) {
+                                match = false; break;
+                            }
+                        }
+                        if (match) isStructuralChange = false;
+                    } else if (allMessages.length === 0 && newMsgs.length === 0) {
+                        isStructuralChange = false;
+                    }
+
+                    allMessages = newMsgs;
+
+                    // 🌟 根據判斷結果決定要怎麼更新畫面
+                    if (isStructuralChange) {
+                        renderMessages(); // 有新留言，重新產生正確的大頭貼跟名字框架
+                    } else {
+                        updateExistingMessagesInPlace(); // 只是按讚，原地更新即可（畫面不會閃爍）
+                    }
+                    
+                    if (document.getElementById('view-board').classList.contains('active')) {
+                        clearBadge();
+                    } else {
+                        updateBadgeCount();
+                    }
                 }
 
                 if (!isSilent) closeModal(); 
             } catch (error) {
-                console.error("更新失敗", error);
-                if (!isSilent) {
-                    closeModal();
-                    showCustomAlert("錯誤", "無法連線到資料庫。");
-                }
+                console.error("同步失敗", error);
+                if (!isSilent) { closeModal(); showCustomAlert("錯誤", "連線超時"); }
             }
         }
 
@@ -1170,7 +1156,6 @@
             return `${y}/${m}/${d} ${ampm} ${h12}:${mins}`;
         }
 
-        // 🌟 補回並升級的 initLockScreen (點整張卡片 4 次解鎖)
         function initLockScreen() {
             let c = 0; let t = null;
             const lockCard = document.querySelector('#lock-screen .card');
@@ -1292,9 +1277,9 @@
                 }
                 
                 allMessages = [...(data.messages || [])].reverse();
+                
                 renderDynamicUI(data);
                 renderMessages();
-                
                 updateBadgeCount();
 
                 document.getElementById('loading').style.display = 'none';
@@ -1470,158 +1455,38 @@
         }
 
         function renderDynamicUI(data) {
-            if (data.config) {
-                const cfg = data.config;
-                if(cfg.TripTitle) { document.getElementById('ui-trip-title').innerText = cfg.TripTitle; document.getElementById('vote-ui-title').innerText = cfg.TripTitle; }
-                if(cfg.TripDate) { document.getElementById('ui-trip-date').innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> <span>${cfg.TripDate}</span>`; document.getElementById('vote-ui-date').innerText = cfg.TripDate; }
-                if(cfg.InfoAcc) document.getElementById('ui-info-acc').innerText = cfg.InfoAcc;
-                if(cfg.InfoPpl) document.getElementById('ui-info-ppl').innerText = cfg.InfoPpl;
-                if(cfg.InfoPrice) document.getElementById('ui-info-price').innerText = cfg.InfoPrice;
-                if(cfg.DepartureDate) countdownTargetDate = new Date(cfg.DepartureDate).getTime();
-                
-                const isLocked = String(cfg.VotingLocked).toLowerCase() === 'true';
-                document.getElementById('admin-lock-toggle').checked = isLocked;
-                
-                isGuestViewEnabled = String(cfg.GuestViewEnabled).toLowerCase() === 'true';
-                const guestToggle = document.getElementById('admin-guest-toggle');
-                if (guestToggle) guestToggle.checked = isGuestViewEnabled;
+            if (!data.config) return;
+            const cfg = data.config;
 
-                const subOverview = document.getElementById('admin-guest-overview');
-                const subItinerary = document.getElementById('admin-guest-itinerary');
-                const subPrep = document.getElementById('admin-guest-prep');
-                const subBoard = document.getElementById('admin-guest-board');
-                
-                if(subOverview) subOverview.checked = String(cfg.Guest_View_Overview).toLowerCase() !== 'false';
-                if(subItinerary) subItinerary.checked = String(cfg.Guest_View_Itinerary).toLowerCase() !== 'false';
-                if(subPrep) subPrep.checked = String(cfg.Guest_View_Prep).toLowerCase() !== 'false';
-                if(subBoard) subBoard.checked = String(cfg.Guest_View_Board).toLowerCase() !== 'false';
+            if(cfg.TripTitle) { document.getElementById('ui-trip-title').innerText = cfg.TripTitle; document.getElementById('vote-ui-title').innerText = cfg.TripTitle; }
+            if(cfg.TripDate) { document.getElementById('ui-trip-date').innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> <span>${cfg.TripDate}</span>`; }
+            if(cfg.InfoAcc) document.getElementById('ui-info-acc').innerText = cfg.InfoAcc;
+            if(cfg.InfoPpl) document.getElementById('ui-info-ppl').innerText = cfg.InfoPpl;
+            if(cfg.InfoPrice) document.getElementById('ui-info-price').innerText = cfg.InfoPrice;
+            if(cfg.DepartureDate) countdownTargetDate = new Date(cfg.DepartureDate).getTime();
+            initDaysCountdown();
 
-		// 🌟 更新新增的三個子開關狀態
-                const subAcc = document.getElementById('admin-guest-acc');
-                const subPpl = document.getElementById('admin-guest-ppl');
-                const subFee = document.getElementById('admin-guest-fee');
-                if(subAcc) subAcc.checked = String(cfg.Guest_View_Acc).toLowerCase() !== 'false';
-                if(subPpl) subPpl.checked = String(cfg.Guest_View_Ppl).toLowerCase() !== 'false';
-                if(subFee) subFee.checked = String(cfg.Guest_View_Fee).toLowerCase() !== 'false';
+            const guestToggle = document.getElementById('admin-guest-toggle');
+            if (guestToggle) guestToggle.checked = getConfigBool(cfg, 'GuestViewEnabled', false);
+            
+            const subOverview = document.getElementById('admin-guest-overview');
+            const subAcc = document.getElementById('admin-guest-acc');
+            const subPpl = document.getElementById('admin-guest-ppl');
+            const subFee = document.getElementById('admin-guest-fee');
+            const subItinerary = document.getElementById('admin-guest-itinerary');
+            const subPrep = document.getElementById('admin-guest-prep');
+            const subBoard = document.getElementById('admin-guest-board');
+            
+            if(subOverview) subOverview.checked = getConfigBool(cfg, 'Guest_View_Overview', true);
+            if(subAcc) subAcc.checked = getConfigBool(cfg, 'Guest_View_Acc', true);
+            if(subPpl) subPpl.checked = getConfigBool(cfg, 'Guest_View_Ppl', true);
+            if(subFee) subFee.checked = getConfigBool(cfg, 'Guest_View_Fee', true);
+            if(subItinerary) subItinerary.checked = getConfigBool(cfg, 'Guest_View_Itinerary', true);
+            if(subPrep) subPrep.checked = getConfigBool(cfg, 'Guest_View_Prep', true);
+            if(subBoard) subBoard.checked = getConfigBool(cfg, 'Guest_View_Board', true);
 
-                // 🌟 前台按鈕視覺鎖定處理 (針對訪客)
-                if (currentUser.votedOption === 3) {
-                    const lockSvgHtml = `<span style="font-size:12px; display:inline-flex; align-items:center; gap:3px; color:#a0aec0; font-weight:700;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>鎖定</span>`;
-
-                    if (String(cfg.Guest_View_Acc).toLowerCase() === 'false') {
-                        let btn = document.getElementById('btn-info-acc');
-                        if (btn) { btn.onclick = null; btn.style.opacity = '0.5'; btn.style.cursor = 'not-allowed'; document.getElementById('ui-info-acc').innerHTML = lockSvgHtml; }
-                    }
-                    if (String(cfg.Guest_View_Ppl).toLowerCase() === 'false') {
-                        let btn = document.getElementById('btn-info-ppl');
-                        if (btn) { btn.onclick = null; btn.style.opacity = '0.5'; btn.style.cursor = 'not-allowed'; document.getElementById('ui-info-ppl').innerHTML = lockSvgHtml; }
-                    }
-                    if (String(cfg.Guest_View_Fee).toLowerCase() === 'false') {
-                        let btn = document.getElementById('btn-info-fee');
-                        if (btn) { btn.onclick = null; btn.style.opacity = '0.5'; btn.style.cursor = 'not-allowed'; document.getElementById('ui-info-price').innerHTML = lockSvgHtml; }
-                    }
-                }
-
-                const subOptionsDiv = document.getElementById('admin-guest-sub-options');
-                if (subOptionsDiv) {
-                    subOptionsDiv.style.opacity = isGuestViewEnabled ? '1' : '0.4';
-                    subOptionsDiv.style.pointerEvents = isGuestViewEnabled ? 'auto' : 'none';
-                }
-
-                const voteBtn = document.getElementById('btn-submit-vote');
-                if (isLocked) {
-                    voteBtn.disabled = true; voteBtn.innerText = "系統已鎖定，停止報名";
-                } else {
-                    voteBtn.disabled = false; voteBtn.innerText = "確認提交";
-                }
-
-                let noticesHtml = ""; 
-                adminNoticesArray = []; 
-                
-                if (cfg.NoticesData) {
-                    try { adminNoticesArray = JSON.parse(cfg.NoticesData); } catch(e) { console.log("JSON 解析失敗"); }
-                } else {
-                    let i = 1;
-                    while(cfg[`Notice${i}_Title`]) {
-                        let rawTime = cfg[`Notice${i}_Time`] || '';
-                        let type = '';
-                        if(rawTime.startsWith('[PIN]')) type = '[PIN]';
-                        else if(rawTime.startsWith('[NEW]')) type = '[NEW]';
-                        let cleanTime = rawTime.replace('[PIN]', '').replace('[NEW]', '').trim();
-                        if (/^\d{4}-\d{2}-\d{2}T/.test(cleanTime)) {
-                            let d = new Date(cleanTime);
-                            cleanTime = !isNaN(d.getTime()) ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : cleanTime.split('T')[0];
-                        }
-                        adminNoticesArray.push({
-                            id: Math.random().toString(36).substring(2, 6),
-                            title: cfg[`Notice${i}_Title`],
-                            desc: cfg[`Notice${i}_Desc`] || '',
-                            imgUrl: cfg[`Notice${i}_ImgUrl`] || '',
-                            time: cleanTime,
-                            type: type,
-                            isHidden: false
-                        });
-                        i++;
-                    }
-                }
-                
-                adminNoticesArray.forEach((notice) => {
-                     if (notice.isHidden) return;
-
-                     let displayTime = notice.time.replace('[PIN]', '').replace('[NEW]', '').trim().replace(/-/g, '/');
-                    
-                    let isPinned = notice.type === '[PIN]';
-                    let pinnedClass = isPinned ? 'notice-card-pinned' : '';
-                    
-                    let badgeHtml = '';
-                    if (notice.type === '[PIN]') badgeHtml = '<div class="notice-pin-new">置頂公告</div>';
-                    else if (notice.type === '[NEW]') badgeHtml = '<div class="notice-new-badge">最新消息</div>';
-                    
-                    let imgUrls = notice.imgUrl ? notice.imgUrl.split('\n').map(u => u.trim()).filter(u => u !== '') : [];
-                    let lines = notice.desc.split('\n');
-                    let isLong = lines.length > 2; 
-                    let needsExpand = isLong || imgUrls.length > 0;
-                    
-                    let shortText = notice.desc;
-                    if (isLong) {
-                        shortText = lines[0] + '\n' + lines[1] + '...';
-                    }
-                    
-                    let shortHtml = needsExpand ? `<div class="notice-content-short">${shortText}<span class="read-more-inline">查看更多</span></div>` : `<div class="notice-content-full" style="display:block; opacity:1; max-height:none;">${notice.desc}</div>`;
-                    
-                    let fullHtml = needsExpand ? `<div class="notice-content-full">${notice.desc}</div>` : '';
-                    
-                    let imgHtml = '';
-                    if (imgUrls.length > 0) {
-                        imgUrls.forEach(url => { imgHtml += `<img src="${url}" class="notice-expand-img" onclick="openImageViewer('${url}', event)" onerror="this.style.display='none'">`; });
-                    }
-
-                    let showLessHtml = needsExpand ? `<div class="notice-expand-footer"><span class="show-less-inline" onclick="event.stopPropagation(); this.closest('.notice-card-new').classList.remove('expanded');">顯示較少</span></div>` : '';
-                    
-                    let clickAttr = needsExpand ? `onclick="if(!this.classList.contains('expanded')) { this.classList.add('expanded'); }"` : '';
-
-                    let shareBtnHtml = `<div onclick="shareNotice('${notice.title}', '${notice.id}'); event.stopPropagation();" class="share-icon-btn" title="分享">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
-                    </div>`;
-
-                    noticesHtml += `<div class="notice-card-new ${pinnedClass}" id="notice-card-${notice.id}" ${clickAttr}>
-                        <div class="notice-header">
-                            <div class="notice-title">${notice.title}</div>
-                            <div style="display:flex; align-items:center;">
-                                ${badgeHtml}
-                                ${shareBtnHtml}
-                            </div>
-                        </div>
-                        ${shortHtml}
-                        ${fullHtml}
-                        ${imgHtml}
-                        ${showLessHtml} 
-                        <div class="notice-footer" style="margin-top:10px;">${displayTime}</div>
-                    </div>`;
-                });
-                
-                document.getElementById('ui-notices-container').innerHTML = noticesHtml || '<p style="color:#888; font-size:13px;">目前無最新公告。</p>';
-            }
+            applyVisitorPermissions(cfg);
+            renderNoticesWithMagic(cfg); 
             
             setTimeout(() => {
                 if (data.transport && data.transport.length > 0) {
@@ -1683,55 +1548,37 @@
                             </div>
                         </div>`;
                     });
-                    
                     document.getElementById('ui-cars-container').innerHTML = carHtml;
                     initCarGridDrag();
-                } else { 
-                    document.getElementById('ui-cars-container').innerHTML = '<p style="color:#888; font-size:13px; margin:0;">尚未安排車次</p>'; 
-                }
+                } else { document.getElementById('ui-cars-container').innerHTML = '<p style="color:#888; font-size:13px; margin:0;">尚未安排車次</p>'; }
                 
                 if (data.bnbs && data.bnbs.length > 0) {
-                    let rulesHtml = '';
-                    let roomsHtml = '';
-                    
+                    let rulesHtml = ''; let roomsHtml = '';
                     data.bnbs.forEach(item => {
                         const type = item['類型'];
-                        
                         if (type === '注意事項') {
                             rulesHtml += `<div class="acc-rule-item"><div class="rule-icon">${item['標籤']}</div><div class="rule-text">${item['內容']}</div></div>`;
-                        } 
-                        else if (type === '房型床位') {
+                        } else if (type === '房型床位') {
                             let membersHtml = '';
                             for (let i = 1; i <= 6; i++) {
                                 const memberName = item[`人員${i}`];
-                                if (memberName) {
-                                    membersHtml += `<div class="member-tag">${memberName}</div>`;
-                                }
+                                if (memberName) membersHtml += `<div class="member-tag">${memberName}</div>`;
                             }
-                            
                             roomsHtml += `
                             <div class="room-card">
                                 <div class="room-header">
                                     <div class="room-header-left">
-                                        <div class="room-icon">
-                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M2 4v16"></path><path d="M2 8h18a2 2 0 0 1 2 2v10"></path><path d="M2 17h20"></path><path d="M6 8v9"></path>
-                                            </svg>
-                                        </div>
+                                        <div class="room-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4v16"></path><path d="M2 8h18a2 2 0 0 1 2 2v10"></path><path d="M2 17h20"></path><path d="M6 8v9"></path></svg></div>
                                         <div class="room-name">${item['標籤']}</div>
                                     </div>
                                     <div class="room-badge">${item['內容']}</div>
                                 </div>
-                                <div class="room-members">
-                                    ${membersHtml}
-                                </div>
+                                <div class="room-members">${membersHtml}</div>
                             </div>`;
                         }
                     });
-
                     const rulesContainer = document.getElementById('acc-rules-container');
                     const roomsContainer = document.getElementById('acc-rooms-container');
-                    
                     if (rulesContainer) rulesContainer.innerHTML = rulesHtml || '<p style="color:#888; font-size:13px;">目前無注意事項</p>';
                     if (roomsContainer) roomsContainer.innerHTML = roomsHtml || '<p style="color:#888; font-size:13px;">尚未分配房間</p>';
                 }
@@ -1762,81 +1609,205 @@
             }, 50);
         }
 
-        function renderChecklist() {
-            const container = document.getElementById('prep-checklist-container');
-            let html = ''; let totalItems = 0; let totalChecked = 0;
-            checklistData.forEach((cat, cIdx) => {
-                let catTotal = cat.items.length; let catChecked = 0;
-                let itemsHtml = '';
-                cat.items.forEach(item => {
-                    totalItems++;
-                    const isChecked = userChecklistState[item.id] === true;
-                    if (isChecked) { catChecked++; totalChecked++; }
-                    itemsHtml += `
-                        <div class="prep-item ${isChecked ? 'checked' : ''}" onclick="toggleChecklistItem('${item.id}')">
-                            <div class="prep-checkbox"></div>
-                            <div class="prep-item-text">
-                                <div class="prep-item-label">${item.label}</div>
-                                ${item.desc ? `<div class="prep-item-desc">${item.desc}</div>` : ''}
-                            </div>
-                        </div>
-                    `;
-                });
-                const isOpen = openCategories[cat.id] ? 'open' : ''; 
-                html += `
-                    <div class="prep-cat-card">
-                        <div class="prep-cat-header" onclick="togglePrepCategory('${cat.id}')">
-                            <div class="prep-cat-icon">${cat.icon}</div>
-                            <div class="prep-cat-title-area">
-                                <div class="prep-cat-title">${cat.title}</div>
-                                <div class="prep-cat-subtitle" style="color:var(--primary-green)">${catChecked}/${catTotal} 項已準備</div>
-                            </div>
-                            <div class="prep-cat-toggle ${isOpen}" id="toggle-${cat.id}">▼</div>
-                        </div>
-                        <div class="prep-cat-body ${isOpen}" id="body-${cat.id}">
-                            ${itemsHtml}
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-            const pct = totalItems === 0 ? 0 : Math.round((totalChecked / totalItems) * 100);
-            document.getElementById('prep-progress-text').innerText = `${totalChecked}/${totalItems} (${pct}%)`;
-            document.getElementById('prep-progress-bar').style.width = `${pct}%`;
-        }
+        function applyVisitorPermissions(cfg) {
+            if (currentUser.votedOption !== 3) return; 
 
-        function togglePrepCategory(catId) {
-            openCategories[catId] = !openCategories[catId];
-            renderChecklist();
-        }
+            isGuestViewEnabled = getConfigBool(cfg, 'GuestViewEnabled', false);
+            const currentActive = document.querySelector('.view-section.active');
+            const isRedLockVisible = document.getElementById('guest-lock-screen').style.display === 'block';
 
-        function toggleChecklistItem(itemId) {
-            userChecklistState[itemId] = !userChecklistState[itemId];
-            isChecklistModified = true; 
-            renderChecklist(); 
-        }
-
-        async function saveChecklistBackground() {
-            if (!isChecklistModified) return; 
-            isChecklistModified = false; 
-            try {
-                await fetch(GAS_API_URL, { 
-                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: "updateChecklist", userId: currentUser.id, data: JSON.stringify(userChecklistState) }) 
-                });
-            } catch(e) { 
-                isChecklistModified = true; 
+            if (!isGuestViewEnabled) {
+                if (!isRedLockVisible) switchView('overview'); 
+                return; 
+            } else if (isGuestViewEnabled && isRedLockVisible) {
+                switchView('overview'); 
             }
+
+            if (currentActive) {
+                const currentId = currentActive.id.replace('view-', '');
+                const keyMap = { 'overview':'Guest_View_Overview', 'accommodation':'Guest_View_Acc', 'people':'Guest_View_Ppl', 'fees':'Guest_View_Fee', 'itinerary':'Guest_View_Itinerary', 'prep':'Guest_View_Prep', 'board':'Guest_View_Board' };
+                
+                if (keyMap[currentId] && !getConfigBool(cfg, keyMap[currentId], true)) {
+                    switchView(currentId); 
+                } else if (currentId === 'guest-locked') {
+                    const activeNav = document.querySelector('.nav-item.active');
+                    if (activeNav) {
+                        const target = activeNav.id.replace('tab-', ''); 
+                        if (getConfigBool(cfg, keyMap[target], true)) {
+                            switchView(target); 
+                        }
+                    }
+                }
+            }
+
+            const lockSvg = `<span style="font-size:11px; display:inline-flex; align-items:center; gap:3px; color:#a0aec0; font-weight:700;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>鎖定</span>`;
+            const permMap = [
+                { key: 'Guest_View_Acc', btnId: 'btn-info-acc', valId: 'ui-info-acc', original: cfg.InfoAcc, target: 'accommodation' },
+                { key: 'Guest_View_Ppl', btnId: 'btn-info-ppl', valId: 'ui-info-ppl', original: cfg.InfoPpl, target: 'people' },
+                { key: 'Guest_View_Fee', btnId: 'btn-info-fee', valId: 'ui-info-price', original: cfg.InfoPrice, target: 'fees' }
+            ];
+
+            permMap.forEach(item => {
+                const btn = document.getElementById(item.btnId);
+                const val = document.getElementById(item.valId);
+                const isLocked = !getConfigBool(cfg, item.key, true);
+
+                if (btn) {
+                    if (isLocked) {
+                        btn.style.opacity = '0.5'; btn.style.cursor = 'not-allowed';
+                        btn.onclick = (e) => { e.stopPropagation(); }; 
+                        if (val) val.innerHTML = lockSvg;
+                    } else {
+                        btn.style.opacity = '1'; btn.style.cursor = 'pointer';
+                        btn.onclick = () => switchView(item.target);
+                        if (val) val.innerText = item.original || '--';
+                    }
+                }
+            });
         }
 
-        function initCarGridDrag() {
-            const slider = document.querySelector('.car-grid');
-            if(!slider) return;
-            let isDown = false; let startX; let scrollLeft;
-            slider.addEventListener('mousedown', (e) => { isDown = true; window.isCarDragging = false; slider.style.cursor = 'grabbing'; startX = e.pageX - slider.offsetLeft; scrollLeft = slider.scrollLeft; });
-            slider.addEventListener('mouseleave', () => { isDown = false; slider.style.cursor = 'grab'; });
-            slider.addEventListener('mouseup', () => { isDown = false; slider.style.cursor = 'grab'; setTimeout(() => window.isCarDragging = false, 50); });
-            slider.addEventListener('mousemove', (e) => { if (!isDown) return; e.preventDefault(); window.isCarDragging = true; const x = e.pageX - slider.offsetLeft; const walk = (x - startX) * 2; slider.scrollLeft = scrollLeft - walk; });
+        function renderNoticesWithMagic(cfg) {
+            const container = document.getElementById('ui-notices-container');
+            adminNoticesArray = []; 
+            
+            if (cfg.NoticesData) {
+                try { adminNoticesArray = JSON.parse(cfg.NoticesData); } catch(e) {}
+            } else {
+                let i = 1;
+                while(cfg[`Notice${i}_Title`]) {
+                    let rawTime = cfg[`Notice${i}_Time`] || '';
+                    let type = '';
+                    if(rawTime.startsWith('[PIN]')) type = '[PIN]';
+                    else if(rawTime.startsWith('[NEW]')) type = '[NEW]';
+                    let cleanTime = rawTime.replace('[PIN]', '').replace('[NEW]', '').trim();
+                    if (/^\d{4}-\d{2}-\d{2}T/.test(cleanTime)) {
+                        let d = new Date(cleanTime);
+                        cleanTime = !isNaN(d.getTime()) ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : cleanTime.split('T')[0];
+                    }
+                    adminNoticesArray.push({
+                        id: Math.random().toString(36).substring(2, 6),
+                        title: cfg[`Notice${i}_Title`],
+                        desc: cfg[`Notice${i}_Desc`] || '',
+                        imgUrl: cfg[`Notice${i}_ImgUrl`] || '',
+                        time: cleanTime,
+                        type: type,
+                        isHidden: false
+                    });
+                    i++;
+                }
+            }
+
+            if (adminNoticesArray.length === 0) { 
+                if(container) container.innerHTML = '<p style="color:#888; font-size:13px;">目前無公告</p>'; 
+                return; 
+            }
+            
+            let html = "";
+            function parseMagicLinks(str) {
+                return str
+                    .replace(/\[前往民宿\]/g, `<span onclick="switchView('accommodation'); switchAccTab('info'); event.stopPropagation();" class="magic-link-btn" style="background:var(--primary-blue);">🏠 民宿資訊</span>`)
+                    .replace(/\[前往分房\]/g, `<span onclick="switchView('accommodation'); switchAccTab('rooms'); event.stopPropagation();" class="magic-link-btn" style="background:var(--primary-orange);">🛏️ 分房名單</span>`)
+                    .replace(/\[前往行程\]/g, `<span onclick="switchView('itinerary'); event.stopPropagation();" class="magic-link-btn" style="background:var(--primary-green);">📍 詳細行程</span>`)
+                    .replace(/\[前往物品\]/g, `<span onclick="switchView('prep'); event.stopPropagation();" class="magic-link-btn" style="background:#868e96;">🎒 攜帶物品</span>`);
+            }
+
+            adminNoticesArray.forEach(n => {
+                if (n.isHidden) return;
+                let displayTime = (n.time || '').replace('[PIN]', '').replace('[NEW]', '').trim().replace(/-/g, '/');
+                let isPinned = n.type === '[PIN]';
+                let imgUrls = n.imgUrl ? n.imgUrl.split('\n').map(u => u.trim()).filter(u => u) : [];
+                let lines = (n.desc || '').split('\n');
+                let isLong = lines.length > 2;
+                let needsExpand = isLong || imgUrls.length > 0;
+
+                let shortText = isLong ? lines[0] + '\n' + lines[1] + '...' : n.desc;
+                let parsedShort = parseMagicLinks(shortText);
+                let parsedFull = parseMagicLinks(n.desc);
+                let imgHtml = imgUrls.map(url => `<img src="${url}" class="notice-expand-img" onclick="openImageViewer('${url}', event)">`).join('');
+                
+                html += `
+                    <div class="notice-card-new ${isPinned ? 'notice-card-pinned' : ''}" id="notice-card-${n.id}" onclick="if(${needsExpand} && !this.classList.contains('expanded')) this.classList.add('expanded')">
+                        <div class="notice-header">
+                            <div class="notice-title">${n.title}</div>
+                            <div style="display:flex; align-items:center;">
+                                ${isPinned ? '<div class="notice-pin-new">置頂公告</div>' : (n.type==='[NEW]' ? '<div class="notice-new-badge">最新消息</div>' : '')}
+                                <div onclick="shareNotice('${n.title}', '${n.id}'); event.stopPropagation();" class="share-icon-btn">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="notice-content-short">${parsedShort}${needsExpand ? '<span class="read-more-inline">查看更多</span>' : ''}</div>
+                        <div class="notice-content-full">${parsedFull}</div>
+                        ${imgHtml}
+                        ${needsExpand ? `<div class="notice-expand-footer"><span class="show-less-inline" onclick="event.stopPropagation(); this.closest('.notice-card-new').classList.remove('expanded');">顯示較少</span></div>` : ''}
+                        <div class="notice-footer" style="margin-top:10px;">${displayTime}</div>
+                    </div>`;
+            });
+            if(container) container.innerHTML = html;
+        }
+
+        function switchView(t) {
+            const topNav = document.querySelector('.top-nav');
+            if (topNav) topNav.classList.remove('nav-hidden');
+
+            let isMasterLocked = false;
+            let isSectionLocked = false;
+
+            if (currentUser.votedOption === 3 && cachedPollData && cachedPollData.config) {
+                const cfg = cachedPollData.config;
+                if (t !== 'admin' && t !== 'admin-notices' && t !== 'result' && t !== 'archive') {
+                    if (!getConfigBool(cfg, 'GuestViewEnabled', false)) {
+                        isMasterLocked = true;
+                    } else {
+                        const keyMap = { 'overview': 'Guest_View_Overview', 'accommodation': 'Guest_View_Acc', 'people': 'Guest_View_Ppl', 'fees': 'Guest_View_Fee', 'itinerary': 'Guest_View_Itinerary', 'prep': 'Guest_View_Prep', 'board': 'Guest_View_Board' };
+                        let subKey = keyMap[t] || '';
+                        if (subKey && !getConfigBool(cfg, subKey, true)) {
+                            isSectionLocked = true;
+                        }
+                    }
+                }
+            }
+
+            if (isMasterLocked) {
+                document.getElementById('app').style.display = 'none';
+                document.getElementById('bottom-nav-block').style.display = 'none';
+                document.getElementById('guest-lock-screen').style.display = 'block';
+                if (typeof refreshMessagesOnly === "function") refreshMessagesOnly(true); 
+                return; 
+            } else {
+                document.getElementById('guest-lock-screen').style.display = 'none';
+                document.getElementById('lock-screen').style.display = 'none';
+                document.getElementById('app').style.display = 'block';
+                if (currentUser.isVoted) {
+                    if (currentUser.votedOption !== 3 || (currentUser.votedOption === 3 && isGuestViewEnabled)) {
+                        document.getElementById('bottom-nav-block').style.display = 'flex';
+                    }
+                }
+            }
+
+            let viewIdToRender = isSectionLocked ? 'guest-locked' : t;
+            const targetView = document.getElementById('view-' + viewIdToRender);
+            
+            document.getElementById('avatar-menu').style.display = 'none';
+            const hIcon = document.getElementById('hamburger-icon');
+            if(hIcon) hIcon.classList.remove('open');
+
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            if (targetView) targetView.classList.add('active');
+
+            let baseTabId = ['accommodation', 'people', 'fees'].includes(t) ? 'overview' : t;
+            const activeTab = document.getElementById('tab-' + baseTabId);
+            const indicator = document.getElementById('nav-indicator');
+
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            if (activeTab) {
+                activeTab.classList.add('active');
+                if (indicator) { indicator.style.width = activeTab.offsetWidth + 'px'; indicator.style.left = activeTab.offsetLeft + 'px'; }
+            }
+
+            if (typeof refreshMessagesOnly === "function") refreshMessagesOnly(true); 
+            if (t === 'result') fetchResults();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function renderMessages() {
@@ -1855,7 +1826,7 @@
                 let avatarHtml = picUrl 
                     ? `<div style="position:relative; width:100%; height:100%; display:flex; justify-content:center; align-items:center;">
                          <span style="position:absolute; font-size:14px; font-weight:700;">${fallbackText}</span>
-                         <img src="${picUrl}" style="position:absolute; width:100%; height:100%; object-fit:cover; z-index:1;" onerror="this.style.display='none'">
+                         <img src="${picUrl}" style="position:absolute; width:100%; height:100%; object-fit:cover; border-radius:50%; z-index:1;" onerror="this.style.display='none'">
                        </div>` 
                     : `<div style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;">${fallbackText}</div>`;
                 
@@ -2169,74 +2140,6 @@
                 card.style.borderColor = "var(--primary-green)"; card.style.borderWidth = "2px";
             }
         }
-        
-        function switchView(t) {
-            const topNav = document.querySelector('.top-nav');
-            if (topNav) topNav.classList.remove('nav-hidden');
-
-            let isLockedForGuest = false;
-            if (currentUser.votedOption === 3 && cachedPollData && cachedPollData.config) {
-                const cfg = cachedPollData.config;
-                let subKey = '';
-           	 if (t === 'overview') subKey = 'Guest_View_Overview';
-        	 else if (t === 'accommodation') subKey = 'Guest_View_Acc';
-         	 else if (t === 'people') subKey = 'Guest_View_Ppl';
-         	 else if (t === 'fees') subKey = 'Guest_View_Fee';
-         	 else if (t === 'itinerary') subKey = 'Guest_View_Itinerary';
-         	 else if (t === 'prep') subKey = 'Guest_View_Prep';
-         	 else if (t === 'board') subKey = 'Guest_View_Board';
-
-                if (subKey && String(cfg[subKey]).toLowerCase() === 'false') {
-                    isLockedForGuest = true;
-                }
-            }
-
-            let viewIdToRender = isLockedForGuest ? 'guest-locked' : t;
-            const targetView = document.getElementById('view-' + viewIdToRender);
-            
-            let baseTabId = t;
-            if (['accommodation', 'people', 'fees'].includes(t)) baseTabId = 'overview';
-            const activeTab = document.getElementById('tab-' + baseTabId);
-
-            const indicator = document.getElementById('nav-indicator');
-            
-            if (targetView && targetView.classList.contains('active') && !isLockedForGuest) {
-                document.getElementById('avatar-menu').style.display = 'none';
-                const hIcon = document.getElementById('hamburger-icon');
-                if(hIcon) hIcon.classList.remove('open');
-                if (activeTab && indicator) {
-                    indicator.style.width = activeTab.offsetWidth + 'px';
-                    indicator.style.left = activeTab.offsetLeft + 'px';
-                }
-                return;
-            }
-            
-            const currentActive = document.querySelector('.view-section.active');
-            if (currentActive && currentActive.id === 'view-prep' && t !== 'prep' && isChecklistModified) {
-                saveChecklistBackground();
-            }
-            
-            if (t === 'board') {
-                clearBadge();
-            } else {
-                if (!isLockedForGuest) setTimeout(() => { refreshMessagesOnly(true); }, 500);
-            }
-
-            document.getElementById('avatar-menu').style.display = 'none';
-            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-            targetView.classList.add('active'); 
-            
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            if (activeTab) {
-                activeTab.classList.add('active'); 
-                if (indicator) {
-                    indicator.style.width = activeTab.offsetWidth + 'px';
-                    indicator.style.left = activeTab.offsetLeft + 'px';
-                }
-            }
-            if (t === 'result') fetchResults();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
 
         function handleAdminLogin() {
             document.getElementById('avatar-menu').style.display = 'none';
@@ -2370,13 +2273,98 @@
             }, 1200); 
         }
 
+        function renderChecklist() {
+            const container = document.getElementById('prep-checklist-container');
+            let html = ''; let totalItems = 0; let totalChecked = 0;
+            checklistData.forEach((cat, cIdx) => {
+                let catTotal = cat.items.length; let catChecked = 0;
+                let itemsHtml = '';
+                cat.items.forEach(item => {
+                    totalItems++;
+                    const isChecked = userChecklistState[item.id] === true;
+                    if (isChecked) { catChecked++; totalChecked++; }
+                    itemsHtml += `
+                        <div class="prep-item ${isChecked ? 'checked' : ''}" onclick="toggleChecklistItem('${item.id}')">
+                            <div class="prep-checkbox"></div>
+                            <div class="prep-item-text">
+                                <div class="prep-item-label">${item.label}</div>
+                                ${item.desc ? `<div class="prep-item-desc">${item.desc}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                const isOpen = openCategories[cat.id] ? 'open' : ''; 
+                html += `
+                    <div class="prep-cat-card">
+                        <div class="prep-cat-header" onclick="togglePrepCategory('${cat.id}')">
+                            <div class="prep-cat-icon">${cat.icon}</div>
+                            <div class="prep-cat-title-area">
+                                <div class="prep-cat-title">${cat.title}</div>
+                                <div class="prep-cat-subtitle" style="color:var(--primary-green)">${catChecked}/${catTotal} 項已準備</div>
+                            </div>
+                            <div class="prep-cat-toggle ${isOpen}" id="toggle-${cat.id}">▼</div>
+                        </div>
+                        <div class="prep-cat-body ${isOpen}" id="body-${cat.id}">
+                            ${itemsHtml}
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            const pct = totalItems === 0 ? 0 : Math.round((totalChecked / totalItems) * 100);
+            document.getElementById('prep-progress-text').innerText = `${totalChecked}/${totalItems} (${pct}%)`;
+            document.getElementById('prep-progress-bar').style.width = `${pct}%`;
+        }
+
+        function togglePrepCategory(catId) {
+            openCategories[catId] = !openCategories[catId];
+            renderChecklist();
+        }
+
+        function toggleChecklistItem(itemId) {
+            userChecklistState[itemId] = !userChecklistState[itemId];
+            isChecklistModified = true; 
+            renderChecklist(); 
+        }
+
+        async function saveChecklistBackground() {
+            if (!isChecklistModified) return; 
+            isChecklistModified = false; 
+            try {
+                await fetch(GAS_API_URL, { 
+                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: "updateChecklist", userId: currentUser.id, data: JSON.stringify(userChecklistState) }) 
+                });
+            } catch(e) { 
+                isChecklistModified = true; 
+            }
+        }
+
+        function initCarGridDrag() {
+            const slider = document.querySelector('.car-grid');
+            if(!slider) return;
+            let isDown = false; let startX; let scrollLeft;
+            slider.addEventListener('mousedown', (e) => { isDown = true; window.isCarDragging = false; slider.style.cursor = 'grabbing'; startX = e.pageX - slider.offsetLeft; scrollLeft = slider.scrollLeft; });
+            slider.addEventListener('mouseleave', () => { isDown = false; slider.style.cursor = 'grab'; });
+            slider.addEventListener('mouseup', () => { isDown = false; slider.style.cursor = 'grab'; setTimeout(() => window.isCarDragging = false, 50); });
+            slider.addEventListener('mousemove', (e) => { if (!isDown) return; e.preventDefault(); window.isCarDragging = true; const x = e.pageX - slider.offsetLeft; const walk = (x - startX) * 2; slider.scrollLeft = scrollLeft - walk; });
+        }
+
+        // 🌟 核心：確保所有背景設定檔與勾選框被完美保護
         async function toggleVotingLock(checkbox) {
             const isLocked = checkbox.checked;            
             const voteBtn = document.getElementById('btn-submit-vote');
             if (isLocked) { voteBtn.disabled = true; voteBtn.innerText = "系統已鎖定，停止報名"; } 
             else { voteBtn.disabled = false; voteBtn.innerText = "確認提交"; }
             
-            fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "updateConfigSingle", key: "VotingLocked", value: isLocked ? "true" : "false" }) }).catch(e => console.error(e));
+            if(cachedPollData && cachedPollData.config) {
+                cachedPollData.config["VotingLocked"] = isLocked ? "true" : "false";
+            }
+
+            activeConfigUpdates++;
+            fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "updateConfigSingle", key: "VotingLocked", value: isLocked ? "true" : "false" }) })
+            .catch(e => console.error(e))
+            .finally(() => { setTimeout(() => { activeConfigUpdates = Math.max(0, activeConfigUpdates - 1); }, 1500); });
         }
         
         async function toggleGuestViewLock(checkbox, key) {
@@ -2394,10 +2382,15 @@
             if(cachedPollData && cachedPollData.config) {
                 cachedPollData.config[key] = isEnabled ? "true" : "false";
             }
+            
+            renderDynamicUI(cachedPollData); 
 
-            fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "updateConfigSingle", key: key, value: isEnabled ? "true" : "false" }) }).catch(e => console.error(e));
+            activeConfigUpdates++;
+            fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "updateConfigSingle", key: key, value: isEnabled ? "true" : "false" }) })
+            .catch(e => console.error(e))
+            .finally(() => { setTimeout(() => { activeConfigUpdates = Math.max(0, activeConfigUpdates - 1); }, 1500); });
         }
-
+        
         function selectVote(o) { 
             lateVoteSelection = o; 
             document.querySelectorAll('.trip-card-vote').forEach(el => { el.classList.remove('selected'); el.querySelector('.vote-check').style.display = 'none'; }); 
@@ -2633,6 +2626,13 @@
             
             lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; 
         }, { passive: true });
+
+        // 🌟 啟動系統心跳：每 5 秒在背景默默對答案一次 (同步開關狀態、留言與公告)
+        setInterval(() => {
+            if (currentUser.isVoted && typeof refreshMessagesOnly === "function") {
+                refreshMessagesOnly(true); 
+            }
+        }, 5000);
 
     </script>
 </body>
