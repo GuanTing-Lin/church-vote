@@ -9,7 +9,7 @@
     <title>香草山小組出遊指南</title>
     <meta property="og:title" content="【出遊指南】香草山小組出遊指南">
     <meta property="og:description" content="趕快點擊查看，詳細行程、車位與住宿分配、行前準備清單都在這！">
-    <meta property="og:image" content="https://raw.githubusercontent.com/GuanTing-Lin/church-vote/main/banner-1.png">
+    <meta property="og:image" content="https://raw.githubusercontent.com/GuanTing-Lin/church-vote/main/banner.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -39,7 +39,20 @@
         .pulse-text { animation: pulse 1.5s infinite ease-in-out; }
         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
         .spinner { width: 36px; height: 36px; border: 3px solid rgba(255,255,255,0.5); border-top: 3px solid var(--primary-green); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 12px; }
-        .top-nav { background: rgba(255, 255, 255, 0.55); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.7); box-shadow: 0 4px 15px rgba(0,0,0,0.03); position: sticky; top: 0; z-index: 900; }
+        .top-nav { 
+            background: rgba(255, 255, 255, 0.55); 
+            backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); 
+            padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 1px solid rgba(255,255,255,0.7); box-shadow: 0 4px 15px rgba(0,0,0,0.03); 
+            position: sticky; top: 0; z-index: 900; 
+            /* 新增下面這行，讓它具備跟抽屜一樣順暢的滑動彈性 */
+            transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+
+        /* 👇 2. 新增隱藏狀態的 class：往上推移自身 100% 的高度 👇 */
+        .top-nav.nav-hidden {
+            transform: translateY(-100%);
+        }
         .top-nav h1 { font-size: 16px; margin: 0; font-weight: 700; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .user-area { position: relative; }
         .user-info { display: flex; align-items: center; font-size: 13px; color: var(--text-main); cursor: pointer; background: rgba(255,255,255,0.4); padding: 4px 10px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.6); transition: 0.2s; box-shadow: inset 0 1px 1px rgba(255,255,255,0.5); }
@@ -122,7 +135,15 @@
         .event-title { font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
         .event-desc { font-size: 13px; color: #4a5568; line-height: 1.5; }
         
-        .prep-progress-card { background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); border-radius: 14px; padding: 12px 16px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05), inset 0 1px 1px white; position: sticky; top: 70px; z-index: 100; border: 1px solid rgba(255,255,255,0.9); }
+        .prep-progress-card { 
+            background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); 
+            border-radius: 14px; padding: 12px 16px; margin-bottom: 16px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05), inset 0 1px 1px white; 
+            position: sticky; top: 70px; z-index: 100; border: 1px solid rgba(255,255,255,0.9); 
+            
+            /* 新增這行：讓它上下移動時，有跟上方導覽列一模一樣的絲滑感 */
+            transition: top 0.65s cubic-bezier(0.4, 0, 0.2, 1); }
+         .prep-progress-card.shift-up { top: 16px; }
         .prep-progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-weight: 700; }
         .prep-progress-track { height: 6px; background: rgba(0,0,0,0.06); border-radius: 3px; overflow: hidden; }
         .prep-progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary-green), #20a085); width: 0%; transition: width 0.4s ease-out; }
@@ -238,7 +259,8 @@
         #user-avatar img, 
         .msg-avatar img, 
         .like-avatar-tiny img, 
-        #drawer-body img {
+        #drawer-body img,
+        .acc-hero-img {
             -webkit-touch-callout: none;
             -webkit-user-select: none;   
             user-select: none;
@@ -322,6 +344,45 @@
         .acc-card { background: rgba(255, 255, 255, 0.55); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.9); border-radius: 14px; padding: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.7); margin-bottom: 12px; }
         
         .acc-time-grid { display: flex; gap: 10px; margin-bottom: 16px; }
+	/* 👇 新增：服務設施 Grid 與卡片樣式 👇 */
+        .facility-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 切割成 3 個等寬直欄 */
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+        .facility-item {
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.9);
+            border-radius: 14px;
+            padding: 14px 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.7);
+            transition: transform 0.2s;
+        }
+        .facility-item:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.7);
+        }
+        .facility-icon {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));
+        }
+        .facility-text {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-main);
+            text-align: center;
+            letter-spacing: 0.5px;
+            white-space: nowrap; /* 確保文字不換行 */
+        }
         .time-card { flex: 1; margin-bottom: 0; display: flex; flex-direction: column; justify-content: center; }
         .time-label { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 2px; }
         .time-value { font-size: 20px; font-weight: 800; color: var(--text-main); line-height: 1; margin-bottom: 2px; }
@@ -435,7 +496,7 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                     後台管理
                 </div>
-                <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.0.4</div>
+                <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.0.5</div>
             </div>
     <div id="loading" style="display: flex; flex-direction: column; align-items: center; margin-top: 120px;">
         <div class="spinner"></div>
@@ -557,13 +618,24 @@
                             <h2 class="acc-title">Zzz呆在漫居</h2>
                             <div class="acc-subtitle">宜蘭縣五結鄉 · 06/27-06/28</div>
                         </div>
-                        <!-- 質感地圖導航按鈕 -->
-                        <a href="https://maps.app.goo.gl/3bEgtfW67x6JM9aa6" target="_blank" class="hero-map-btn">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                <circle cx="12" cy="10" r="3"></circle>
-                            </svg>
-                        </a>
+                        
+                        <div style="display: flex; gap: 8px;">
+                            <a href="https://twstay.com/RWD2/index.aspx?bnb=manjubnb17" target="_blank" class="hero-map-btn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                                </svg>
+                            </a>
+                            
+                            <a href="https://maps.app.goo.gl/3bEgtfW67x6JM9aa6" target="_blank" class="hero-map-btn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                    <circle cx="12" cy="10" r="3"></circle>
+                                </svg>
+                            </a>
+                        </div>
+                        
                     </div>
                 </div>
             </div>
@@ -576,6 +648,7 @@
 
            <!-- 分頁 1：民宿資訊 -->
             <div id="acc-content-info" class="acc-content-section active">
+                
                 <div class="acc-time-grid">
                     <div class="acc-card time-card">
                         <div class="time-label">入住</div>
@@ -589,8 +662,47 @@
                     </div>
                 </div>
 
+                <div class="acc-section-title">服務設施</div>
+                <div class="facility-grid">
+                    <div class="facility-item">
+                        <div class="facility-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#007BFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"></path></svg>
+                        </div>
+                        <div class="facility-text">戲水池</div>
+                    </div>
+                    <div class="facility-item">
+                        <div class="facility-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F9A826" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+                        </div>
+                        <div class="facility-text">烤肉場地</div>
+                    </div>
+                    <div class="facility-item">
+                        <div class="facility-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3BD0AF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>
+                        </div>
+                        <div class="facility-text">電動麻將</div>
+                    </div>
+                    <div class="facility-item">
+                        <div class="facility-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff4d4f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>
+                        </div>
+                        <div class="facility-text">歡唱設備</div>
+                    </div>
+                    <div class="facility-item">
+                        <div class="facility-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6c7a89" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>
+                        </div>
+                        <div class="facility-text">公用客廳</div>
+                    </div>
+                    <div class="facility-item">
+                        <div class="facility-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e67e22" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>
+                        </div>
+                        <div class="facility-text">廚房使用</div>
+                    </div>
+                </div>
+
                 <div class="acc-section-title">注意事項</div>
-                <!-- 👇 改成這個空容器 👇 -->
                 <div id="acc-rules-container">
                     <p style="color:var(--text-muted); font-size:13px; text-align:center;">載入中...</p>
                 </div>
@@ -874,7 +986,6 @@
                 avatarsHtml += `<div class="like-avatar-tiny" style="background:linear-gradient(135deg, var(--primary-orange), #ff8c00); z-index:${zIndex};">${avContent}</div>`;
             });
             avatarsHtml += `</div>`;
-
             let lastNameOrId = likesArray[likesArray.length - 1];
             let lastDisplayName = window.userNameMap[lastNameOrId] || lastNameOrId;
             let textHtml = `<span class="like-text-style"><span class="like-name-bold">${lastDisplayName}</span> ${likesArray.length > 1 ? '和其他人都說讚' : '說讚'}</span>`;
@@ -1202,12 +1313,12 @@
         async function shareNotice(title, id) {
             const shareUrl = window.location.href.split('?')[0] + '?notice=' + id;
             
-            const shareTextContent = "【出遊公告轉發/分享】\n" + title + "\n👉 點擊前往出遊指南查看完整內容：";
+            const shareTextContent = "【出遊指南公告】\n" + title + "\n👉 查看完整內容：";
             
             if (navigator.share) {
                 try { 
                     await navigator.share({ 
-                        title: "【出遊公告轉發/分享】", // 這個標題會顯示在某些 App 的主旨欄
+                        title: "【出遊指南公告】", // 這個標題會顯示在某些 App 的主旨欄
                         text: shareTextContent, 
                         url: shareUrl 
                     }); 
@@ -2281,6 +2392,45 @@
 
         // 網頁載入時啟動自動播放
         startAccAutoPlay();
+
+	// 👇 智慧導航列 (Smart Header) 滾動偵測邏輯 👇
+        let lastScrollTop = 0;
+        const topNav = document.querySelector('.top-nav');
+        const avatarMenuScroll = document.getElementById('avatar-menu'); 
+        const hamburgerIconScroll = document.getElementById('hamburger-icon');
+        const prepCard = document.querySelector('.prep-progress-card'); // 抓取進度條卡片
+
+        window.addEventListener('scroll', function() {
+            let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            
+            // 防呆機制：如果是滑到最頂部 (iOS 橡皮筋回彈)，強制顯示
+            if (scrollTop <= 0) {
+                topNav.classList.remove('nav-hidden');
+                if (prepCard) prepCard.classList.remove('shift-up'); 
+                lastScrollTop = scrollTop;
+                return;
+            }
+
+            // 判斷滾動方向
+            // 🌟 關鍵修復：加入 && scrollTop > 60，確保原本的導覽列空間已經滾出螢幕，才允許收起
+            if (scrollTop > lastScrollTop && scrollTop > 60) { 
+                // 向下滑動：隱藏 Header，進度條上推
+                topNav.classList.add('nav-hidden');
+                if (prepCard) prepCard.classList.add('shift-up'); 
+                
+                // 自動關閉右上角選單
+                if (avatarMenuScroll && avatarMenuScroll.style.display === 'flex') {
+                    avatarMenuScroll.style.display = 'none';
+                    if (hamburgerIconScroll) hamburgerIconScroll.classList.remove('open');
+                }
+            } else if (scrollTop < lastScrollTop) { 
+                // 向上滑動：顯示 Header，進度條退回
+                topNav.classList.remove('nav-hidden');
+                if (prepCard) prepCard.classList.remove('shift-up'); 
+            }
+            
+            lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; 
+        }, { passive: true });
 
     </script>
 </body>
