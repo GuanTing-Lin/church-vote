@@ -500,7 +500,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             後台管理
         </div>
-        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.0.9</div>
+        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.1.0</div>
     </div>
     <div id="loading" style="display: flex; flex-direction: column; align-items: center; margin-top: 120px;">
         <div class="spinner"></div>
@@ -1068,7 +1068,8 @@
 
         // 🌟 防止背景跟操作者搶方向盤的鎖定閥
         let activeConfigUpdates = 0;
-
+        let activeMessageUpdates = 0;
+        
         async function refreshMessagesOnly(isSilent = true) {
             if (!isSilent) showCustomAlert("更新中", "正在抓取最新資料...", false);
             try {
@@ -1089,7 +1090,8 @@
                     }
                 }
 
-                if (data.messages) {
+                // 🚨 核心防禦：只有當你「沒有」在操作留言(按讚/發佈)時，背景才允許覆蓋留言板
+                if (data.messages && activeMessageUpdates === 0) {
                     data.messages.forEach(m => {
                         const id = m.LineID || m.UserId;
                         if (id) window.userNameMap[id] = m.Name;
@@ -1099,11 +1101,9 @@
 
                     const newMsgs = [...data.messages].reverse();
                     
-                    // 🌟 核心修復：智慧判斷是「有新留言擠進來」還是「舊留言被按讚/編輯」
                     let isStructuralChange = true;
                     if (allMessages.length === newMsgs.length && allMessages.length > 0) {
                         let match = true;
-                        // 檢查最前面的留言有沒有換人，如果沒有，代表只是有人按讚或編輯
                         for (let i = 0; i < Math.min(10, allMessages.length); i++) {
                             if (allMessages[i].Name !== newMsgs[i].Name || allMessages[i].Time !== newMsgs[i].Time) {
                                 match = false; break;
@@ -1116,11 +1116,10 @@
 
                     allMessages = newMsgs;
 
-                    // 🌟 根據判斷結果決定要怎麼更新畫面
                     if (isStructuralChange) {
-                        renderMessages(); // 有新留言，重新產生正確的大頭貼跟名字框架
+                        renderMessages(); 
                     } else {
-                        updateExistingMessagesInPlace(); // 只是按讚，原地更新即可（畫面不會閃爍）
+                        updateExistingMessagesInPlace(); 
                     }
                     
                     if (document.getElementById('view-board').classList.contains('active')) {
@@ -2014,6 +2013,9 @@
                 clearTimeout(window.likeTimers[index]);
             }
 
+            // 🌟 新增：鎖定背景留言同步，保護你的操作不被覆蓋
+            activeMessageUpdates++;
+
             window.likeTimers[index] = setTimeout(async () => {
                 try {
                     await fetch(GAS_API_URL, {
@@ -2027,7 +2029,12 @@
                             isAdding: isAdding
                         })
                     });
-                } catch(e) { console.error("按讚狀態儲存失敗"); }
+                } catch(e) { 
+                    console.error("按讚狀態儲存失敗"); 
+                } finally {
+                    // 🌟 延遲解鎖：給伺服器一點緩衝時間
+                    setTimeout(() => { activeMessageUpdates = Math.max(0, activeMessageUpdates - 1); }, 1500);
+                }
             }, 400);
         }
 
@@ -2059,11 +2066,17 @@
 
         async function submitEditMessage(index, newContent, msgObj) {
             showCustomAlert("更新中", "正在儲存修改的留言...", false);
+            
+            activeMessageUpdates++; // 🌟 鎖定背景更新
             try {
                 await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "editMessage", userId: currentUser.id, timeStr: msgObj.Time, oldContent: msgObj.Content, newContent: newContent }) });
                 showCustomAlert("成功", "留言已更新！");
                 allMessages[index].Content = newContent; allMessages[index].IsEdited = "V"; renderMessages();
-            } catch(e) { showCustomAlert("錯誤", "更新失敗，請檢查網路連線。"); }
+            } catch(e) { 
+                showCustomAlert("錯誤", "更新失敗，請檢查網路連線。"); 
+            } finally {
+                setTimeout(() => { activeMessageUpdates = Math.max(0, activeMessageUpdates - 1); }, 1500); // 🌟 解鎖
+            }
         }
 
         async function postMessage() {
@@ -2074,7 +2087,14 @@
             
             clearBadge();
 
-            try { await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "addMessage", userName: currentUser.name, userId: currentUser.id, avatarText: currentUser.initial, timeStr: time, content: val }) }); } catch(e) { allMessages.shift(); renderMessages(); t.value = val; showCustomAlert("錯誤", "發佈失敗，請檢查網路連線後再試一次。"); }
+            activeMessageUpdates++; // 🌟 鎖定背景更新
+            try { 
+                await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "addMessage", userName: currentUser.name, userId: currentUser.id, avatarText: currentUser.initial, timeStr: time, content: val }) }); 
+            } catch(e) { 
+                allMessages.shift(); renderMessages(); t.value = val; showCustomAlert("錯誤", "發佈失敗，請檢查網路連線後再試一次。"); 
+            } finally {
+                setTimeout(() => { activeMessageUpdates = Math.max(0, activeMessageUpdates - 1); }, 1500);
+            }
         }
 
         function unlockMainApp() {
