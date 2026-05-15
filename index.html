@@ -84,12 +84,18 @@
         .info-icon { font-size: 20px; margin-bottom: 6px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08)); color: var(--primary-blue); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .info-icon svg { flex-shrink: 0; min-width: 20px; min-height: 20px; }
         .info-label { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; font-weight: 500; }
-        .info-value { font-size: 13px; font-weight: 700; color: var(--text-main); }
+	.info-value { 
+  	  font-size: 13px; 
+   	 font-weight: 700; 
+   	 color: var(--text-main); 
+   	 transition: color 0.2s ease; 
+	}
+	.info-block:hover .info-value { 
+  	  color: var(--primary-blue); 
+	}
         
         .notice-card-new { background: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.8); border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03), inset 0 1px 1px rgba(255,255,255,0.5); padding: 16px; margin-bottom: 12px; position: relative; overflow: hidden; transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer; }
         .notice-card-new:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.08), inset 0 1px 1px rgba(255,255,255,0.6); }
-	/* 👇 針對置頂公告的高質感玻璃特效 (微暖色底 + 柔和光暈) 👇 */
-        /* 👇 針對置頂公告的高質感玻璃特效 (微玫瑰紅底 + 柔和光暈) 👇 */
         .notice-card-pinned {
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 77, 79, 0.08) 100%);
             border: 1px solid rgba(255, 77, 79, 0.3);
@@ -315,7 +321,7 @@
 
        /* 👇 1. 返回按鈕加入 Hover 放大與加深陰影效果 👇 */
         .acc-back-btn { position: absolute; top: 16px; left: 16px; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.9); display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 10; color: var(--text-main); box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .acc-back-btn:hover { background: rgba(255,255,255,0.9); transform: scale(1.1); box-shadow: 0 6px 16px rgba(0,0,0,0.1); color: var(--primary-orange); }
+        .acc-back-btn:hover { background: rgba(255,255,255,0.9); transform: scale(1.1); box-shadow: 0 6px 16px rgba(0,0,0,0.1); color: var(--primary-blue); }
         .acc-back-btn:active { transform: scale(0.9); }
         .acc-back-btn svg { width: 18px; height: 18px; transition: 0.2s; }
         
@@ -332,11 +338,11 @@
             backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255,255,255,0.9);
             box-shadow: 0 4px 12px rgba(0,0,0,0.08), inset 0 1px 1px white;
-            color: var(--primary-blue); 
+            color: var(--text-main); /* 👈 1. 預設改為跟標題一樣的深黑色 */
             transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             margin-bottom: 2px;
         }
-        .hero-map-btn:hover { transform: scale(1.1); background: rgba(255,255,255,0.95); color: var(--primary-orange); }
+        .hero-map-btn:hover { transform: scale(1.1); background: rgba(255,255,255,0.95); color: var(--primary-blue); } /* 👈 2. Hover 改為亮藍色 */
         .hero-map-btn:active { transform: scale(0.9); }
 
         .acc-hero-content { position: absolute; bottom: 0; left: 0; right: 0; padding: 30px 16px 12px; background: linear-gradient(to top, rgba(255,255,255,1) 5%, rgba(255,255,255,0.8) 40%, transparent 100%); }
@@ -509,7 +515,7 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                     後台管理
                 </div>
-                <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.0.7</div>
+                <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.0.8</div>
             </div>
     <div id="loading" style="display: flex; flex-direction: column; align-items: center; margin-top: 120px;">
         <div class="spinner"></div>
@@ -551,28 +557,25 @@
                 <div class="days-number" id="days-countdown">--</div>
                 <div class="days-label">天</div>
                 <div class="info-blocks-container">
-                    <div class="info-block" onclick="switchView('accommodation')" style="cursor: pointer;">
+                    <div class="info-block" id="btn-info-acc" onclick="switchView('accommodation')" style="cursor: pointer;">
                         <div class="info-icon">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                         </div>
                         <div class="info-label">民宿/床位</div>
-                        <!-- 這裡改為 --，等待 JavaScript 載入後台的 "包棟民宿" -->
-                        <div class="info-value" id="ui-info-acc" style="color: var(--primary-blue);">--</div>
+                        <div class="info-value" id="ui-info-acc">--</div>
                     </div>
-                    <div class="info-block">
+                    <div class="info-block" id="btn-info-ppl" onclick="switchView('people')" style="cursor: pointer;">
                         <div class="info-icon">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                         </div>
                         <div class="info-label">人數</div>
-                        <!-- 等待 JavaScript 載入後台的 "約 16 人" -->
                         <div class="info-value" id="ui-info-ppl">--</div>
                     </div>
-                    <div class="info-block">
+                    <div class="info-block" id="btn-info-fee" onclick="switchView('fees')" style="cursor: pointer;">
                         <div class="info-icon">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
                         </div>
                         <div class="info-label">費用</div>
-                        <!-- 等待 JavaScript 載入後台的 "約 $2,500" -->
                         <div class="info-value" id="ui-info-price">--</div>
                     </div>
                 </div>
@@ -731,6 +734,44 @@
             </div>
         </div>
 
+			
+	<div id="view-people" class="view-section">
+            <div class="card">
+                <div class="acc-back-btn" onclick="switchView('overview')" style="position: static; margin-bottom: 20px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </div>
+                <div style="text-align: center; padding: 40px 0; color: var(--text-muted);">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 16px; opacity: 0.5;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    <p style="font-weight: 700;">內容施工中...</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-fees" class="view-section">
+            <div class="card">
+                <div class="acc-back-btn" onclick="switchView('overview')" style="position: static; margin-bottom: 20px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </div>
+                <div style="text-align: center; padding: 40px 0; color: var(--text-muted);">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 16px; opacity: 0.5;"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+                    <p style="font-weight: 700;">內容施工中...</p>
+                </div>
+            </div>
+        </div>
+	
+	<div id="view-guest-locked" class="view-section">
+            <div style="display: flex; justify-content: center; align-items: center; height: 60vh;">
+                <div class="card" style="display: inline-flex; flex-direction: column; justify-content: center; align-items: center; width: 280px; padding: 40px 20px; text-align: center;">
+                    <div style="margin-bottom: 16px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.1));">
+                        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#a0aec0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    </div>
+                    <h3 style="color: var(--text-main); margin: 0 0 8px; font-size: 18px;">僅限報名參與者查看</h3>
+                    <p style="color: var(--text-muted); line-height: 1.5; font-size: 13px; margin: 0;">系統已將此區塊設為不公開</p>
+                </div>
+            </div>
+        </div>
+
+
         <div id="view-itinerary" class="view-section">
             <h2 style="text-align: center; color: var(--primary-blue); margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; gap: 8px;">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> 詳細行程
@@ -838,19 +879,56 @@
         <div id="view-admin" class="view-section">
             <h2 style="text-align: center; color: var(--text-main); margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; gap: 8px;">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> 後台管理
-        </h2>
+            </h2>
             <div class="card">
                 <div class="admin-menu-item" onclick="openAdminNotices()">
                     <div style="font-size: 15px; font-weight: 600; color: var(--text-main);">編輯首頁公告</div>
                     <div style="color: #cbd5e0; font-weight: 700;">></div>
                 </div>
+
                 <div class="admin-menu-item">
                     <div style="font-size: 15px; font-weight: 600; color: var(--text-main);">鎖定投票系統</div>
                     <label class="switch"><input type="checkbox" id="admin-lock-toggle" onchange="toggleVotingLock(this)"><span class="slider"></span></label>
                 </div>
-                <div class="admin-menu-item">
-                    <div style="font-size: 15px; font-weight: 600; color: var(--text-main);">開放訪客查看</div>
-                    <label class="switch"><input type="checkbox" id="admin-guest-toggle" onchange="toggleGuestViewLock(this)"><span class="slider"></span></label>
+
+                <div class="admin-menu-item" style="flex-direction: column; align-items: stretch; padding-bottom: 20px; border-bottom: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
+                        <div style="font-size: 15px; font-weight: 600; color: var(--text-main);">開放訪客查看 (總開關)</div>
+                        <label class="switch"><input type="checkbox" id="admin-guest-toggle" onchange="toggleGuestViewLock(this, 'GuestViewEnabled')"><span class="slider"></span></label>
+                    </div>
+                    
+                    <div id="admin-guest-sub-options" style="background: rgba(255,255,255,0.4); border: 1px solid rgba(0,0,0,0.05); border-radius: 12px; padding: 16px; margin-top: 5px; transition: opacity 0.3s;">
+                        <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; margin-bottom: 15px; letter-spacing: 0.5px;">分區瀏覽權限</div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                            <div style="font-size: 14px; font-weight: 600; color: var(--text-main);">首頁總覽</div>
+                            <label class="switch" style="transform: scale(0.8); margin: 0;"><input type="checkbox" id="admin-guest-overview" onchange="toggleGuestViewLock(this, 'Guest_View_Overview')"><span class="slider"></span></label>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                            <div style="font-size: 13px; font-weight: 600; color: var(--text-muted); margin-left: 12px;">├ 民宿床位</div>
+                            <label class="switch" style="transform: scale(0.7); margin: 0;"><input type="checkbox" id="admin-guest-acc" onchange="toggleGuestViewLock(this, 'Guest_View_Acc')"><span class="slider"></span></label>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                            <div style="font-size: 13px; font-weight: 600; color: var(--text-muted); margin-left: 12px;">├ 參與名單</div>
+                            <label class="switch" style="transform: scale(0.7); margin: 0;"><input type="checkbox" id="admin-guest-ppl" onchange="toggleGuestViewLock(this, 'Guest_View_Ppl')"><span class="slider"></span></label>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                            <div style="font-size: 13px; font-weight: 600; color: var(--text-muted); margin-left: 12px;">├ 活動費用</div>
+                            <label class="switch" style="transform: scale(0.7); margin: 0;"><input type="checkbox" id="admin-guest-fee" onchange="toggleGuestViewLock(this, 'Guest_View_Fee')"><span class="slider"></span></label>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                            <div style="font-size: 14px; font-weight: 600; color: var(--text-main);">詳細行程</div>
+                            <label class="switch" style="transform: scale(0.8); margin: 0;"><input type="checkbox" id="admin-guest-itinerary" onchange="toggleGuestViewLock(this, 'Guest_View_Itinerary')"><span class="slider"></span></label>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                            <div style="font-size: 14px; font-weight: 600; color: var(--text-main);">攜帶物品</div>
+                            <label class="switch" style="transform: scale(0.8); margin: 0;"><input type="checkbox" id="admin-guest-prep" onchange="toggleGuestViewLock(this, 'Guest_View_Prep')"><span class="slider"></span></label>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-size: 14px; font-weight: 600; color: var(--text-main);">留言板</div>
+                            <label class="switch" style="transform: scale(0.8); margin: 0;"><input type="checkbox" id="admin-guest-board" onchange="toggleGuestViewLock(this, 'Guest_View_Board')"><span class="slider"></span></label>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -926,7 +1004,8 @@
         
         const LIFF_ID = "2009879130-CwjiaVKB"; 
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxtnKFJZNfvJbGd_KBbTgV5rI-7uqlMJLVZp3dElIFFpWlbPKxEjoE5IUxS0e7eJhLBjQ/exec";
-        const LATE_VOTE_PASSCODE = "062728"; const ADMIN_PASSCODE = "9999";
+        const LATE_VOTE_PASSCODE = "062728"; 
+        const ADMIN_PASSCODE = "9999";
         
         let currentUser = { name: "", id: "", pictureUrl: "", initial: "?", isVoted: false, votedOption: null }; 
         let lateVoteSelection = 0; let cachedPollData = null; let countdownTargetDate = 0;
@@ -942,6 +1021,7 @@
 
         const isLocalEnv = window.location.protocol === "file:" || window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
         const cacheBuster = "&t=" + new Date().getTime();
+        
         initialDataPromise = fetch(GAS_API_URL + "?v=2" + cacheBuster, { cache: 'no-store', redirect: 'follow' })
             .then(res => res.json())
             .catch(err => { console.error("背景抓取資料失敗", err); return null; });
@@ -981,6 +1061,7 @@
             if (badge) badge.style.display = 'none';
         }
 
+        // 🌟 已修復的按讚頭像渲染函式
         function getLikesIgStyle(likesArray) {
             if (!likesArray || likesArray.length === 0) return "";
             
@@ -999,6 +1080,7 @@
                 avatarsHtml += `<div class="like-avatar-tiny" style="background:linear-gradient(135deg, var(--primary-orange), #ff8c00); z-index:${zIndex};">${avContent}</div>`;
             });
             avatarsHtml += `</div>`;
+            
             let lastNameOrId = likesArray[likesArray.length - 1];
             let lastDisplayName = window.userNameMap[lastNameOrId] || lastNameOrId;
             let textHtml = `<span class="like-text-style"><span class="like-name-bold">${lastDisplayName}</span> ${likesArray.length > 1 ? '和其他人都說讚' : '說讚'}</span>`;
@@ -1075,6 +1157,7 @@
             if (inp.type === 'password') { inp.type = 'text'; toggleBtn.innerHTML = svgEyeOff; } 
             else { inp.type = 'password'; toggleBtn.innerHTML = svgEye; }
         }
+
         function getFormattedTime() {
             const now = new Date();
             const y = now.getFullYear();
@@ -1085,6 +1168,31 @@
             const ampm = hours >= 12 ? '下午' : '上午';
             const h12 = hours % 12 || 12; 
             return `${y}/${m}/${d} ${ampm} ${h12}:${mins}`;
+        }
+
+        // 🌟 補回並升級的 initLockScreen (點整張卡片 4 次解鎖)
+        function initLockScreen() {
+            let c = 0; let t = null;
+            const lockCard = document.querySelector('#lock-screen .card');
+            
+            if (lockCard) {
+                lockCard.style.userSelect = 'none';
+                lockCard.style.touchAction = 'manipulation';
+                lockCard.style.cursor = 'pointer';
+                
+                lockCard.onclick = () => {
+                    c++; 
+                    clearTimeout(t); 
+                    t = setTimeout(() => c = 0, 2000); 
+                    
+                    if (navigator.vibrate) navigator.vibrate(30);
+
+                    if (c >= 4) { 
+                        c = 0; 
+                        unlockMainApp(); 
+                    }
+                };
+            }
         }
 
         window.onload = async function() {
@@ -1221,16 +1329,17 @@
             if (currentUser.votedOption === 3 && !isGuestViewEnabled) return;
             
             const m = document.getElementById('avatar-menu'); 
-            const icon = document.getElementById('hamburger-icon'); // 抓取圖示
+            const icon = document.getElementById('hamburger-icon');
             
             if (m.style.display === 'flex') {
                 m.style.display = 'none';
-                if(icon) icon.classList.remove('open'); // 關閉時恢復三條線
+                if(icon) icon.classList.remove('open');
             } else {
                 m.style.display = 'flex';
-                if(icon) icon.classList.add('open'); // 打開時變成叉叉
+                if(icon) icon.classList.add('open');
             }
         }
+
         function closeModal() { 
             document.body.classList.remove('no-scroll');
             document.getElementById('custom-modal').style.display = 'none'; 
@@ -1239,6 +1348,7 @@
             const pwdToggle = document.getElementById('pwd-toggle');
             if(pwdToggle) { pwdToggle.innerHTML = svgEye; document.getElementById('modal-input').type = 'password'; }
         }
+
         function showCustomAlert(t, d, showBtn = true) { 
             document.getElementById('modal-title').innerText=t; 
             const descEl = document.getElementById('modal-desc');
@@ -1255,6 +1365,7 @@
             const btnConfirm = document.getElementById('modal-btn-confirm');
             const spinner = document.getElementById('modal-spinner');
             document.body.classList.add('no-scroll');
+            
             if (showBtn) { 
                 btnGroup.style.display = 'flex'; 
                 btnConfirm.style.display = 'block'; 
@@ -1269,6 +1380,7 @@
             }
             document.getElementById('custom-modal').style.display='flex'; 
         }
+
         function showCustomPrompt(t, isPwd, cb) { 
             document.getElementById('modal-title').innerText=t; 
             document.getElementById('modal-desc').style.display='none'; 
@@ -1289,8 +1401,22 @@
             document.getElementById('custom-modal').style.display='flex'; 
             setTimeout(()=>inp.focus(),100); 
         }
-        function openCarDrawer(t, c) { document.body.classList.add('no-scroll'); document.getElementById('drawer-title').innerHTML = t; document.getElementById('drawer-body').innerHTML = c; const d = document.getElementById('custom-drawer'); d.style.display = 'block'; setTimeout(() => d.classList.add('show'), 10); }
-        function closeDrawer() { document.body.classList.remove('no-scroll'); const d = document.getElementById('custom-drawer'); d.classList.remove('show'); setTimeout(() => d.style.display = 'none', 300); }
+
+        function openCarDrawer(t, c) { 
+            document.body.classList.add('no-scroll'); 
+            document.getElementById('drawer-title').innerHTML = t; 
+            document.getElementById('drawer-body').innerHTML = c; 
+            const d = document.getElementById('custom-drawer'); 
+            d.style.display = 'block'; 
+            setTimeout(() => d.classList.add('show'), 10); 
+        }
+
+        function closeDrawer() { 
+            document.body.classList.remove('no-scroll'); 
+            const d = document.getElementById('custom-drawer'); 
+            d.classList.remove('show'); 
+            setTimeout(() => d.style.display = 'none', 300); 
+        }
         
         const drawerContent = document.querySelector('.drawer-content');
         let drawerStartY = 0;
@@ -1325,13 +1451,12 @@
 
         async function shareNotice(title, id) {
             const shareUrl = window.location.href.split('?')[0] + '?notice=' + id;
-            
             const shareTextContent = "【出遊指南公告】\n" + title + "\n👉 點擊查看完整內容：";
             
             if (navigator.share) {
                 try { 
                     await navigator.share({ 
-                        title: "【出遊指南公告】", // 這個標題會顯示在某些 App 的主旨欄
+                        title: "【出遊指南公告】",
                         text: shareTextContent, 
                         url: shareUrl 
                     }); 
@@ -1361,6 +1486,48 @@
                 const guestToggle = document.getElementById('admin-guest-toggle');
                 if (guestToggle) guestToggle.checked = isGuestViewEnabled;
 
+                const subOverview = document.getElementById('admin-guest-overview');
+                const subItinerary = document.getElementById('admin-guest-itinerary');
+                const subPrep = document.getElementById('admin-guest-prep');
+                const subBoard = document.getElementById('admin-guest-board');
+                
+                if(subOverview) subOverview.checked = String(cfg.Guest_View_Overview).toLowerCase() !== 'false';
+                if(subItinerary) subItinerary.checked = String(cfg.Guest_View_Itinerary).toLowerCase() !== 'false';
+                if(subPrep) subPrep.checked = String(cfg.Guest_View_Prep).toLowerCase() !== 'false';
+                if(subBoard) subBoard.checked = String(cfg.Guest_View_Board).toLowerCase() !== 'false';
+
+		// 🌟 更新新增的三個子開關狀態
+                const subAcc = document.getElementById('admin-guest-acc');
+                const subPpl = document.getElementById('admin-guest-ppl');
+                const subFee = document.getElementById('admin-guest-fee');
+                if(subAcc) subAcc.checked = String(cfg.Guest_View_Acc).toLowerCase() !== 'false';
+                if(subPpl) subPpl.checked = String(cfg.Guest_View_Ppl).toLowerCase() !== 'false';
+                if(subFee) subFee.checked = String(cfg.Guest_View_Fee).toLowerCase() !== 'false';
+
+                // 🌟 前台按鈕視覺鎖定處理 (針對訪客)
+                if (currentUser.votedOption === 3) {
+                    const lockSvgHtml = `<span style="font-size:12px; display:inline-flex; align-items:center; gap:3px; color:#a0aec0; font-weight:700;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>鎖定</span>`;
+
+                    if (String(cfg.Guest_View_Acc).toLowerCase() === 'false') {
+                        let btn = document.getElementById('btn-info-acc');
+                        if (btn) { btn.onclick = null; btn.style.opacity = '0.5'; btn.style.cursor = 'not-allowed'; document.getElementById('ui-info-acc').innerHTML = lockSvgHtml; }
+                    }
+                    if (String(cfg.Guest_View_Ppl).toLowerCase() === 'false') {
+                        let btn = document.getElementById('btn-info-ppl');
+                        if (btn) { btn.onclick = null; btn.style.opacity = '0.5'; btn.style.cursor = 'not-allowed'; document.getElementById('ui-info-ppl').innerHTML = lockSvgHtml; }
+                    }
+                    if (String(cfg.Guest_View_Fee).toLowerCase() === 'false') {
+                        let btn = document.getElementById('btn-info-fee');
+                        if (btn) { btn.onclick = null; btn.style.opacity = '0.5'; btn.style.cursor = 'not-allowed'; document.getElementById('ui-info-price').innerHTML = lockSvgHtml; }
+                    }
+                }
+
+                const subOptionsDiv = document.getElementById('admin-guest-sub-options');
+                if (subOptionsDiv) {
+                    subOptionsDiv.style.opacity = isGuestViewEnabled ? '1' : '0.4';
+                    subOptionsDiv.style.pointerEvents = isGuestViewEnabled ? 'auto' : 'none';
+                }
+
                 const voteBtn = document.getElementById('btn-submit-vote');
                 if (isLocked) {
                     voteBtn.disabled = true; voteBtn.innerText = "系統已鎖定，停止報名";
@@ -1368,17 +1535,12 @@
                     voteBtn.disabled = false; voteBtn.innerText = "確認提交";
                 }
 
-		//----------------------------
-                
-                // 👇 升級版 JSON 公告解析與向下相容邏輯 👇
                 let noticesHtml = ""; 
                 adminNoticesArray = []; 
                 
-                // 1. 優先讀取新的 JSON 格式
                 if (cfg.NoticesData) {
                     try { adminNoticesArray = JSON.parse(cfg.NoticesData); } catch(e) { console.log("JSON 解析失敗"); }
                 } else {
-                    // 2. 向下相容：如果沒有 JSON，自動抓取舊版格式轉換
                     let i = 1;
                     while(cfg[`Notice${i}_Title`]) {
                         let rawTime = cfg[`Notice${i}_Time`] || '';
@@ -1391,7 +1553,7 @@
                             cleanTime = !isNaN(d.getTime()) ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : cleanTime.split('T')[0];
                         }
                         adminNoticesArray.push({
-                            id: Math.random().toString(36).substring(2, 6), // 自動賦予微型 ID
+                            id: Math.random().toString(36).substring(2, 6),
                             title: cfg[`Notice${i}_Title`],
                             desc: cfg[`Notice${i}_Desc`] || '',
                             imgUrl: cfg[`Notice${i}_ImgUrl`] || '',
@@ -1403,14 +1565,11 @@
                     }
                 }
                 
-                // 開始渲染畫面
                 adminNoticesArray.forEach((notice) => {
                      if (notice.isHidden) return;
 
-
-		   let displayTime = notice.time.replace('[PIN]', '').replace('[NEW]', '').trim().replace(/-/g, '/');
+                     let displayTime = notice.time.replace('[PIN]', '').replace('[NEW]', '').trim().replace(/-/g, '/');
                     
-                    // 🌟 判斷是否為置頂公告，賦予專屬 class
                     let isPinned = notice.type === '[PIN]';
                     let pinnedClass = isPinned ? 'notice-card-pinned' : '';
                     
@@ -1423,16 +1582,13 @@
                     let isLong = lines.length > 2; 
                     let needsExpand = isLong || imgUrls.length > 0;
                     
-                    // 🌟 1. 精準截斷邏輯：如果文字過長，才在截斷處補上 `...`
                     let shortText = notice.desc;
                     if (isLong) {
                         shortText = lines[0] + '\n' + lines[1] + '...';
                     }
                     
-                    // 🌟 2. 拔除 span 裡的 `...`，變回純粹的「查看更多」
                     let shortHtml = needsExpand ? `<div class="notice-content-short">${shortText}<span class="read-more-inline">查看更多</span></div>` : `<div class="notice-content-full" style="display:block; opacity:1; max-height:none;">${notice.desc}</div>`;
                     
-                    // 🌟 3. 完整文字不再綁定顯示較少
                     let fullHtml = needsExpand ? `<div class="notice-content-full">${notice.desc}</div>` : '';
                     
                     let imgHtml = '';
@@ -1440,7 +1596,6 @@
                         imgUrls.forEach(url => { imgHtml += `<img src="${url}" class="notice-expand-img" onclick="openImageViewer('${url}', event)" onerror="this.style.display='none'">`; });
                     }
 
-                    // 🌟 4. 新增專屬的 Footer 放「顯示較少」，這個變數等一下會排在 HTML 結構的圖片之後
                     let showLessHtml = needsExpand ? `<div class="notice-expand-footer"><span class="show-less-inline" onclick="event.stopPropagation(); this.closest('.notice-card-new').classList.remove('expanded');">顯示較少</span></div>` : '';
                     
                     let clickAttr = needsExpand ? `onclick="if(!this.classList.contains('expanded')) { this.classList.add('expanded'); }"` : '';
@@ -1449,7 +1604,6 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
                     </div>`;
 
-                    // 🌟 拔除 inline-style，改用乾淨的 class 控制
                     noticesHtml += `<div class="notice-card-new ${pinnedClass}" id="notice-card-${notice.id}" ${clickAttr}>
                         <div class="notice-header">
                             <div class="notice-title">${notice.title}</div>
@@ -1461,15 +1615,15 @@
                         ${shortHtml}
                         ${fullHtml}
                         ${imgHtml}
-                        ${showLessHtml} <div class="notice-footer" style="margin-top:10px;">${displayTime}</div>
+                        ${showLessHtml} 
+                        <div class="notice-footer" style="margin-top:10px;">${displayTime}</div>
                     </div>`;
                 });
                 
                 document.getElementById('ui-notices-container').innerHTML = noticesHtml || '<p style="color:#888; font-size:13px;">目前無最新公告。</p>';
             }
+            
             setTimeout(() => {
-
-                // 👇 調整後的：動態渲染車位分配（精緻毛玻璃單卡片版，縮小字體與間距） 👇
                 if (data.transport && data.transport.length > 0) {
                     let carHtml = "";
                     data.transport.forEach(car => {
@@ -1480,36 +1634,27 @@
                         const meetPoint = car['MeetPoint'] || '尚未指定';
                         const mapLink = car['MapLink'] || '';
 
-                        // 電話按鈕縮小 (28px)，更秀氣
-                        // 👇 升級為蘋果毛玻璃質感的電話按鈕 👇
                         const phoneBtn = phone ? 
                             `<a href="tel:${phone}" style="display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; background:linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.4)); color:var(--primary-blue); border-radius:50%; text-decoration:none; border:1px solid rgba(255,255,255,0.9); box-shadow:0 4px 10px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,1); backdrop-filter:blur(10px); transition:all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);" onmouseover="this.style.transform='scale(1.1)'; this.style.background='rgba(255,255,255,0.9)';" onmouseout="this.style.transform='scale(1)'; this.style.background='linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.4))';">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
                             </a>` : '';
 
-                        // 乘客標籤縮小，間距變緊湊
                         const passArr = passengersRaw.split(',').map(p => p.trim()).filter(p => p);
                         const passTags = passArr.length > 0 
                             ? passArr.map(p => `<div class="member-tag" style="font-size:12px; padding:4px 10px;">${p}</div>`).join('') 
                             : '<span style="color:var(--text-muted); font-size:12px; font-weight:500;">無</span>';
 
-                        // 導航按鈕等比例縮小
                         const mapBtn = mapLink ? 
                             `<a href="${mapLink}" target="_blank" style="display:inline-flex; align-items:center; gap:4px; font-size:12px; font-weight:700; color:var(--primary-blue); background:rgba(0,123,255,0.08); padding:6px 12px; border-radius:16px; text-decoration:none; margin-top:8px; transition:0.2s;">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> 導航至 Google Map
                             </a>` : '';
 
-                        // 抽屜彈出畫面：統合成單一透白毛玻璃卡片，內部用虛線分隔
                         const drawerContent = `
                             <div style="background: rgba(255, 255, 255, 0.45); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.9); border-radius: 16px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.7);">
-                                
-                                <!-- 駕駛 -->
                                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px dashed rgba(0,0,0,0.08); padding-bottom: 12px; margin-bottom: 12px;">
                                     <div style="font-size:16px; font-weight:800; color:var(--text-main);">${driverName}</div>
                                     ${phoneBtn}
                                 </div>
-                                
-                                <!-- 乘客名單 -->
                                 <div style="border-bottom: 1px dashed rgba(0,0,0,0.08); padding-bottom: 12px; margin-bottom: 12px;">
                                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                                         <div style="font-size:11px; font-weight:600; color:var(--text-muted);">乘客名單</div>
@@ -1519,14 +1664,11 @@
                                         ${passTags}
                                     </div>
                                 </div>
-                                
-                                <!-- 集合點 -->
                                 <div>
                                     <div style="font-size:11px; font-weight:600; color:var(--text-muted); margin-bottom:4px;">集合點</div>
                                     <div style="font-size:14px; font-weight:700; color:var(--text-main); line-height:1.4;">${meetPoint}</div>
                                     ${mapBtn}
                                 </div>
-
                             </div>
                         `;
 
@@ -1548,13 +1690,10 @@
                     document.getElementById('ui-cars-container').innerHTML = '<p style="color:#888; font-size:13px; margin:0;">尚未安排車次</p>'; 
                 }
                 
-		        // 👇 新增：動態渲染民宿注意事項與分房分配 👇
                 if (data.bnbs && data.bnbs.length > 0) {
                     let rulesHtml = '';
                     let roomsHtml = '';
-                    const colorThemes = ['orange', 'blue', 'green']; // 用來讓房型卡片自動換色
-                    let roomCounter = 0;
-
+                    
                     data.bnbs.forEach(item => {
                         const type = item['類型'];
                         
@@ -1575,10 +1714,10 @@
                                 <div class="room-header">
                                     <div class="room-header-left">
                                         <div class="room-icon">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M2 4v16"></path><path d="M2 8h18a2 2 0 0 1 2 2v10"></path><path d="M2 17h20"></path><path d="M6 8v9"></path>
-    </svg>
-</div>
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M2 4v16"></path><path d="M2 8h18a2 2 0 0 1 2 2v10"></path><path d="M2 17h20"></path><path d="M6 8v9"></path>
+                                            </svg>
+                                        </div>
                                         <div class="room-name">${item['標籤']}</div>
                                     </div>
                                     <div class="room-badge">${item['內容']}</div>
@@ -1590,14 +1729,13 @@
                         }
                     });
 
-                    // 將組好的 HTML 塞入容器
                     const rulesContainer = document.getElementById('acc-rules-container');
                     const roomsContainer = document.getElementById('acc-rooms-container');
                     
                     if (rulesContainer) rulesContainer.innerHTML = rulesHtml || '<p style="color:#888; font-size:13px;">目前無注意事項</p>';
                     if (roomsContainer) roomsContainer.innerHTML = roomsHtml || '<p style="color:#888; font-size:13px;">尚未分配房間</p>';
                 }
-		
+        
                 if (data.itinerary && data.itinerary.length > 0) {
                     let itinHtml = ""; let currentDay = "";
                     data.itinerary.forEach(item => {
@@ -1623,6 +1761,7 @@
                 renderChecklist(); 
             }, 50);
         }
+
         function renderChecklist() {
             const container = document.getElementById('prep-checklist-container');
             let html = ''; let totalItems = 0; let totalChecked = 0;
@@ -1665,15 +1804,18 @@
             document.getElementById('prep-progress-text').innerText = `${totalChecked}/${totalItems} (${pct}%)`;
             document.getElementById('prep-progress-bar').style.width = `${pct}%`;
         }
+
         function togglePrepCategory(catId) {
             openCategories[catId] = !openCategories[catId];
             renderChecklist();
         }
+
         function toggleChecklistItem(itemId) {
             userChecklistState[itemId] = !userChecklistState[itemId];
             isChecklistModified = true; 
             renderChecklist(); 
         }
+
         async function saveChecklistBackground() {
             if (!isChecklistModified) return; 
             isChecklistModified = false; 
@@ -1686,6 +1828,7 @@
                 isChecklistModified = true; 
             }
         }
+
         function initCarGridDrag() {
             const slider = document.querySelector('.car-grid');
             if(!slider) return;
@@ -1859,7 +2002,6 @@
                 else if (Array.isArray(msgObj.Likes)) likesArray = msgObj.Likes;
             } catch(e) {}
 
-            // 🌟 強化：不管陣列裡存的是 ID 還是名字，也不管有沒有多餘空白，都精準抓出您的紀錄
             let idIdx = likesArray.findIndex(id => 
                 String(id).trim() === String(currentUser.id).trim() || 
                 String(id).trim() === String(currentUser.name).trim()
@@ -1867,10 +2009,8 @@
             
             let isAdding = false;
             if (idIdx > -1) {
-                // 如果已經按過讚，就把他從陣列中拔掉 (收回讚)
                 likesArray.splice(idIdx, 1); 
             } else {
-                // 如果還沒按過，就把他加到陣列最末端
                 likesArray.push(currentUser.id); 
                 isAdding = true;
             }
@@ -1921,6 +2061,7 @@
         }
 
         function loadMoreMessages() { currentMsgPage++; renderMessages(); }
+
         function openEditMessage(index) {
             document.body.classList.add('no-scroll');
             const msg = allMessages[index];
@@ -1944,6 +2085,7 @@
             document.getElementById('custom-modal').style.display = 'flex';
             setTimeout(() => textarea.focus(), 100);
         }
+
         async function submitEditMessage(index, newContent, msgObj) {
             showCustomAlert("更新中", "正在儲存修改的留言...", false);
             try {
@@ -1952,6 +2094,7 @@
                 allMessages[index].Content = newContent; allMessages[index].IsEdited = "V"; renderMessages();
             } catch(e) { showCustomAlert("錯誤", "更新失敗，請檢查網路連線。"); }
         }
+
         async function postMessage() {
             const t = document.getElementById('new-msg-text'); const val = t.value.trim(); if (!val) return;
             const time = getFormattedTime();
@@ -1962,6 +2105,7 @@
 
             try { await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "addMessage", userName: currentUser.name, userId: currentUser.id, avatarText: currentUser.initial, timeStr: time, content: val }) }); } catch(e) { allMessages.shift(); renderMessages(); t.value = val; showCustomAlert("錯誤", "發佈失敗，請檢查網路連線後再試一次。"); }
         }
+
         function unlockMainApp() {
             if (currentUser.votedOption === 3 && !isGuestViewEnabled) {
                 document.getElementById('app').style.display = 'none';
@@ -2009,10 +2153,12 @@
                 switchView('voting'); 
             }
         }
+
         function initDaysCountdown() {
             if(!countdownTargetDate) return;
             document.getElementById('days-countdown').innerText = Math.max(0, Math.ceil((countdownTargetDate - new Date().getTime()) / 86400000));
         }
+
         function markArchive() {
             if (!currentUser.votedOption) return;
             const card = document.getElementById('archive-card-' + currentUser.votedOption);
@@ -2025,19 +2171,46 @@
         }
         
         function switchView(t) {
-            const targetView = document.getElementById('view-' + t);
-            const activeTab = document.getElementById('tab-' + t);
+            const topNav = document.querySelector('.top-nav');
+            if (topNav) topNav.classList.remove('nav-hidden');
+
+            let isLockedForGuest = false;
+            if (currentUser.votedOption === 3 && cachedPollData && cachedPollData.config) {
+                const cfg = cachedPollData.config;
+                let subKey = '';
+           	 if (t === 'overview') subKey = 'Guest_View_Overview';
+        	 else if (t === 'accommodation') subKey = 'Guest_View_Acc';
+         	 else if (t === 'people') subKey = 'Guest_View_Ppl';
+         	 else if (t === 'fees') subKey = 'Guest_View_Fee';
+         	 else if (t === 'itinerary') subKey = 'Guest_View_Itinerary';
+         	 else if (t === 'prep') subKey = 'Guest_View_Prep';
+         	 else if (t === 'board') subKey = 'Guest_View_Board';
+
+                if (subKey && String(cfg[subKey]).toLowerCase() === 'false') {
+                    isLockedForGuest = true;
+                }
+            }
+
+            let viewIdToRender = isLockedForGuest ? 'guest-locked' : t;
+            const targetView = document.getElementById('view-' + viewIdToRender);
+            
+            let baseTabId = t;
+            if (['accommodation', 'people', 'fees'].includes(t)) baseTabId = 'overview';
+            const activeTab = document.getElementById('tab-' + baseTabId);
+
             const indicator = document.getElementById('nav-indicator');
-            if (targetView && targetView.classList.contains('active')) {
+            
+            if (targetView && targetView.classList.contains('active') && !isLockedForGuest) {
                 document.getElementById('avatar-menu').style.display = 'none';
-		const hIcon = document.getElementById('hamburger-icon');
-            	if(hIcon) hIcon.classList.remove('open');
+                const hIcon = document.getElementById('hamburger-icon');
+                if(hIcon) hIcon.classList.remove('open');
                 if (activeTab && indicator) {
                     indicator.style.width = activeTab.offsetWidth + 'px';
                     indicator.style.left = activeTab.offsetLeft + 'px';
                 }
                 return;
             }
+            
             const currentActive = document.querySelector('.view-section.active');
             if (currentActive && currentActive.id === 'view-prep' && t !== 'prep' && isChecklistModified) {
                 saveChecklistBackground();
@@ -2046,15 +2219,16 @@
             if (t === 'board') {
                 clearBadge();
             } else {
-                setTimeout(() => { refreshMessagesOnly(true); }, 500);
+                if (!isLockedForGuest) setTimeout(() => { refreshMessagesOnly(true); }, 500);
             }
 
             document.getElementById('avatar-menu').style.display = 'none';
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-            targetView.classList.add('active');
+            targetView.classList.add('active'); 
+            
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             if (activeTab) {
-                activeTab.classList.add('active');
+                activeTab.classList.add('active'); 
                 if (indicator) {
                     indicator.style.width = activeTab.offsetWidth + 'px';
                     indicator.style.left = activeTab.offsetLeft + 'px';
@@ -2066,7 +2240,7 @@
 
         function handleAdminLogin() {
             document.getElementById('avatar-menu').style.display = 'none';
-	    const hIcon = document.getElementById('hamburger-icon');
+            const hIcon = document.getElementById('hamburger-icon');
             if(hIcon) hIcon.classList.remove('open');
             if (document.getElementById('view-admin').classList.contains('active')) return;
             showCustomPrompt("管理員登入", true, (pwd) => {
@@ -2074,7 +2248,8 @@
                 else showCustomAlert("錯誤", "密碼不正確");
             });
         }
-       function openAdminNotices() {
+
+        function openAdminNotices() {
             let html = "";
             adminNoticesArray.forEach((n) => { html += generateNoticeInputHTML(n); });
             document.getElementById('admin-notice-list-container').innerHTML = html;
@@ -2088,12 +2263,10 @@
             
             const noticeId = notice.id || Math.random().toString(36).substring(2, 6); 
             
-            // 🌟 1. 淨化日期：強制濾除可能殘留的標籤，讓輸入框只顯示純日期
             let rawTime = notice.time || '';
             let cleanTimeVal = rawTime.replace(/\[PIN\]/g, '').replace(/\[NEW\]/g, '').trim();
             let timeVal = cleanTimeVal ? cleanTimeVal.replace(/\//g, '-') : defaultDate;
         
-            // 🌟 2. 依照隱藏狀態設定初始的透明度
             return `<div class="admin-notice-block" data-id="${noticeId}" style="transition: opacity 0.3s; opacity: ${notice.isHidden ? '0.5' : '1'};">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
                     <div style="display:flex; align-items:center;">
@@ -2128,16 +2301,16 @@
         
         function addAdminNoticeField() { 
             const container = document.getElementById('admin-notice-list-container'); 
-            // 呼叫時不傳參數，就會觸發產生新 ID 的機制
             container.insertAdjacentHTML('beforeend', generateNoticeInputHTML()); 
         }
+
         function removeAdminNoticeField(btn) { btn.closest('.admin-notice-block').remove(); }
+        
         function initAdminDragAndDrop() {
             const container = document.getElementById('admin-notice-list-container');
             if (window.Sortable) { new Sortable(container, { handle: '.drag-handle', animation: 150, ghostClass: 'dragging' }); }
         }
 
-        // 👇 替換為具備「自動置頂與日期排序」智慧邏輯的儲存函式 👇
         async function saveAdminNotices() {
             const btn = document.getElementById('btn-save-notices');
             btn.innerText = "資料儲存中..."; btn.disabled = true;
@@ -2148,7 +2321,6 @@
                 const title = block.querySelector('.admin-n-title').value.trim();
                 const type = block.querySelector('.admin-n-type').value;
                 
-                // 🌟 1. 確保儲存時提取乾淨的日期，再與標籤組合
                 let rawDateInput = block.querySelector('.admin-n-time').value.replace(/\[PIN\]/g, '').replace(/\[NEW\]/g, '').trim();
                 const timeRaw = rawDateInput; 
                 const time = type + timeRaw; 
@@ -2156,7 +2328,6 @@
                 const desc = block.querySelector('.admin-n-desc').value.trim();
                 const imgUrl = block.querySelector('.admin-n-img').value.trim();
                 
-                // 🌟 2. 邏輯反轉：如果有勾選(綠色)代表顯示，沒勾選代表隱藏
                 const isVisible = block.querySelector('.admin-n-visible').checked;
                 const isHidden = !isVisible; 
                 
@@ -2200,40 +2371,40 @@
         }
 
         async function toggleVotingLock(checkbox) {
-            const isLocked = checkbox.checked;
-            checkbox.disabled = true;
-            
+            const isLocked = checkbox.checked;            
             const voteBtn = document.getElementById('btn-submit-vote');
             if (isLocked) { voteBtn.disabled = true; voteBtn.innerText = "系統已鎖定，停止報名"; } 
             else { voteBtn.disabled = false; voteBtn.innerText = "確認提交"; }
             
-            fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "updateConfigSingle", key: "VotingLocked", value: isLocked ? "true" : "false" }) })
-                .finally(() => { checkbox.disabled = false; });
+            fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "updateConfigSingle", key: "VotingLocked", value: isLocked ? "true" : "false" }) }).catch(e => console.error(e));
         }
         
-        async function toggleGuestViewLock(checkbox) {
+        async function toggleGuestViewLock(checkbox, key) {
             const isEnabled = checkbox.checked;
-            checkbox.disabled = true;
-            isGuestViewEnabled = isEnabled; 
-            fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "updateConfigSingle", key: "GuestViewEnabled", value: isEnabled ? "true" : "false" }) })
-                .finally(() => { checkbox.disabled = false; });
-        }
-        function initLockScreen() {
-            let c = 0; let t = null;
-            document.getElementById('secret-lock').onclick = () => {
-                c++; clearTimeout(t); t = setTimeout(() => c = 0, 2000);
-                if (c >= 4) { 
-                    c = 0; 
-                    unlockMainApp(); 
+            
+            if (key === 'GuestViewEnabled') {
+                isGuestViewEnabled = isEnabled; 
+                const subOptionsDiv = document.getElementById('admin-guest-sub-options');
+                if (subOptionsDiv) {
+                    subOptionsDiv.style.opacity = isEnabled ? '1' : '0.4';
+                    subOptionsDiv.style.pointerEvents = isEnabled ? 'auto' : 'none';
                 }
-            };
+            }
+
+            if(cachedPollData && cachedPollData.config) {
+                cachedPollData.config[key] = isEnabled ? "true" : "false";
+            }
+
+            fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "updateConfigSingle", key: key, value: isEnabled ? "true" : "false" }) }).catch(e => console.error(e));
         }
+
         function selectVote(o) { 
             lateVoteSelection = o; 
             document.querySelectorAll('.trip-card-vote').forEach(el => { el.classList.remove('selected'); el.querySelector('.vote-check').style.display = 'none'; }); 
             const selectedOpt = document.getElementById('vote-opt-' + o);
             selectedOpt.classList.add('selected'); selectedOpt.querySelector('.vote-check').style.display = 'block'; 
         }
+
         async function submitLateVote() {
             if (!lateVoteSelection) return showCustomAlert("提示", "請選擇是否參加");
             if (cachedPollData?.config?.VotingLocked === 'true') return showCustomAlert("系統已鎖定", "主辦人已關閉報名系統。");
@@ -2242,7 +2413,6 @@
             try {
                 await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "vote", userName: currentUser.name, userId: currentUser.id, pictureUrl: currentUser.pictureUrl, choice_trip: tripText, time_opt1: "V", time_opt2: "V" }) });
                 
-                // 🌟 修復 1：報名成功並建立資料列後，立刻補送一次大頭貼與時間更新
                 fetch(GAS_API_URL, {
                     method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ 
@@ -2283,6 +2453,7 @@
                 resultContainer.innerHTML = `<div class="fade-in"><h2 style="text-align: center; color: var(--text-main); margin-top: 0; margin-bottom: 20px; text-shadow: 0 1px 2px rgba(255,255,255,0.6); display: flex; align-items: center; justify-content: center; gap: 8px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg> 投票結果統計</h2><div class="card" style="padding: 20px; background: rgba(255,255,255,0.45);"><div style="text-align: center; margin-bottom: 12px; font-weight: 700; font-size: 15px; color: var(--primary-orange);">方案一：宜蘭深度放鬆 (二天一夜)</div><div style="font-size: 14px; color: var(--text-main); background: rgba(255,255,255,0.4); padding: 15px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.7); box-shadow: inset 0 1px 1px rgba(255,255,255,0.6);"><div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 8px;"><span style="color: var(--text-muted); display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> 6/13-6/14</span><span style="font-weight: 700; font-size: 15px; color: ${t1_d1_c};">${t1_d1} 票</span></div><div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted); display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> 6/27-6/28</span><span style="font-weight: 700; font-size: 15px; color: ${t1_d2_c};">${t1_d2} 票</span></div></div></div><div class="card" style="padding: 20px; background: rgba(255,255,255,0.45);"><div style="text-align: center; margin-bottom: 12px; font-weight: 700; font-size: 15px; color: var(--primary-blue);">方案二：基隆海派清涼 (一日遊)</div><div style="font-size: 14px; color: var(--text-main); background: rgba(255,255,255,0.4); padding: 15px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.7); box-shadow: inset 0 1px 1px rgba(255,255,255,0.6);"><div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 8px;"><span style="color: var(--text-muted); display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> 6/13-6/14</span><span style="font-weight: 700; font-size: 15px; color: ${t2_d1_c};">${t2_d1} 票</span></div><div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted); display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> 6/27-6/28</span><span style="font-weight: 700; font-size: 15px; color: ${t2_d2_c};">${t2_d2} 票</span></div></div></div><div style="margin-top: 30px; text-align: center;"><div style="font-weight: 700; color: var(--text-muted); font-size: 13px; margin-bottom: 12px;">已完成投票名單(${totalVotes} 人已投)：</div><div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 20px;">${votersHtml || "<span style='color: #a0aec0; font-size: 12px;'>尚無人投票</span>"}</div></div>${unableCount > 0 ? `<div style="background: rgba(255,255,255,0.3); padding: 16px; border-radius: 14px; border: 1px dashed rgba(255,255,255,0.6); text-align: left; margin-top: 10px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);"><div style="font-weight: 700; color: #ff4d4f; font-size: 13px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg> 無法參加 (${unableCount} 人)</div><div style="display: flex; flex-wrap: wrap;">${unableHtml}</div></div>` : ''}</div>`;
             } catch (error) { resultContainer.innerHTML = `<h3 style="color: #ff4d4f; text-align: center; margin-top: 50px;">連線超時，請重試。</h3>`; }
         }
+
         window.addEventListener('click', function(event) {
             const avatarMenu = document.getElementById('avatar-menu');
             if (avatarMenu && avatarMenu.style.display === 'flex') {
@@ -2291,7 +2462,8 @@
                 if (icon) icon.classList.remove('open'); 
             }
         });
-	function openImageViewer(url, event) {
+
+        function openImageViewer(url, event) {
             if (event) event.stopPropagation();
             const viewer = document.getElementById('image-viewer');
             const img = document.getElementById('viewer-img');
@@ -2318,6 +2490,7 @@
                 metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
             }
         }
+
         window.addEventListener('resize', function() {
             const activeTab = document.querySelector('.nav-item.active');
             const indicator = document.getElementById('nav-indicator');
@@ -2326,29 +2499,25 @@
                 indicator.style.left = activeTab.offsetLeft + 'px';
             }
         });
-	// 切換民宿頁面內的「民宿資訊」與「分房分配」Tab
+
         function switchAccTab(tabId) {
-            // 移除所有 active
             document.getElementById('tab-acc-info').classList.remove('active');
             document.getElementById('tab-acc-rooms').classList.remove('active');
             document.getElementById('acc-content-info').classList.remove('active');
             document.getElementById('acc-content-rooms').classList.remove('active');
             
-            // 加上選中的 active
             document.getElementById('tab-acc-' + tabId).classList.add('active');
             document.getElementById('acc-content-' + tabId).classList.add('active');
         }
 
-	// 自動輪播與手勢滑動
         const accTrack = document.getElementById('acc-carousel-track');
         let totalAccSlides = 5;
-        let currentDomIndex = 1; // 因為前面會加一個分身，所以真實的第一張索引是 1
+        let currentDomIndex = 1; 
         let accAutoPlayTimer;
         let touchStartX = 0;
         let touchEndX = 0;
         let isTransitioning = false; 
 
-        // 1. 動態複製第一張與最後一張，達成無縫銜接結構
         if (accTrack) {
             const slides = Array.from(accTrack.children);
             const firstClone = slides[0].cloneNode(true);
@@ -2357,51 +2526,42 @@
             accTrack.appendChild(firstClone);
             accTrack.insertBefore(lastClone, slides[0]);
             
-            // 初始位置設定在真實的第一張 (跳過最後一張的分身)
             accTrack.style.transition = 'none';
             accTrack.style.transform = `translateX(-100%)`;
-            accTrack.offsetHeight; // 強制重繪
+            accTrack.offsetHeight; 
         }
 
-        // 2. 更新畫面位置與點點的共用函式
         function updateCarouselView() {
             if (!accTrack) return;
             const dots = document.querySelectorAll('.acc-dot');
             
-            // 開啟過場動畫
             accTrack.style.transition = 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)';
             accTrack.style.transform = `translateX(-${currentDomIndex * 100}%)`;
 
-            // 計算真實的索引來亮起對應的點點
             if (dots.length > 0) {
                 dots.forEach(d => d.classList.remove('active'));
                 let realIndex = currentDomIndex - 1;
-                if (realIndex === totalAccSlides) realIndex = 0; // 滑到最後一張的分身時，亮第一個點
-                if (realIndex === -1) realIndex = totalAccSlides - 1; // 滑到第一張的分身時，亮最後一個點
+                if (realIndex === totalAccSlides) realIndex = 0; 
+                if (realIndex === -1) realIndex = totalAccSlides - 1; 
                 if (dots[realIndex]) dots[realIndex].classList.add('active');
             }
 
-            // 👇 關鍵修復：用 setTimeout 取代 transitionend，保證動畫狀態絕對會解鎖 👇
-            // 注意！這個部分被移進來 updateCarouselView 裡面了，原本的「第3步監聽器」已經徹底刪除！
             setTimeout(() => {
                 isTransitioning = false;
                 if (currentDomIndex === totalAccSlides + 1) {
-                    // 如果滑到了最後一個 (第一張的分身)，瞬間跳回真實的第一張
                     accTrack.style.transition = 'none';
                     currentDomIndex = 1;
                     accTrack.style.transform = `translateX(-${currentDomIndex * 100}%)`;
                     accTrack.offsetHeight; 
                 } else if (currentDomIndex === 0) {
-                    // 如果滑到了最前面 (最後一張的分身)，瞬間跳回真實的最後一張
                     accTrack.style.transition = 'none';
                     currentDomIndex = totalAccSlides;
                     accTrack.style.transform = `translateX(-${currentDomIndex * 100}%)`;
                     accTrack.offsetHeight; 
                 }
-            }, 650); // 給 600ms 動畫 + 50ms 的安全緩衝時間
+            }, 650); 
         }
 
-        // 3. 啟動自動輪播計時器
         function startAccAutoPlay() {
             clearInterval(accAutoPlayTimer);
             accAutoPlayTimer = setInterval(() => {
@@ -2413,51 +2573,44 @@
             }, 5000);
         }
 
-        // 4. 加入觸控滑動監聽
         if (accTrack) {
             accTrack.addEventListener('touchstart', (e) => {
                 touchStartX = e.changedTouches[0].screenX;
-                clearInterval(accAutoPlayTimer); // 手指摸到螢幕時，暫停自動播放
+                clearInterval(accAutoPlayTimer); 
             }, { passive: true });
 
             accTrack.addEventListener('touchend', (e) => {
                 touchEndX = e.changedTouches[0].screenX;
                 handleSwipeGesture();
-                startAccAutoPlay(); // 手指離開後，恢復自動播放
+                startAccAutoPlay(); 
             }, { passive: true });
         }
 
-        // 5. 判斷滑動方向
         function handleSwipeGesture() {
-            if (isTransitioning) return; // 動畫還沒跑完不准連續滑
+            if (isTransitioning) return; 
             const swipeThreshold = 40;
             if (touchEndX < touchStartX - swipeThreshold) {
-                // 向左滑 (下一張)
                 currentDomIndex++;
                 isTransitioning = true;
                 updateCarouselView();
             } else if (touchEndX > touchStartX + swipeThreshold) {
-                // 向右滑 (上一張)
                 currentDomIndex--;
                 isTransitioning = true;
                 updateCarouselView();
             }
         }
 
-        // 網頁載入時啟動自動播放
         startAccAutoPlay();
 
-	// 👇 智慧導航列 (Smart Header) 滾動偵測邏輯 👇
         let lastScrollTop = 0;
         const topNav = document.querySelector('.top-nav');
         const avatarMenuScroll = document.getElementById('avatar-menu'); 
         const hamburgerIconScroll = document.getElementById('hamburger-icon');
-        const prepCard = document.querySelector('.prep-progress-card'); // 抓取進度條卡片
+        const prepCard = document.querySelector('.prep-progress-card'); 
 
         window.addEventListener('scroll', function() {
             let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
             
-            // 防呆機制：如果是滑到最頂部 (iOS 橡皮筋回彈)，強制顯示
             if (scrollTop <= 0) {
                 topNav.classList.remove('nav-hidden');
                 if (prepCard) prepCard.classList.remove('shift-up'); 
@@ -2465,20 +2618,15 @@
                 return;
             }
 
-            // 判斷滾動方向
-            // 🌟 關鍵修復：加入 && scrollTop > 60，確保原本的導覽列空間已經滾出螢幕，才允許收起
             if (scrollTop > lastScrollTop && scrollTop > 60) { 
-                // 向下滑動：隱藏 Header，進度條上推
                 topNav.classList.add('nav-hidden');
                 if (prepCard) prepCard.classList.add('shift-up'); 
                 
-                // 自動關閉右上角選單
                 if (avatarMenuScroll && avatarMenuScroll.style.display === 'flex') {
                     avatarMenuScroll.style.display = 'none';
                     if (hamburgerIconScroll) hamburgerIconScroll.classList.remove('open');
                 }
             } else if (scrollTop < lastScrollTop) { 
-                // 向上滑動：顯示 Header，進度條退回
                 topNav.classList.remove('nav-hidden');
                 if (prepCard) prepCard.classList.remove('shift-up'); 
             }
