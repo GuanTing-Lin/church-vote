@@ -9,7 +9,7 @@
     <title>香草山小組出遊指南</title>
     <meta property="og:title" content="【出遊指南】香草山小組出遊指南">
     <meta property="og:description" content="趕快點擊查看，詳細行程、車位與住宿分配、行前準備清單都在這！">
-    <meta property="og:image" content="https://raw.githubusercontent.com/GuanTing-Lin/church-vote/main/banner.png">
+    <meta property="og:image" content="https://raw.githubusercontent.com/GuanTing-Lin/church-vote/main/banner-1.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -88,7 +88,18 @@
         
         .notice-card-new { background: rgba(255,255,255,0.45); border: 1px solid rgba(255,255,255,0.8); border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.03), inset 0 1px 1px rgba(255,255,255,0.5); padding: 16px; margin-bottom: 12px; position: relative; overflow: hidden; transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer; }
         .notice-card-new:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.08), inset 0 1px 1px rgba(255,255,255,0.6); }
-        .notice-card-new::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: currentColor; border-radius: 4px 0 0 4px; }
+	/* 👇 針對置頂公告的高質感玻璃特效 (微暖色底 + 柔和光暈) 👇 */
+        /* 👇 針對置頂公告的高質感玻璃特效 (微玫瑰紅底 + 柔和光暈) 👇 */
+        .notice-card-pinned {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 77, 79, 0.08) 100%);
+            border: 1px solid rgba(255, 77, 79, 0.3);
+            box-shadow: 0 6px 20px rgba(255, 77, 79, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.9);
+        }
+        .notice-card-pinned:hover {
+            box-shadow: 0 8px 25px rgba(255, 77, 79, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.9);
+            transform: translateY(-2px);
+        }
+
         .notice-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
         .notice-title { font-weight: 700; color: var(--text-main); font-size: 15px; display: flex; align-items: center; gap: 8px; flex-grow: 1; }
         
@@ -100,8 +111,8 @@
         .share-icon-btn:active { transform: scale(0.9); }
 
         .notice-content-short { font-size: 14px; color: #2c3e50; line-height: 1.6; margin: 0 0 12px; white-space: pre-wrap; }
-        .read-more-inline { color: #868e96; font-size: 14px; margin-left: 2px; font-weight: 600; transition: color 0.2s ease; cursor: pointer; }
-        .notice-card-new:hover .read-more-inline { color: var(--primary-blue); }
+        .read-more-inline, .show-less-inline { color: #868e96; font-size: 14px; margin-left: 4px; font-weight: 600; transition: color 0.2s ease; cursor: pointer; }
+        .notice-card-new:hover .read-more-inline, .notice-card-new:hover .show-less-inline { color: var(--primary-blue); }
         .notice-content-full { display: none; font-size: 14px; color: #2c3e50; line-height: 1.6; white-space: pre-wrap; margin: 0 0 12px; overflow: hidden; max-height: 0; opacity: 0; transition: max-height 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease; }
         
         .notice-card-new.expanded .notice-content-short { display: none; }
@@ -114,6 +125,9 @@
 
         .notice-expand-img { display: none; width: 100%; border-radius: 8px; margin-top: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .notice-card-new.expanded .notice-expand-img { display: block; animation: fadeIn 0.4s ease-out; }
+	/* 👇 新增：負責包裝「顯示較少」，並讓它在展開時才顯示出來 👇 */
+        .notice-expand-footer { display: none; margin-top: 8px; text-align: left; }
+        .notice-card-new.expanded .notice-expand-footer { display: block; animation: fadeIn 0.4s ease-out; }
         
         .notice-footer { font-size: 11px; color: #a0aec0; font-weight: 500;}
         
@@ -256,24 +270,24 @@
         .drag-handle:active { cursor: grabbing; color: var(--primary-orange); }
         .admin-delete-btn { background: rgba(255,77,79,0.1); color: #ff4d4f; border: 1px solid rgba(255,77,79,0.2); border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s;}
         .admin-delete-btn:hover { background: #ff4d4f; color: white; }
-        #user-avatar img, 
-        .msg-avatar img, 
-        .like-avatar-tiny img, 
-        #drawer-body img,
+        /* 1. 頭像與留言板圖片 (禁止所有點擊與儲存) */
+        #user-avatar img, .msg-avatar img, .like-avatar-tiny img, #drawer-body img { 
+            -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-user-drag: none; pointer-events: none; 
+        }
+
+        /* 2.  輪播圖專屬：禁止長按下載與拖曳，但「保留」觸控滑動功能  */
         .acc-hero-img {
             -webkit-touch-callout: none;
-            -webkit-user-select: none;   
-            user-select: none;
-            -webkit-user-drag: none;     
-            pointer-events: none;        
+            -webkit-user-select: none;
+            user-select: none; 
+            -webkit-user-drag: none;
+            pointer-events: auto;
         }
         body.no-scroll { overflow: hidden !important; }
-	    /* 👇 新增：全螢幕圖片檢視器的 CSS 👇 */
         .image-viewer-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: rgba(0,0,0,0.92); z-index: 9999; display: none; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s ease; touch-action: pinch-zoom; }
         .image-viewer-overlay.show { opacity: 1; }
         .image-viewer-img { max-width: 100vw; max-height: 100dvh; object-fit: contain; transition: transform 0.3s; }
         .viewer-close-btn { position: fixed; top: max(20px, env(safe-area-inset-top)); right: 20px; color: white; background: rgba(255,255,255,0.25); width: 36px; height: 36px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 10000; font-size: 24px; font-weight: bold; backdrop-filter: blur(10px); }
-        /* 👇 調整後的：民宿頁面專屬毛玻璃樣式 (精緻比例版) 👇 */
 	    .acc-hero { 
             position: relative; 
             margin: -20px -16px 16px; 
@@ -283,7 +297,6 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
             background: #fff; 
 
-            /* 👇 加入下面這兩行，終結圓角在動畫時爆開的渲染 Bug 👇 */
             transform: translateZ(0);
             -webkit-mask-image: -webkit-radial-gradient(white, black);
         }        
@@ -496,7 +509,7 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                     後台管理
                 </div>
-                <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.0.5</div>
+                <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.0.7</div>
             </div>
     <div id="loading" style="display: flex; flex-direction: column; align-items: center; margin-top: 120px;">
         <div class="spinner"></div>
@@ -566,7 +579,7 @@
             </div>
             <div class="section-title">
                 <div style="display:flex; align-items:center;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary-blue)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="3" width="18" height="14" rx="2" ry="2"></rect>
                         <path d="M8 21h8"></path>
                         <path d="M12 17v4"></path>
@@ -808,8 +821,8 @@
         </div>
         
         <div id="view-archive" class="view-section">
-            <h2 style="text-align: center; color: var(--primary-gray); margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; gap: 6px;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg> 歷史方案回顧
+            <h2 style="text-align: center; color: var(--text-main); margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg> 歷史方案回顧
             </h2>
             <div class="cards-row archive-card">
                 <div class="trip-card" id="archive-card-1"><div class="card-img-block"><img src="yilan.png" onerror="this.style.display='none'" loading="lazy"><div class="card-badge-container"><span class="card-badge">勝出方案</span></div></div><div class="card-body"><div class="card-title" style="font-weight:700; font-size:15px;">方案一：宜蘭深度放鬆</div></div></div>
@@ -1313,7 +1326,7 @@
         async function shareNotice(title, id) {
             const shareUrl = window.location.href.split('?')[0] + '?notice=' + id;
             
-            const shareTextContent = "【出遊指南公告】\n" + title + "\n👉 查看完整內容：";
+            const shareTextContent = "【出遊指南公告】\n" + title + "\n👉 點擊查看完整內容：";
             
             if (navigator.share) {
                 try { 
@@ -1354,70 +1367,92 @@
                 } else {
                     voteBtn.disabled = false; voteBtn.innerText = "確認提交";
                 }
+
+		//----------------------------
                 
-                let noticesHtml = ""; let i = 1; adminNoticesArray = []; 
-                while(cfg[`Notice${i}_Title`]) {
-                    let title = cfg[`Notice${i}_Title`];
-                    let desc = cfg[`Notice${i}_Desc`] || '';
-                    let rawTime = cfg[`Notice${i}_Time`] || '';
-                    let imgUrl = cfg[`Notice${i}_ImgUrl`] || '';
-                    
-                    let type = '';
-                    if(rawTime.startsWith('[PIN]')) type = '[PIN]';
-                    else if(rawTime.startsWith('[NEW]')) type = '[NEW]';
-                    
-                    let cleanTime = rawTime.replace('[PIN]', '').replace('[NEW]', '').trim();
-                    if (/^\d{4}-\d{2}-\d{2}T/.test(cleanTime)) {
-                        let d = new Date(cleanTime);
-                        if (!isNaN(d.getTime())) { 
-                            cleanTime = d.getFullYear() + '-' + (d.getMonth() + 1).toString().padStart(2, '0') + '-' + d.getDate().toString().padStart(2, '0'); 
-                        } else { 
-                            cleanTime = cleanTime.split('T')[0]; 
+                // 👇 升級版 JSON 公告解析與向下相容邏輯 👇
+                let noticesHtml = ""; 
+                adminNoticesArray = []; 
+                
+                // 1. 優先讀取新的 JSON 格式
+                if (cfg.NoticesData) {
+                    try { adminNoticesArray = JSON.parse(cfg.NoticesData); } catch(e) { console.log("JSON 解析失敗"); }
+                } else {
+                    // 2. 向下相容：如果沒有 JSON，自動抓取舊版格式轉換
+                    let i = 1;
+                    while(cfg[`Notice${i}_Title`]) {
+                        let rawTime = cfg[`Notice${i}_Time`] || '';
+                        let type = '';
+                        if(rawTime.startsWith('[PIN]')) type = '[PIN]';
+                        else if(rawTime.startsWith('[NEW]')) type = '[NEW]';
+                        let cleanTime = rawTime.replace('[PIN]', '').replace('[NEW]', '').trim();
+                        if (/^\d{4}-\d{2}-\d{2}T/.test(cleanTime)) {
+                            let d = new Date(cleanTime);
+                            cleanTime = !isNaN(d.getTime()) ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : cleanTime.split('T')[0];
                         }
+                        adminNoticesArray.push({
+                            id: Math.random().toString(36).substring(2, 6), // 自動賦予微型 ID
+                            title: cfg[`Notice${i}_Title`],
+                            desc: cfg[`Notice${i}_Desc`] || '',
+                            imgUrl: cfg[`Notice${i}_ImgUrl`] || '',
+                            time: cleanTime,
+                            type: type,
+                            isHidden: false
+                        });
+                        i++;
                     }
-                    let displayTime = cleanTime.replace(/-/g, '/');
+                }
+                
+                // 開始渲染畫面
+                adminNoticesArray.forEach((notice) => {
+                     if (notice.isHidden) return;
+
+
+		   let displayTime = notice.time.replace('[PIN]', '').replace('[NEW]', '').trim().replace(/-/g, '/');
                     
-                    adminNoticesArray.push({title, desc, imgUrl, time: cleanTime, type}); 
-                    
-                    let color = i % 2 !== 0 ? 'var(--primary-orange)' : 'var(--primary-blue)';
+                    // 🌟 判斷是否為置頂公告，賦予專屬 class
+                    let isPinned = notice.type === '[PIN]';
+                    let pinnedClass = isPinned ? 'notice-card-pinned' : '';
                     
                     let badgeHtml = '';
-                    if (type === '[PIN]') badgeHtml = '<div class="notice-pin-new">置頂公告</div>';
-                    else if (type === '[NEW]') badgeHtml = '<div class="notice-new-badge">最新消息</div>';
+                    if (notice.type === '[PIN]') badgeHtml = '<div class="notice-pin-new">置頂公告</div>';
+                    else if (notice.type === '[NEW]') badgeHtml = '<div class="notice-new-badge">最新消息</div>';
                     
-                    // 將輸入的網址根據換行符號分割成陣列，並過濾掉空白
-                    let imgUrls = imgUrl ? imgUrl.split('\n').map(u => u.trim()).filter(u => u !== '') : [];
+                    let imgUrls = notice.imgUrl ? notice.imgUrl.split('\n').map(u => u.trim()).filter(u => u !== '') : [];
+                    let lines = notice.desc.split('\n');
+                    let isLong = lines.length > 2; 
+                    let needsExpand = isLong || imgUrls.length > 0;
+                    
+                    // 🌟 1. 精準截斷邏輯：如果文字過長，才在截斷處補上 `...`
+                    let shortText = notice.desc;
+                    if (isLong) {
+                        shortText = lines[0] + '\n' + lines[1] + '...';
+                    }
+                    
+                    // 🌟 2. 拔除 span 裡的 `...`，變回純粹的「查看更多」
+                    let shortHtml = needsExpand ? `<div class="notice-content-short">${shortText}<span class="read-more-inline">查看更多</span></div>` : `<div class="notice-content-full" style="display:block; opacity:1; max-height:none;">${notice.desc}</div>`;
+                    
+                    // 🌟 3. 完整文字不再綁定顯示較少
+                    let fullHtml = needsExpand ? `<div class="notice-content-full">${notice.desc}</div>` : '';
+                    
+                    let imgHtml = '';
+                    if (imgUrls.length > 0) {
+                        imgUrls.forEach(url => { imgHtml += `<img src="${url}" class="notice-expand-img" onclick="openImageViewer('${url}', event)" onerror="this.style.display='none'">`; });
+                    }
 
-                    // 🌟 嚴格查看更多處理邏輯：有第3行，或有圖片
-                    let lines = desc.split('\n');
-                    let isLong = lines.length > 2; 
-                    let needsExpand = isLong || imgUrls.length > 0;
-                    let shortText = desc;
-                    
-                    if (isLong) {
-                        shortText = lines[0] + '\n' + lines[1]; // 嚴格保留前兩行
-                    }
-                    
-                    let shortHtml = needsExpand ? `<div class="notice-content-short">${shortText}<span class="read-more-inline">...查看更多</span></div>` : `<div class="notice-content-full" style="display:block; opacity:1; max-height:none;">${desc}</div>`;
-                    let fullHtml = needsExpand ? `<div class="notice-content-full">${desc}</div>` : '';
-                    
-                    // 迴圈產生多張圖片的 HTML
-                    let imgHtml = '';
-                    if (imgUrls.length > 0) {
-                        imgUrls.forEach(url => {
-                            imgHtml += `<img src="${url}" class="notice-expand-img" onclick="openImageViewer('${url}', event)" onerror="this.style.display='none'">`;
-                        });
-                    }
+                    // 🌟 4. 新增專屬的 Footer 放「顯示較少」，這個變數等一下會排在 HTML 結構的圖片之後
+                    let showLessHtml = needsExpand ? `<div class="notice-expand-footer"><span class="show-less-inline" onclick="event.stopPropagation(); this.closest('.notice-card-new').classList.remove('expanded');">顯示較少</span></div>` : '';
                     
                     let clickAttr = needsExpand ? `onclick="if(!this.classList.contains('expanded')) { this.classList.add('expanded'); }"` : '';
 
-                    let shareBtnHtml = `<div onclick="shareNotice('${title}', ${i}); event.stopPropagation();" class="share-icon-btn" title="分享">
+                    let shareBtnHtml = `<div onclick="shareNotice('${notice.title}', '${notice.id}'); event.stopPropagation();" class="share-icon-btn" title="分享">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
                     </div>`;
 
-                    noticesHtml += `<div class="notice-card-new" id="notice-card-${i}" style="border-left-color: ${color};" ${clickAttr}>
+                    // 🌟 拔除 inline-style，改用乾淨的 class 控制
+                    noticesHtml += `<div class="notice-card-new ${pinnedClass}" id="notice-card-${notice.id}" ${clickAttr}>
                         <div class="notice-header">
-                            <div class="notice-title">${title}</div>
+                            <div class="notice-title">${notice.title}</div>
                             <div style="display:flex; align-items:center;">
                                 ${badgeHtml}
                                 ${shareBtnHtml}
@@ -1426,10 +1461,10 @@
                         ${shortHtml}
                         ${fullHtml}
                         ${imgHtml}
-                        <div class="notice-footer" style="margin-top:10px;">${displayTime}</div>
+                        ${showLessHtml} <div class="notice-footer" style="margin-top:10px;">${displayTime}</div>
                     </div>`;
-                    i++;
-                }
+                });
+                
                 document.getElementById('ui-notices-container').innerHTML = noticesHtml || '<p style="color:#888; font-size:13px;">目前無最新公告。</p>';
             }
             setTimeout(() => {
@@ -2039,45 +2074,63 @@
                 else showCustomAlert("錯誤", "密碼不正確");
             });
         }
-        function openAdminNotices() {
+       function openAdminNotices() {
             let html = "";
-            adminNoticesArray.forEach((n, idx) => { html += generateNoticeInputHTML(idx + 1, n); });
+            adminNoticesArray.forEach((n) => { html += generateNoticeInputHTML(n); });
             document.getElementById('admin-notice-list-container').innerHTML = html;
             switchView('admin-notices'); 
             initAdminDragAndDrop();
         }
         
-        function generateNoticeInputHTML(idx, notice = {title:'', desc:'', imgUrl:'', time:'', type:''}) {
+        function generateNoticeInputHTML(notice = {id:'', title:'', desc:'', imgUrl:'', time:'', type:'', isHidden: false}) {
             const today = new Date();
             const defaultDate = `${today.getFullYear()}-${(today.getMonth()+1).toString().padStart(2,'0')}-${today.getDate().toString().padStart(2,'0')}`;
             
-            let type = notice.type || '';
+            const noticeId = notice.id || Math.random().toString(36).substring(2, 6); 
+            
+            // 🌟 1. 淨化日期：強制濾除可能殘留的標籤，讓輸入框只顯示純日期
             let rawTime = notice.time || '';
-            let timeVal = rawTime ? rawTime.replace(/\//g, '-') : defaultDate;
+            let cleanTimeVal = rawTime.replace(/\[PIN\]/g, '').replace(/\[NEW\]/g, '').trim();
+            let timeVal = cleanTimeVal ? cleanTimeVal.replace(/\//g, '-') : defaultDate;
         
-            return `<div class="admin-notice-block" id="admin-notice-item-${idx}">
+            // 🌟 2. 依照隱藏狀態設定初始的透明度
+            return `<div class="admin-notice-block" data-id="${noticeId}" style="transition: opacity 0.3s; opacity: ${notice.isHidden ? '0.5' : '1'};">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
-                    <div style="display:flex; align-items:center;"><span class="drag-handle" title="按住拖曳可排序">☰</span><label style="font-size:12px; color:var(--text-muted); font-weight: 600; margin:0;">公告標題</label></div>
-                    <button class="admin-delete-btn" style="position:static;" onclick="removeAdminNoticeField(this)">刪除</button>
+                    <div style="display:flex; align-items:center;">
+                        <span class="drag-handle" title="按住拖曳可排序">☰</span>
+                        <label style="font-size:12px; color:var(--text-muted); font-weight: 600; margin:0;">公告標題</label>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <label class="switch" style="transform: scale(0.75); margin: 0;" title="綠色為顯示，灰色為隱藏">
+                            <input type="checkbox" class="admin-n-visible" ${!notice.isHidden ? 'checked' : ''} onchange="this.closest('.admin-notice-block').style.opacity = this.checked ? '1' : '0.5'">
+                            <span class="slider"></span>
+                        </label>
+                        <button class="admin-delete-btn" style="position:static;" onclick="removeAdminNoticeField(this)">刪除</button>
+                    </div>
                 </div>
                 <input type="text" class="msg-textarea admin-n-title" style="min-height:36px; margin-bottom:10px; background: rgba(255,255,255,0.9);" value="${notice.title}">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
-                    <label style="font-size:12px; color:var(--text-muted); font-weight: 600;">標籤與日期</label>
+                    <label style="font-size:12px; color:var(--text-muted); font-weight: 600;">公告日期</label>
                     <select class="admin-n-type" style="padding: 3px 8px; border-radius: 8px; border: 1px solid #cbd5e0; font-size: 12px; font-weight: 700; color: #4a5568; outline: none; background: white;">
-                        <option value="" ${type===''?'selected':''}>無標籤</option>
-                        <option value="[PIN]" ${type==='[PIN]'?'selected':''}>置頂公告</option>
-                        <option value="[NEW]" ${type==='[NEW]'?'selected':''}>最新消息</option>
-                    </select>
+                        <option value="" ${notice.type===''?'selected':''}>無標籤</option>
+                        <option value="[PIN]" ${notice.type==='[PIN]'?'selected':''}>置頂公告</option>
+                        <option value="[NEW]" ${notice.type==='[NEW]'?'selected':''}>最新消息</option>
+                    </select>
                 </div>
                 <input type="text" onfocus="this.type='date'" onblur="this.type='text'" class="msg-textarea admin-n-time" style="width:100%; box-sizing:border-box; min-height:36px; margin-bottom:10px; background: rgba(255,255,255,0.9); -webkit-appearance:none;" value="${timeVal}">
                 
                 <label style="font-size:12px; color:var(--text-muted); font-weight: 600;">詳細內容</label>
-                <textarea class="msg-textarea admin-n-desc" style="background: rgba(255,255,255,0.9); margin-bottom:10px;">${notice.desc}</textarea>
-		<label style="font-size:12px; color:var(--text-muted); font-weight: 600;">圖片連結</label>
-                <textarea class="msg-textarea admin-n-img" placeholder="請貼上圖片網址，若有多張請換行" style="min-height:72px; background: rgba(255,255,255,0.9);">${notice.imgUrl || ''}</textarea>
-            </div>`;
+                <textarea class="msg-textarea admin-n-desc" style="background: rgba(255,255,255,0.9); margin-bottom:10px;">${notice.desc}</textarea>
+                <label style="font-size:12px; color:var(--text-muted); font-weight: 600;">圖片連結</label>
+                <textarea class="msg-textarea admin-n-img" placeholder="請貼上圖片網址，若有多張請換行" style="min-height:72px; background: rgba(255,255,255,0.9);">${notice.imgUrl || ''}</textarea>
+            </div>`;
         }
-        function addAdminNoticeField() { const container = document.getElementById('admin-notice-list-container'); container.insertAdjacentHTML('beforeend', generateNoticeInputHTML(container.children.length + 1)); }
+        
+        function addAdminNoticeField() { 
+            const container = document.getElementById('admin-notice-list-container'); 
+            // 呼叫時不傳參數，就會觸發產生新 ID 的機制
+            container.insertAdjacentHTML('beforeend', generateNoticeInputHTML()); 
+        }
         function removeAdminNoticeField(btn) { btn.closest('.admin-notice-block').remove(); }
         function initAdminDragAndDrop() {
             const container = document.getElementById('admin-notice-list-container');
@@ -2090,51 +2143,52 @@
             btn.innerText = "資料儲存中..."; btn.disabled = true;
             let tempNotices = [];
             
-            // 1. 先把畫面上所有的公告抓下來
-            document.querySelectorAll('.admin-notice-block').forEach((block, idx) => {
+            document.querySelectorAll('.admin-notice-block').forEach((block) => {
+                const id = block.getAttribute('data-id'); 
                 const title = block.querySelector('.admin-n-title').value.trim();
                 const type = block.querySelector('.admin-n-type').value;
-                const timeRaw = block.querySelector('.admin-n-time').value.trim();
+                
+                // 🌟 1. 確保儲存時提取乾淨的日期，再與標籤組合
+                let rawDateInput = block.querySelector('.admin-n-time').value.replace(/\[PIN\]/g, '').replace(/\[NEW\]/g, '').trim();
+                const timeRaw = rawDateInput; 
                 const time = type + timeRaw; 
+                
                 const desc = block.querySelector('.admin-n-desc').value.trim();
                 const imgUrl = block.querySelector('.admin-n-img').value.trim();
                 
+                // 🌟 2. 邏輯反轉：如果有勾選(綠色)代表顯示，沒勾選代表隱藏
+                const isVisible = block.querySelector('.admin-n-visible').checked;
+                const isHidden = !isVisible; 
+                
                 if(title) {
-                    // 🌟 這裡多存入 type 跟 timeRaw，方便稍後做排序判斷
-                    tempNotices.push({title, desc, imgUrl, time, type, timeRaw});
+                    tempNotices.push({ id, title, desc, imgUrl, timeRaw, time, type, isHidden });
                 }
             });
             
-            // 🌟 2. 智慧排序邏輯：分離置頂與一般公告
             let pinnedNotices = tempNotices.filter(n => n.type === '[PIN]');
             let normalNotices = tempNotices.filter(n => n.type !== '[PIN]');
             
-            // 🌟 3. 將置頂公告依據「日期」進行降冪排序 (越新的日期數字越大，排越前面)
             pinnedNotices.sort((a, b) => {
-                // 將 YYYY-MM-DD 轉為時間戳記來比較
                 let dateA = new Date(a.timeRaw.replace(/-/g, '/')).getTime() || 0;
                 let dateB = new Date(b.timeRaw.replace(/-/g, '/')).getTime() || 0;
-                return dateB - dateA; // 大的在前面 (最新)
+                return dateB - dateA; 
             });
             
-            // 🌟 4. 把排好的置頂公告，跟一般公告(維持原本使用者拖曳的順序)合併
             let newNotices = [...pinnedNotices, ...normalNotices];
             
-            showCustomAlert("資料同步中", "正在更新公告內容...", false);
+            showCustomAlert("資料儲存中", "資料正在寫入資料庫...", false);
             
-            for(let key in cachedPollData.config) {
-                if(key.startsWith('Notice')) delete cachedPollData.config[key];
-            }
-            newNotices.forEach((n, idx) => {
-                let i = idx + 1;
-                cachedPollData.config[`Notice${i}_Title`] = n.title;
-                cachedPollData.config[`Notice${i}_Desc`] = n.desc;
-                cachedPollData.config[`Notice${i}_Time`] = n.time;
-                if(n.imgUrl) cachedPollData.config[`Notice${i}_ImgUrl`] = n.imgUrl;
-            });
+            fetch(GAS_API_URL, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                body: JSON.stringify({ 
+                    action: "updateConfigSingle", 
+                    key: "NoticesData", 
+                    value: JSON.stringify(newNotices) 
+                }) 
+            }).catch(e => console.error("JSON 公告背景儲存失敗"));
             
-            fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "updateNotices", notices: newNotices }) })
-                .catch(e => console.error("公告背景儲存失敗"));
+            cachedPollData.config.NoticesData = JSON.stringify(newNotices);
             
             setTimeout(() => {
                 renderDynamicUI(cachedPollData);
@@ -2142,7 +2196,7 @@
                 switchView('overview');
                 btn.innerText = "儲存所有變更"; 
                 btn.disabled = false;
-            }, 1500); 
+            }, 1200); 
         }
 
         async function toggleVotingLock(checkbox) {
@@ -2226,7 +2280,7 @@
                 const t1_d2_c = (t1_d2 === t1_max && t1_max > 0) ? 'var(--primary-orange)' : 'var(--text-main)';
                 const t2_d1_c = (t2_d1 === t2_max && t2_max > 0) ? 'var(--primary-blue)' : 'var(--text-main)';
                 const t2_d2_c = (t2_d2 === t2_max && t2_max > 0) ? 'var(--primary-blue)' : 'var(--text-main)';
-                resultContainer.innerHTML = `<div class="fade-in"><h2 style="text-align: center; color: var(--text-main); margin-top: 0; margin-bottom: 20px; text-shadow: 0 1px 2px rgba(255,255,255,0.6);">投票結果統計</h2><div class="card" style="padding: 20px; background: rgba(255,255,255,0.45);"><div style="text-align: center; margin-bottom: 12px; font-weight: 700; font-size: 15px; color: var(--primary-orange);">方案一：宜蘭深度放鬆 (二天一夜)</div><div style="font-size: 14px; color: var(--text-main); background: rgba(255,255,255,0.4); padding: 15px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.7); box-shadow: inset 0 1px 1px rgba(255,255,255,0.6);"><div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 8px;"><span style="color: var(--text-muted); display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> 6/13-6/14</span><span style="font-weight: 700; font-size: 15px; color: ${t1_d1_c};">${t1_d1} 票</span></div><div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted); display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> 6/27-6/28</span><span style="font-weight: 700; font-size: 15px; color: ${t1_d2_c};">${t1_d2} 票</span></div></div></div><div class="card" style="padding: 20px; background: rgba(255,255,255,0.45);"><div style="text-align: center; margin-bottom: 12px; font-weight: 700; font-size: 15px; color: var(--primary-blue);">方案二：基隆海派清涼 (一日遊)</div><div style="font-size: 14px; color: var(--text-main); background: rgba(255,255,255,0.4); padding: 15px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.7); box-shadow: inset 0 1px 1px rgba(255,255,255,0.6);"><div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 8px;"><span style="color: var(--text-muted); display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> 6/13-6/14</span><span style="font-weight: 700; font-size: 15px; color: ${t2_d1_c};">${t2_d1} 票</span></div><div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted); display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> 6/27-6/28</span><span style="font-weight: 700; font-size: 15px; color: ${t2_d2_c};">${t2_d2} 票</span></div></div></div><div style="margin-top: 30px; text-align: center;"><div style="font-weight: 700; color: var(--text-muted); font-size: 13px; margin-bottom: 12px;">已完成投票名單(${totalVotes} 人已投)：</div><div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 20px;">${votersHtml || "<span style='color: #a0aec0; font-size: 12px;'>尚無人投票</span>"}</div></div>${unableCount > 0 ? `<div style="background: rgba(255,255,255,0.3); padding: 16px; border-radius: 14px; border: 1px dashed rgba(255,255,255,0.6); text-align: left; margin-top: 10px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);"><div style="font-weight: 700; color: #ff4d4f; font-size: 13px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg> 無法參加 (${unableCount} 人)</div><div style="display: flex; flex-wrap: wrap;">${unableHtml}</div></div>` : ''}</div>`;
+                resultContainer.innerHTML = `<div class="fade-in"><h2 style="text-align: center; color: var(--text-main); margin-top: 0; margin-bottom: 20px; text-shadow: 0 1px 2px rgba(255,255,255,0.6); display: flex; align-items: center; justify-content: center; gap: 8px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg> 投票結果統計</h2><div class="card" style="padding: 20px; background: rgba(255,255,255,0.45);"><div style="text-align: center; margin-bottom: 12px; font-weight: 700; font-size: 15px; color: var(--primary-orange);">方案一：宜蘭深度放鬆 (二天一夜)</div><div style="font-size: 14px; color: var(--text-main); background: rgba(255,255,255,0.4); padding: 15px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.7); box-shadow: inset 0 1px 1px rgba(255,255,255,0.6);"><div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 8px;"><span style="color: var(--text-muted); display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> 6/13-6/14</span><span style="font-weight: 700; font-size: 15px; color: ${t1_d1_c};">${t1_d1} 票</span></div><div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted); display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> 6/27-6/28</span><span style="font-weight: 700; font-size: 15px; color: ${t1_d2_c};">${t1_d2} 票</span></div></div></div><div class="card" style="padding: 20px; background: rgba(255,255,255,0.45);"><div style="text-align: center; margin-bottom: 12px; font-weight: 700; font-size: 15px; color: var(--primary-blue);">方案二：基隆海派清涼 (一日遊)</div><div style="font-size: 14px; color: var(--text-main); background: rgba(255,255,255,0.4); padding: 15px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.7); box-shadow: inset 0 1px 1px rgba(255,255,255,0.6);"><div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 8px;"><span style="color: var(--text-muted); display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> 6/13-6/14</span><span style="font-weight: 700; font-size: 15px; color: ${t2_d1_c};">${t2_d1} 票</span></div><div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted); display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> 6/27-6/28</span><span style="font-weight: 700; font-size: 15px; color: ${t2_d2_c};">${t2_d2} 票</span></div></div></div><div style="margin-top: 30px; text-align: center;"><div style="font-weight: 700; color: var(--text-muted); font-size: 13px; margin-bottom: 12px;">已完成投票名單(${totalVotes} 人已投)：</div><div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 20px;">${votersHtml || "<span style='color: #a0aec0; font-size: 12px;'>尚無人投票</span>"}</div></div>${unableCount > 0 ? `<div style="background: rgba(255,255,255,0.3); padding: 16px; border-radius: 14px; border: 1px dashed rgba(255,255,255,0.6); text-align: left; margin-top: 10px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);"><div style="font-weight: 700; color: #ff4d4f; font-size: 13px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg> 無法參加 (${unableCount} 人)</div><div style="display: flex; flex-wrap: wrap;">${unableHtml}</div></div>` : ''}</div>`;
             } catch (error) { resultContainer.innerHTML = `<h3 style="color: #ff4d4f; text-align: center; margin-top: 50px;">連線超時，請重試。</h3>`; }
         }
         window.addEventListener('click', function(event) {
