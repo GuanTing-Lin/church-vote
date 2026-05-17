@@ -456,10 +456,38 @@
         .member-tag { 
             background: rgba(255, 255, 255, 0.6); 
             border: 1px solid rgba(255, 255, 255, 0.9); 
-            font-size: 12px; color: var(--text-muted); font-weight: 600; 
+            font-size: 12px; color: var(--text-main); font-weight: 600; /* 👈 這裡改成 var(--text-main) */
             padding: 4px 12px; border-radius: 20px; 
             box-shadow: 0 2px 6px rgba(0,0,0,0.02); 
         }
+        .admin-itin-item-row input:focus, .admin-itin-item-row textarea:focus {
+            outline: none;
+            border-color: var(--primary-blue) !important;
+            background: white !important;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+        .admin-itin-item-row.dragging {
+            opacity: 0.3;
+            border: 2px dashed var(--primary-blue);
+            background: #fff !important;
+        }
+
+
+        /* 行程編輯器專屬樣式 */
+        .itin-edit-day:focus, .itin-edit-time:focus, .itin-edit-title:focus, .itin-edit-desc:focus {
+            outline: none;
+            border-color: var(--primary-blue) !important;
+            background: white !important;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+
+        .admin-itin-block input, .admin-itin-block textarea {
+            transition: all 0.2s;
+            background: rgba(255,255,255,0.4);
+        }
+
+
+
     </style>
 </head>
 <body>
@@ -504,7 +532,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             後台管理
         </div>
-        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.1.3</div>
+        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.1.4</div>
     </div>
     <div id="loading" style="display: flex; flex-direction: column; align-items: center; margin-top: 120px;">
         <div class="spinner"></div>
@@ -786,12 +814,6 @@
                 <textarea id="new-msg-text" class="msg-textarea" placeholder="想留什麼都可以~"></textarea>
                 <button class="btn-primary" onclick="postMessage()">送出留言</button>
             </div>
-            <div style="display: flex; justify-content: flex-end; margin-bottom: 8px; padding-right: 4px;">
-                <button onclick="refreshMessagesOnly(false)" style="display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.9); padding: 5px 12px; border-radius: 12px; color: var(--primary-blue); font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.04); transition: 0.2s; backdrop-filter: blur(10px);">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-                    更新留言
-                </button>
-            </div>
             <div class="card" style="padding: 10px 20px;">
                 <div id="msg-list-container"></div>
             </div>
@@ -854,6 +876,10 @@
                     <div style="font-size: 15px; font-weight: 600; color: var(--text-main);">編輯首頁公告</div>
                     <div style="color: #cbd5e0; font-weight: 700;">></div>
                 </div>
+                <div class="admin-menu-item" onclick="openAdminItinerary()">
+                    <div style="font-size: 15px; font-weight: 600; color: var(--text-main);">編輯詳細行程</div>
+                    <div style="color: #cbd5e0; font-weight: 700;">></div>
+                </div>
 
                 <div class="admin-menu-item">
                     <div style="font-size: 15px; font-weight: 600; color: var(--text-main);">鎖定補投票系統</div>
@@ -914,6 +940,21 @@
                 <div id="admin-notice-list-container" style="text-align:left;"></div>
                 <button class="btn-primary" style="background:rgba(255,255,255,0.4); color:var(--text-main); margin-bottom:15px; border: 1px solid rgba(255,255,255,0.6); box-shadow: inset 0 1px 1px rgba(255,255,255,0.5);" onclick="addAdminNoticeField()">+ 新增公告</button>
                 <button class="btn-primary" id="btn-save-notices" onclick="saveAdminNotices()">儲存所有變更</button>
+            </div>
+        </div>
+        <div id="view-admin-itinerary" class="view-section">
+            <div style="display: flex; align-items: center; margin-bottom: 20px; position: relative; justify-content: center; height: 40px;">
+                <div onclick="switchView('admin')" style="position: absolute; left: 0; color: var(--text-main); font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 6px 12px; background: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.9); border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); transition: 0.2s; backdrop-filter: blur(10px);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    返回
+                </div>
+                <h2 style="color: var(--text-main); margin: 0; font-size: 18px; text-shadow: 0 1px 2px rgba(255,255,255,0.5);"> 編輯詳細行程</h2>
+            </div>
+
+            <div id="admin-itin-list-container"></div>
+
+            <div class="card" style="padding: 15px; text-align: center; background: rgba(255,255,255,0.5); margin-top: 10px;">
+                <button class="btn-primary" id="btn-save-itinerary" onclick="saveAdminItinerary()">儲存行程變更</button>
             </div>
         </div>
     </main>
@@ -1137,10 +1178,21 @@
                 const welcomeNameEl = document.getElementById('welcome-name');
                 welcomeNameEl.innerHTML = `<span>${currentUser.name}</span>`;
                 if(document.getElementById('user-avatar')) document.getElementById('user-avatar').innerText = currentUser.initial;
+                
+                fetch(GAS_API_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ 
+                          action: "updateAvatar", 
+                          userId: currentUser.id, 
+                          pictureUrl: "",
+                          loginTime: getFormattedTime() 
+                     })
+                }).catch(e => console.log("測試帳號同步失敗"));
+
                 await processLoadedData();
                 return;
             } 
-            
+                        
             const checkLiff = setInterval(async () => {
                 if (typeof liff !== 'undefined') {
                     clearInterval(checkLiff);
@@ -1201,9 +1253,9 @@
                         if (m.Name && m.AvatarUrl) window.userAvatarMap[m.Name] = m.AvatarUrl; 
                     });
                 }
-                if (data.votes) {
-                    data.votes.forEach(v => {
-                        // 🌟 修正：同時支援有空白與無空白的欄位名稱
+                // 🌟 修改：改為讀取 members 節點
+                if (data.members) {
+                    data.members.forEach(v => {
                         const id = v['LINE ID'] || v['LINEID']; 
                         const name = v['LINE 名稱'] || v['LINE名稱'];
                         const pic = v['AvatarUrl'] || v['pictureUrl'] || v['照片'];
@@ -1219,8 +1271,8 @@
 
                 // 處理個人狀態 (僅初次載入)
                 if (isInitialLoad) {
-                    let vArray = data.votes || [];
-                    // 🌟 修正：找人時也同時比對兩種 ID 寫法
+                    // 🌟 修改：改從 members 陣列中找人
+                    let vArray = data.members || [];
                     let userIdx = vArray.findIndex(row => row['LINE ID'] === currentUser.id || row['LINEID'] === currentUser.id);
                     
                     if (userIdx > -1) {
@@ -1232,7 +1284,7 @@
                         else if (s && s.includes("無法參加")) currentUser.votedOption = 3;
                         try { if(userVote['Checklist']) { userChecklistState = JSON.parse(userVote['Checklist']); } } catch(e) {}
                         
-                        // 🌟 自動檢查並更新 LINE 名字與大頭貼 (相容舊欄位)
+                        // 自動檢查並更新 LINE 名字與大頭貼
                         let isProfileChanged = false;
                         let dbName = userVote['LINE 名稱'] || userVote['LINE名稱'];
                         let dbPic = userVote['AvatarUrl'] || userVote['pictureUrl'] || userVote['照片'];
@@ -1249,14 +1301,45 @@
                         }
                         
                         if (isProfileChanged) {
-                            db.ref('votes').set(vArray); 
+                            // 🌟 修改：寫入 members 節點
+                            db.ref('members').set(vArray); 
+                            
+                            fetch(GAS_API_URL, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                                body: JSON.stringify({
+                                    action: "vote",
+                                    userName: currentUser.name,
+                                    userId: currentUser.id,
+                                    pictureUrl: currentUser.pictureUrl || "",
+                                    choice_trip: userVote['偏好行程'] || "無法參加(訪客查看)",
+                                    time_opt1: userVote['time_opt1'] || userVote['6/13-6/14'] || "",
+                                    time_opt2: userVote['time_opt2'] || userVote['6/27-6/28'] || ""
+                                })
+                            }).catch(e => console.error("Sheets 同步失敗:", e));
                         }
                     } else {
                         currentUser.isVoted = true;
                         currentUser.votedOption = 3; 
                         const newVote = { "LINEID": currentUser.id, "LINE名稱": currentUser.name, "AvatarUrl": currentUser.pictureUrl || "", "偏好行程": "無法參加(訪客查看)", "time_opt1": "", "time_opt2": "" };
                         vArray.push(newVote);
-                        db.ref('votes').set(vArray);
+                        
+                        // 🌟 修改：寫入 members 節點
+                        db.ref('members').set(vArray);
+                        
+                        fetch(GAS_API_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: JSON.stringify({
+                                action: "vote",
+                                userName: currentUser.name,
+                                userId: currentUser.id,
+                                pictureUrl: currentUser.pictureUrl || "",
+                                choice_trip: "無法參加(訪客查看)",
+                                time_opt1: "",
+                                time_opt2: ""
+                            })
+                        }).catch(e => console.error("Sheets 新訪客自動建立失敗:", e));
                     }
                 }
                 
@@ -1474,7 +1557,12 @@
             }
 
             const guestToggle = document.getElementById('admin-guest-toggle');
-            if (guestToggle) guestToggle.checked = getConfigBool(cfg, 'GuestViewEnabled', false);
+            if (guestToggle) {
+                let isGuestOn = getConfigBool(cfg, 'GuestViewEnabled', false);
+                guestToggle.checked = isGuestOn;
+                const subOptionsDiv = document.getElementById('admin-guest-sub-options');
+                if (subOptionsDiv) subOptionsDiv.style.display = isGuestOn ? 'block' : 'none';
+            }
             
             const subOverview = document.getElementById('admin-guest-overview');
             const subAcc = document.getElementById('admin-guest-acc');
@@ -1596,10 +1684,27 @@
                         if (item.Day !== currentDay) { 
                             if(currentDay !== "") itinHtml += `</div></div>`; 
                             currentDay = item.Day; 
-                            itinHtml += `<div class="card"><h3 style="margin-top:0; color:var(--primary-orange); border-bottom:1px solid rgba(255,255,255,0.3); padding-bottom:12px; font-size: 16px;">${currentDay}</h3><div class="timeline">`; 
+                            // 確保前台顯示加上明確的日期
+                            let displayDay = currentDay === "Day 2" ? "Day 2 - 06/28(日)" : "Day 1 - 06/27(六)";
+                            itinHtml += `<div class="card"><h3 style="margin-top:0; color:var(--primary-orange); border-bottom:1px solid rgba(255,255,255,0.3); padding-bottom:12px; font-size: 16px;">${displayDay}</h3><div class="timeline">`; 
                         }
+                        
+                        // 🌟 核心：自動轉換 24 小時制為 12 小時制 (例如 15:00 -> 下午 3:00)
+                        let timeStr = item.Time || "";
+                        if (timeStr && !timeStr.includes('午')) { // 防呆：只有純數字才轉換
+                            const parts = timeStr.split(':');
+                            if (parts.length >= 2) {
+                                let h = parseInt(parts[0], 10);
+                                if (!isNaN(h)) {
+                                    let ampm = h >= 12 ? '下午' : '上午';
+                                    h = h % 12 || 12; // 0點或12點會轉換為12
+                                    timeStr = `${ampm} ${h}:${parts[1]}`;
+                                }
+                            }
+                        }
+
                         let linkStr = item.Link ? `<br><a href="${item.Link}" target="_blank" style="display:inline-block; margin-top:8px; color:var(--primary-blue); text-decoration:none; font-size:12px; font-weight:700; background:rgba(0,123,255,0.08); padding:4px 10px; border-radius:12px; transition:0.2s;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:2px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>導航至 Google Map</a>` : "";
-                        itinHtml += `<div class="timeline-item"><div class="time-badge">${item.Time}</div><div class="event-title">${item.Title}</div><div class="event-desc">${item.Desc}${linkStr}</div></div>`;
+                        itinHtml += `<div class="timeline-item"><div class="time-badge">${timeStr}</div><div class="event-title">${item.Title}</div><div class="event-desc">${item.Desc}${linkStr}</div></div>`;
                     });
                     if(currentDay !== "") itinHtml += `</div></div>`; 
                     document.getElementById('ui-timeline-wrapper').innerHTML = itinHtml;
@@ -1632,13 +1737,10 @@
                 }
             }
 
-            // 🚨 2. 以下僅限「訪客身分」的權限檢查
             if (currentUser.votedOption !== 3) return; 
 
             isGuestViewEnabled = getConfigBool(cfg, 'GuestViewEnabled', false);
             const isRedLockVisible = document.getElementById('guest-lock-screen').style.display === 'block';
-
-            // 🌟 將 voting (補報名系統) 加入特權名單，保證不被總開關紅鎖踢出去
             const isSafePage = ['admin', 'admin-notices', 'result', 'archive', 'voting'].includes(currentId);
 
             if (!isGuestViewEnabled) {
@@ -2022,6 +2124,7 @@
                 }).catch(e => console.error("Sheets 按讚同步失敗:", e));
             }
         }
+
         function loadMoreMessages() { currentMsgPage++; renderMessages(); }
 
         function openEditMessage(index) {
@@ -2042,7 +2145,6 @@
                 if (!newContent) return showCustomAlert("提示", "留言不能為空！");
                 if (newContent === msg.Content) { closeModal(); return; }
                 
-                // 🌟 寫入 Firebase
                 let origMsgs = cachedPollData.messages || [];
                 let origIndex = origMsgs.length - 1 - index;
                 if(origMsgs[origIndex]) {
@@ -2064,10 +2166,8 @@
             
             t.value = ''; clearBadge();
             
-            // 1. 先寫入 Firebase (前台秒更新)
             db.ref('messages').set(msgs);
 
-            // 🌟 2. 新增：背景偷偷傳給 Google Sheets (不影響前台速度)
             fetch(GAS_API_URL, { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
@@ -2251,6 +2351,161 @@
                 btn.innerText = "儲存所有變更"; btn.disabled = false;
             });
         }
+        // 🌟 1. 轉換器：將任何舊時間轉成純 24 小時制
+        function convertTo24Hour(timeStr) {
+            if (!timeStr) return "08:00";
+            let str = String(timeStr);
+            if (/^\d{2}:\d{2}$/.test(str)) return str; 
+            let isPM = str.includes('下午') || str.toLowerCase().includes('pm');
+            let cleanTime = str.replace(/[^0-9:]/g, ''); 
+            let parts = cleanTime.split(':');
+            if (parts.length >= 2) {
+                let h = parseInt(parts[0], 10);
+                let m = parts[1].padStart(2, '0');
+                if (isPM && h < 12) h += 12;
+                if (!isPM && h === 12) h = 0;
+                return `${String(h).padStart(2, '0')}:${m}`;
+            }
+            return "08:00";
+        }
+
+        // 🌟 2. 產生單一條行程項目的 HTML
+        function generateEventRowHTML(item = {Time:'', Title:'', Desc:'', Link:''}) {
+            let time24 = convertTo24Hour(item.Time);
+            return `
+                <div class="admin-itin-item-row" style="display: flex; flex-direction: column; gap: 8px; background: rgba(255,255,255,0.5); padding: 12px; border-radius: 12px; margin-bottom: 10px; border: 1px solid rgba(0,0,0,0.05); position: relative;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="itin-drag-handle" style="cursor: grab; font-size: 18px; color: #a0aec0; padding: 5px; user-select:none;">☰</span>
+                            <input type="time" class="itin-edit-time" style="font-weight: 700; color: var(--primary-blue); border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; padding: 4px 8px; font-size: 14px; background: white;" value="${time24}">
+                        </div>
+                        <button class="admin-delete-btn" style="padding: 4px 8px; font-size: 12px; position:static;" onclick="this.closest('.admin-itin-item-row').remove()">刪除項目</button>
+                    </div>
+                    <input type="text" class="itin-edit-title" placeholder="行程名稱" style="width: 100%; box-sizing: border-box; font-weight: 700; font-size: 15px; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; padding: 6px 8px; background: white;" value="${item.Title || ''}">
+                    <textarea class="itin-edit-desc" placeholder="詳細內容..." style="width: 100%; box-sizing: border-box; font-size: 13px; color: #4a5568; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; padding: 6px 8px; min-height: 40px; font-family: inherit; background: white;">${item.Desc || ''}</textarea>
+                    <input type="text" class="itin-edit-link" placeholder="Google Maps 連結 (選填)" style="width: 100%; box-sizing: border-box; font-size: 11px; color: var(--primary-blue); border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; padding: 4px 8px; background: white;" value="${item.Link || ''}">
+                </div>
+            `;
+        }
+
+        // 🌟 3. 產生一整天框框的大外殼
+        function generateDayCardHTML(dayKey, displayTitle, eventsHtml) {
+            return `
+                <div class="card admin-day-block" data-day="${dayKey}" style="padding: 15px; margin-bottom: 20px; background: rgba(255,255,255,0.35);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 8px;">
+                        <div style="font-weight: 800; color: var(--primary-orange); font-size: 16px;">${displayTitle}</div>
+                    </div>
+                    <div class="admin-itin-events-list">${eventsHtml}</div>
+                    <button class="btn-primary" style="background: rgba(0,123,255,0.04); color: var(--primary-blue); border: 1px dashed rgba(0,123,255,0.3); box-shadow: none; padding: 8px; margin-top: 5px; font-size: 13px; border-radius: 10px;" onclick="addEventToDay(this)">+ 新增項目</button>
+                </div>
+            `;
+        }
+
+        // 🌟 4. 打開行程編輯器
+        function openAdminItinerary() {
+            const container = document.getElementById('admin-itin-list-container');
+            let data = cachedPollData.itinerary || [];
+            
+            let grouped = { "Day 1": [], "Day 2": [] };
+            
+            data.forEach(item => {
+                let d = item.Day || "";
+                if (d === "Day 2" || d.includes("28") || d.includes("Day 2")) {
+                    grouped["Day 2"].push(item);
+                } else {
+                    grouped["Day 1"].push(item);
+                }
+            });
+            
+            let html = "";
+            const titles = { "Day 1": "Day 1 - 06/27(六)", "Day 2": "Day 2 - 06/28(日)" };
+
+            ["Day 1", "Day 2"].forEach(dayKey => {
+                let eventsHtml = "";
+                if (grouped[dayKey].length > 0) {
+                    grouped[dayKey].forEach(item => { eventsHtml += generateEventRowHTML(item); });
+                } else {
+                    eventsHtml += generateEventRowHTML({Time: '08:00'}); 
+                }
+                html += generateDayCardHTML(dayKey, titles[dayKey], eventsHtml);
+            });
+            
+            container.innerHTML = html;
+            switchView('admin-itinerary');
+            initItinerarySortable();
+        }
+
+        // 🌟 5. 初始化托曳功能
+        function initItinerarySortable() {
+            document.querySelectorAll('.admin-itin-events-list').forEach(el => {
+                if (window.Sortable) {
+                    new Sortable(el, { handle: '.itin-drag-handle', animation: 150, ghostClass: 'dragging', onEnd: function() { if (navigator.vibrate) navigator.vibrate(15); } });
+                }
+            });
+        }
+
+        // 🌟 6. 新增空項目
+        function addEventToDay(btn) {
+            const list = btn.closest('.card').querySelector('.admin-itin-events-list');
+            list.insertAdjacentHTML('beforeend', generateEventRowHTML({Time: '12:00'}));
+        }
+
+
+        async function saveAdminItinerary() {
+            try {
+                // 先鎖定按鈕，並跳出提示框
+                const btn = document.getElementById('btn-save-itinerary');
+                if (btn) btn.disabled = true;
+                showCustomAlert("正在儲存行程", "更新即時資料庫中...", false);
+
+                const dayBlocks = document.querySelectorAll('.admin-day-block');
+                let newItinData = [];
+
+                dayBlocks.forEach(block => {
+                    const dayKey = block.getAttribute('data-day'); 
+                    if (!dayKey) return;
+
+                    const rows = block.querySelectorAll('.admin-itin-item-row');
+                    rows.forEach(row => {
+                        const timeEl = row.querySelector('.itin-edit-time');
+                        const titleEl = row.querySelector('.itin-edit-title');
+                        const descEl = row.querySelector('.itin-edit-desc');
+                        const linkEl = row.querySelector('.itin-edit-link');
+                        
+                        const Time = timeEl ? timeEl.value.trim() : "08:00";
+                        const Title = titleEl ? titleEl.value.trim() : "";
+                        const Desc = descEl ? descEl.value.trim() : "";
+                        const Link = linkEl ? linkEl.value.trim() : "";
+
+                        if (Title) { 
+                            newItinData.push({ Day: dayKey, Time, Title, Desc, Link }); 
+                        }
+                    });
+                });
+
+                if (newItinData.length === 0) newItinData = "";
+
+                // 寫入 Firebase
+                await db.ref('itinerary').set(newItinData);
+                
+                closeModal(); // 關閉讀取轉圈圈
+                showCustomAlert("儲存成功", "詳細行程已更新！");
+                
+                // 延遲 1 秒後自動關閉提示並跳回前台行程畫面
+                setTimeout(() => { 
+                    closeModal();
+                    switchView('itinerary'); 
+                }, 1000);
+
+            } catch (e) {
+                console.error("行程儲存錯誤:", e);
+                closeModal();
+                showCustomAlert("錯誤", "儲存失敗：" + e.message);
+            } finally {
+                const btn = document.getElementById('btn-save-itinerary');
+                if (btn) btn.disabled = false;
+            }
+        }
 
         function renderChecklist() {
             const container = document.getElementById('prep-checklist-container');
@@ -2304,27 +2559,26 @@
             userChecklistState[itemId] = !userChecklistState[itemId];
             isChecklistModified = true; 
             renderChecklist(); 
+            saveChecklistBackground();
         }
 
         async function saveChecklistBackground() {
             if (!isChecklistModified) return; 
             isChecklistModified = false; 
             
-            // 🌟 寫入 Firebase：更新個人的 Checklist
-            let currentVotes = cachedPollData.votes || [];
-            let userIdx = currentVotes.findIndex(v => v['LINE ID'] === currentUser.id);
+            let currentMembers = cachedPollData.members || [];
+            let userIdx = currentMembers.findIndex(v => v['LINE ID'] === currentUser.id || v['LINEID'] === currentUser.id);
+            
             if (userIdx > -1) {
-                currentVotes[userIdx].Checklist = JSON.stringify(userChecklistState);
+                currentMembers[userIdx].Checklist = JSON.stringify(userChecklistState);
                 
-                // 1. 先寫入 Firebase
-                db.ref('votes').set(currentVotes).catch(e => isChecklistModified = true);
+                db.ref('members').set(currentMembers).catch(e => isChecklistModified = true);
 
-                // 🌟 2. 新增：背景偷偷同步到 Google Sheets
                 fetch(GAS_API_URL, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: "updateChecklist", userId: currentUser.id, data: JSON.stringify(userChecklistState) }) 
-                }).catch(e => console.error("Sheets 攜帶物品同步失敗:", e));
+                }).catch(e => console.error("Sheets 同步失敗:", e));
             }
         }
 
@@ -2340,8 +2594,19 @@
 
         async function toggleVotingLock(checkbox) {
             const isLocked = checkbox.checked;            
-            // 🌟 寫入 Firebase：直接更新 config 節點
+            
+            // 1. Firebase 極速寫入
             db.ref('config/VotingLocked').set(isLocked ? "true" : "false");
+
+            // 2. Google Sheets 背景同步 + UI 鎖定防打架
+            activeConfigUpdates++;
+            fetch(GAS_API_URL, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                body: JSON.stringify({ action: "updateConfigSingle", key: "VotingLocked", value: isLocked ? "true" : "false" }) 
+            })
+            .catch(e => console.error(e))
+            .finally(() => { setTimeout(() => { activeConfigUpdates = Math.max(0, activeConfigUpdates - 1); }, 1500); });
         }
         
         async function toggleGuestViewLock(checkbox, key) {
@@ -2350,12 +2615,22 @@
                 isGuestViewEnabled = isEnabled; 
                 const subOptionsDiv = document.getElementById('admin-guest-sub-options');
                 if (subOptionsDiv) {
-                    subOptionsDiv.style.opacity = isEnabled ? '1' : '0.4';
-                    subOptionsDiv.style.pointerEvents = isEnabled ? 'auto' : 'none';
+                    // 🌟 改為控制 display 來徹底隱藏
+                    subOptionsDiv.style.display = isEnabled ? 'block' : 'none';
                 }
             }
-            // 🌟 寫入 Firebase
+            // 1. Firebase 極速寫入
             db.ref('config/' + key).set(isEnabled ? "true" : "false");
+            
+            // 2. Google Sheets 背景同步 + UI 鎖定防打架
+            activeConfigUpdates++;
+            fetch(GAS_API_URL, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                body: JSON.stringify({ action: "updateConfigSingle", key: key, value: isEnabled ? "true" : "false" }) 
+            })
+            .catch(e => console.error(e))
+            .finally(() => { setTimeout(() => { activeConfigUpdates = Math.max(0, activeConfigUpdates - 1); }, 1500); });
         }
         
         function selectVote(o) { 
@@ -2370,19 +2645,20 @@
             if (cachedPollData?.config?.VotingLocked === 'true') return showCustomAlert("系統已鎖定", "主辦人已關閉報名系統。");
             showCustomAlert("資料傳送中", "請稍候...", false);
             
-            // 🌟 寫入 Firebase：更新個人投票資料
-            let currentVotes = cachedPollData.votes || [];
-            let userIdx = currentVotes.findIndex(v => v['LINE ID'] === currentUser.id);
+            // 🌟 修改：改操作 members 陣列
+            let currentMembers = cachedPollData.members || [];
+            let userIdx = currentMembers.findIndex(v => v['LINE ID'] === currentUser.id || v['LINEID'] === currentUser.id);
             
             const voteData = { 
-                "LINE ID": currentUser.id, "LINE 名稱": currentUser.name, "照片": currentUser.pictureUrl || "", 
+                "LINEID": currentUser.id, "LINE名稱": currentUser.name, "AvatarUrl": currentUser.pictureUrl || "", 
                 "偏好行程": "方案一：宜蘭深度放鬆 (二天一夜)", "time_opt1": "", "time_opt2": "V" 
             };
 
-            if (userIdx > -1) currentVotes[userIdx] = { ...currentVotes[userIdx], ...voteData, Checklist: currentVotes[userIdx].Checklist || "" };
-            else currentVotes.push(voteData);
+            if (userIdx > -1) currentMembers[userIdx] = { ...currentMembers[userIdx], ...voteData, Checklist: currentMembers[userIdx].Checklist || "" };
+            else currentMembers.push(voteData);
 
-            db.ref('votes').set(currentVotes).then(() => {
+            // 🌟 修改：改寫入 members 節點
+            db.ref('members').set(currentMembers).then(() => {
                 fetch(GAS_API_URL, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
@@ -2399,17 +2675,47 @@
             const resultContainer = document.getElementById('result-chart-area');
             resultContainer.innerHTML = `<div style="text-align: center; margin-top: 60px;"><div class="spinner" style="margin: 0 auto 15px;"></div><h2 style="color: #4a5568;">統計中...</h2></div>`;
             try {
-                let data = cachedPollData ? cachedPollData.votes : [];
-                if (!cachedPollData) { const response = await fetch(GAS_API_URL, { cache: 'no-store', redirect: 'follow' }); cachedPollData = await response.json(); data = cachedPollData.votes || []; }
+                // 🌟 修改：撈取資料從 cachedPollData.votes 改成 cachedPollData.members
+                let data = cachedPollData ? cachedPollData.members : [];
+                if (!cachedPollData) { 
+                    const response = await fetch(GAS_API_URL, { cache: 'no-store', redirect: 'follow' }); 
+                    cachedPollData = await response.json(); 
+                    data = cachedPollData.members || []; 
+                }
                 let totalVotes = 0; let votersHtml = ""; let t1_d1 = 0; let t1_d2 = 0; let t2_d1 = 0; let t2_d2 = 0; let unableCount = 0; let unableHtml = "";
                 data.forEach(row => {
-                    if (row['LINE ID'] === "test_user_001") return;
+                    // 🌟 同時支援舊版與新版的 ID 寫法
+                    const id = row['LINE ID'] || row['LINEID'];
+                    if (id === "test_user_001") return;
 
-                    totalVotes++; const trip = row['偏好行程']; const name = row['LINE 名稱']; 
-                    if (trip && trip.includes("無法參加")) { unableCount++; if (name) unableHtml += `<div style="display: inline-block; background: rgba(255,255,255,0.4); padding: 4px 12px; border-radius: 20px; margin: 4px 6px 4px 0; font-size: 12px; border: 1px solid rgba(255,255,255,0.6); color: var(--text-muted); box-shadow: 0 2px 5px rgba(0,0,0,0.02);">${name}</div>`; return; }
-                    const isTrip1 = trip && trip.includes("方案一"); const isTrip2 = trip && trip.includes("方案二");
-                    if (isTrip1) { if (row['time_opt1'] === 'V' || row['6/13-6/14'] === 'V') t1_d1++; if (row['time_opt2'] === 'V' || row['6/27-6/28'] === 'V') t1_d2++; } else if (isTrip2) { if (row['time_opt1'] === 'V' || row['6/13-6/14'] === 'V') t2_d1++; if (row['time_opt2'] === 'V' || row['6/27-6/28'] === 'V') t2_d2++; }
-                    if (name && (isTrip1 || isTrip2)) votersHtml += `<div style="display: inline-block; background: rgba(255,255,255,0.6); padding: 4px 12px; border-radius: 20px; margin: 4px 6px 4px 0; font-size: 12px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.6), 0 4px 10px rgba(0,0,0,0.04); color: var(--text-main); border: 1px solid rgba(255,255,255,0.8);">${name} <span style="color:var(--primary-green); font-size:11px; margin-left: 4px;">✔</span></div>`;
+                    totalVotes++; 
+                    const trip = row['偏好行程']; 
+                    // 🌟 同時支援舊版與新版的名字寫法
+                    const name = row['LINE 名稱'] || row['LINE名稱']; 
+                    
+                    if (trip && trip.includes("無法參加")) { 
+                        unableCount++; 
+                        if (name) unableHtml += `<div style="display: inline-block; background: rgba(255,255,255,0.4); padding: 4px 12px; border-radius: 20px; margin: 4px 6px 4px 0; font-size: 12px; border: 1px solid rgba(255,255,255,0.6); color: var(--text-muted); box-shadow: 0 2px 5px rgba(0,0,0,0.02);">${name}</div>`; 
+                        return; 
+                    }
+                    const isTrip1 = trip && trip.includes("方案一"); 
+                    const isTrip2 = trip && trip.includes("方案二");
+
+                    // 🌟 日期也加上相容防護
+                    const opt1 = row['time_opt1'] || row['6/13-6/14'];
+                    const opt2 = row['time_opt2'] || row['6/27-6/28'];
+
+                    if (isTrip1) { 
+                        if (opt1 === 'V') t1_d1++; 
+                        if (opt2 === 'V') t1_d2++; 
+                    } else if (isTrip2) { 
+                        if (opt1 === 'V') t2_d1++; 
+                        if (opt2 === 'V') t2_d2++; 
+                    }
+                    
+                    if (name && (isTrip1 || isTrip2)) {
+                        votersHtml += `<div style="display: inline-block; background: rgba(255,255,255,0.6); padding: 4px 12px; border-radius: 20px; margin: 4px 6px 4px 0; font-size: 12px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.6), 0 4px 10px rgba(0,0,0,0.04); color: var(--text-main); border: 1px solid rgba(255,255,255,0.8);">${name} <span style="color:var(--primary-green); font-size:11px; margin-left: 4px;">✔</span></div>`;
+                    }
                 });
                 const t1_max = Math.max(t1_d1, t1_d2); const t2_max = Math.max(t2_d1, t2_d2);
                 const t1_d1_c = (t1_d1 === t1_max && t1_max > 0) ? 'var(--primary-orange)' : 'var(--text-main)';
