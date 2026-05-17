@@ -1056,10 +1056,17 @@
         const db = firebase.database();
         let isInitialLoad = true; // 紀錄是否為初次載入
 
+        // 👇 1. 新增一個防彈特徵碼產生器
+        function getMessageFingerprint(msg) {
+            // 將時間、名字、內容組合，並剔除所有空白與換行，GAS 後台怎麼改格式都不怕
+            let str = (msg.Time || "") + (msg.Name || "") + (msg.Content || "");
+            return str.replace(/\s+/g, '');
+        }
+
+        // 👇 2. 替換舊的 updateBadgeCount
         function updateBadgeCount() {
             if (!allMessages || allMessages.length === 0) return;
             
-            // 改用雲端抓下來的 ID
             const lastReadId = cloudLastReadId; 
             let unreadCount = 0;
             
@@ -1067,9 +1074,21 @@
                 unreadCount = allMessages.length;
             } else {
                 for (let i = 0; i < allMessages.length; i++) {
-                    let currentId = allMessages[i].MsgID || (allMessages[i].Time + allMessages[i].Content);
-                    if (currentId === lastReadId) break;
+                    let msg = allMessages[i];
+                    let currentFingerprint = getMessageFingerprint(msg);
+                    let currentMsgId = msg.MsgID || "";
+                    
+                    // 只要「防彈特徵」或「MsgID」其中一個對得上，就代表找到書籤了！
+                    if (currentFingerprint === lastReadId || currentMsgId === lastReadId) {
+                        break;
+                    }
                     unreadCount++;
+                }
+                
+                // 🛡️ 防呆機制：如果真的一路找到底都找不到（代表舊紀錄完全對不上）
+                // 為了避免 12 個紅點嚇到人，最多只提示 1 個未讀
+                if (unreadCount === allMessages.length && allMessages.length > 0) {
+                    unreadCount = 1;
                 }
             }
 
@@ -1084,21 +1103,23 @@
             }
         }
 
+        // 👇 3. 替換舊的 clearBadge
         function clearBadge() {
             if (allMessages && allMessages.length > 0) {
-                let topId = allMessages[0].MsgID || (allMessages[0].Time + allMessages[0].Content);
+                let msg = allMessages[0]; // 抓最新的一筆
                 
-                // 舊的：存在本地端 (可以刪除或保留當備用)
-                // localStorage.setItem('lastReadMsgId_' + currentUser.id, topId);
-
-                // 新的：存在 Firebase 雲端
+                // 🎯 核心修正：首選絕對不會變的 MsgID！萬一真的出錯沒有 MsgID，才用文字特徵備用
+                let readMarker = msg.MsgID || getMessageFingerprint(msg);
+                
+                // 寫入到 Firebase 雲端
                 if (currentUser && currentUser.id) {
-                    db.ref('readReceipts/' + currentUser.id).set(topId);
+                    db.ref('readReceipts/' + currentUser.id).set(readMarker);
                 }
             }
             const badge = document.getElementById('board-badge');
             if (badge) badge.style.display = 'none';
         }
+
 
         function getLikesIgStyle(likesArray) {
             if (!likesArray || likesArray.length === 0) return "";
