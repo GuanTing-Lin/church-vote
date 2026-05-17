@@ -142,7 +142,7 @@
         .timeline-item::before { content: ''; position: absolute; left: -26px; top: 3px; width: 12px; height: 12px; border-radius: 50%; background: white; border: 3px solid var(--primary-blue); box-shadow: 0 0 0 3px rgba(0,123,255,0.1); }
         .time-badge { font-size: 13px; font-weight: 800; color: var(--primary-blue); margin-bottom: 4px; letter-spacing: 0.5px; }
         .event-title { font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
-        .event-desc { font-size: 13px; color: #4a5568; line-height: 1.5; }
+        .event-desc { font-size: 13px; color: #4a5568; line-height: 1.5; white-space: pre-wrap; }
         
         .prep-progress-card { 
             background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); 
@@ -471,8 +471,6 @@
             border: 2px dashed var(--primary-blue);
             background: #fff !important;
         }
-
-
         /* 行程編輯器專屬樣式 */
         .itin-edit-day:focus, .itin-edit-time:focus, .itin-edit-title:focus, .itin-edit-desc:focus {
             outline: none;
@@ -485,8 +483,6 @@
             transition: all 0.2s;
             background: rgba(255,255,255,0.4);
         }
-
-
 
     </style>
 </head>
@@ -532,7 +528,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             後台管理
         </div>
-        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.1.4</div>
+        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.1.5</div>
     </div>
     <div id="loading" style="display: flex; flex-direction: column; align-items: center; margin-top: 120px;">
         <div class="spinner"></div>
@@ -1547,11 +1543,20 @@
             // 🌟 處理補報名系統「確認提交」按鈕的鎖定狀態
             const voteBtn = document.getElementById('btn-submit-vote');
             const adminLockToggle = document.getElementById('admin-lock-toggle');
-            
+
+            // 判斷是否已經報名 (方案一或方案二代表已報名，方案三代表訪客/無法參加)
+            const isAlreadyRegistered = currentUser.isVoted && (currentUser.votedOption === 1 || currentUser.votedOption === 2);
+
             if (String(cfg.VotingLocked).toLowerCase() === 'true') {
+                // 狀況 1：系統全域鎖定
                 if (voteBtn) { voteBtn.disabled = true; voteBtn.innerText = "系統已鎖定，停止報名"; }
                 if (adminLockToggle) adminLockToggle.checked = true;
+            } else if (isAlreadyRegistered) {
+                // 狀況 2：系統未鎖定，但該使用者已經報名過
+                if (voteBtn) { voteBtn.disabled = true; voteBtn.innerText = "您已報名"; }
+                if (adminLockToggle) adminLockToggle.checked = false;
             } else {
+                // 狀況 3：系統未鎖定，且使用者為訪客/無法參加狀態，可以補報名
                 if (voteBtn) { voteBtn.disabled = false; voteBtn.innerText = "確認提交"; }
                 if (adminLockToggle) adminLockToggle.checked = false;
             }
@@ -1722,7 +1727,7 @@
         }
 
         function applyVisitorPermissions(cfg) {
-            // 🌟 1. 補報名系統獨立防護 (因為所有人都可以進補報名頁面，所以放在最前面檢查)
+            // 1. 補報名系統獨立防護
             const currentActive = document.querySelector('.view-section.active');
             const currentId = currentActive ? currentActive.id.replace('view-', '') : '';
             
@@ -1730,16 +1735,44 @@
                 switchView('voting'); // 轉向灰色鎖頭
                 return;
             } else if (currentId === 'guest-locked' && !document.querySelector('.nav-item.active')) {
-                // 如果卡在鎖定畫面，且沒有導覽列(代表是補報名的鎖定)，若後台解鎖則自動恢復
                 if (String(cfg.VotingLocked).toLowerCase() !== 'true') {
                     switchView('voting');
                     return;
                 }
             }
 
-            if (currentUser.votedOption !== 3) return; 
-
+            // 👇 2. 首頁總覽的三個按鈕狀態 (移到前面，確保能確實上鎖與解鎖)
+            const isGuest = currentUser.votedOption === 3;
             isGuestViewEnabled = getConfigBool(cfg, 'GuestViewEnabled', false);
+
+            const lockSvg = `<span style="font-size:11px; display:inline-flex; align-items:center; gap:3px; color:#a0aec0; font-weight:700;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>鎖定</span>`;
+            const permMap = [
+                { key: 'Guest_View_Acc', btnId: 'btn-info-acc', valId: 'ui-info-acc', original: cfg.InfoAcc, target: 'accommodation' },
+                { key: 'Guest_View_Ppl', btnId: 'btn-info-ppl', valId: 'ui-info-ppl', original: cfg.InfoPpl, target: 'people' },
+                { key: 'Guest_View_Fee', btnId: 'btn-info-fee', valId: 'ui-info-price', original: cfg.InfoPrice, target: 'fees' }
+            ];
+
+            permMap.forEach(item => {
+                const btn = document.getElementById(item.btnId);
+                const val = document.getElementById(item.valId);
+                // 只有「是訪客」且「該區塊未開放」才會上鎖
+                const isLocked = isGuest && !getConfigBool(cfg, item.key, true);
+
+                if (btn) {
+                    if (isLocked) {
+                        btn.style.opacity = '0.5'; btn.style.cursor = 'not-allowed';
+                        btn.onclick = (e) => { e.stopPropagation(); }; 
+                        if (val) val.innerHTML = lockSvg;
+                    } else {
+                        btn.style.opacity = '1'; btn.style.cursor = 'pointer';
+                        btn.onclick = () => switchView(item.target);
+                        if (val) val.innerText = item.original || '--';
+                    }
+                }
+            });
+            if (!isGuest) return; 
+
+            // 3. 訪客的轉址防護與紅鎖頭判斷
             const isRedLockVisible = document.getElementById('guest-lock-screen').style.display === 'block';
             const isSafePage = ['admin', 'admin-notices', 'result', 'archive', 'voting'].includes(currentId);
 
@@ -1765,31 +1798,6 @@
                     }
                 }
             }
-
-            const lockSvg = `<span style="font-size:11px; display:inline-flex; align-items:center; gap:3px; color:#a0aec0; font-weight:700;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>鎖定</span>`;
-            const permMap = [
-                { key: 'Guest_View_Acc', btnId: 'btn-info-acc', valId: 'ui-info-acc', original: cfg.InfoAcc, target: 'accommodation' },
-                { key: 'Guest_View_Ppl', btnId: 'btn-info-ppl', valId: 'ui-info-ppl', original: cfg.InfoPpl, target: 'people' },
-                { key: 'Guest_View_Fee', btnId: 'btn-info-fee', valId: 'ui-info-price', original: cfg.InfoPrice, target: 'fees' }
-            ];
-
-            permMap.forEach(item => {
-                const btn = document.getElementById(item.btnId);
-                const val = document.getElementById(item.valId);
-                const isLocked = !getConfigBool(cfg, item.key, true);
-
-                if (btn) {
-                    if (isLocked) {
-                        btn.style.opacity = '0.5'; btn.style.cursor = 'not-allowed';
-                        btn.onclick = (e) => { e.stopPropagation(); }; 
-                        if (val) val.innerHTML = lockSvg;
-                    } else {
-                        btn.style.opacity = '1'; btn.style.cursor = 'pointer';
-                        btn.onclick = () => switchView(item.target);
-                        if (val) val.innerText = item.original || '--';
-                    }
-                }
-            });
         }
 
         function renderNoticesWithMagic(cfg) {
@@ -2379,7 +2387,7 @@
                             <span class="itin-drag-handle" style="cursor: grab; font-size: 18px; color: #a0aec0; padding: 5px; user-select:none;">☰</span>
                             <input type="time" class="itin-edit-time" style="font-weight: 700; color: var(--primary-blue); border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; padding: 4px 8px; font-size: 14px; background: white;" value="${time24}">
                         </div>
-                        <button class="admin-delete-btn" style="padding: 4px 8px; font-size: 12px; position:static;" onclick="this.closest('.admin-itin-item-row').remove()">刪除項目</button>
+                        <button class="admin-delete-btn" style="padding: 4px 8px; font-size: 12px; position:static;" onclick="this.closest('.admin-itin-item-row').remove()">刪除</button>
                     </div>
                     <input type="text" class="itin-edit-title" placeholder="行程名稱" style="width: 100%; box-sizing: border-box; font-weight: 700; font-size: 15px; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; padding: 6px 8px; background: white;" value="${item.Title || ''}">
                     <textarea class="itin-edit-desc" placeholder="詳細內容..." style="width: 100%; box-sizing: border-box; font-size: 13px; color: #4a5568; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; padding: 6px 8px; min-height: 40px; font-family: inherit; background: white;">${item.Desc || ''}</textarea>
@@ -2643,9 +2651,11 @@
         async function submitLateVote() {
             if (!lateVoteSelection) return showCustomAlert("提示", "請點選我要參加");
             if (cachedPollData?.config?.VotingLocked === 'true') return showCustomAlert("系統已鎖定", "主辦人已關閉報名系統。");
+            // 👇 新增這行：防止已經報名的人重複觸發 API
+             if (currentUser.isVoted && (currentUser.votedOption === 1 || currentUser.votedOption === 2)) return showCustomAlert("提示", "您已經完成報名囉！");
+
             showCustomAlert("資料傳送中", "請稍候...", false);
-            
-            // 🌟 修改：改操作 members 陣列
+                        
             let currentMembers = cachedPollData.members || [];
             let userIdx = currentMembers.findIndex(v => v['LINE ID'] === currentUser.id || v['LINEID'] === currentUser.id);
             
@@ -2666,7 +2676,16 @@
                 }).catch(e => console.error("Sheets 補報名同步失敗:", e));
 
                 showCustomAlert("報名成功", "");
-                currentUser.isVoted = true; currentUser.votedOption = 1;
+                
+                // 更新使用者狀態為正式成員
+                currentUser.isVoted = true; 
+                currentUser.votedOption = 1;
+
+                // 👇 呼叫畫面重繪：這步會確實拔除鎖頭、同時把提交按鈕變成「您已報名」
+                if (cachedPollData) {
+                    renderDynamicUI(cachedPollData);
+                }
+
                 unlockMainApp();
             }).catch(e => showCustomAlert("錯誤", "網路異常，請稍後再試。"));
         }
