@@ -504,7 +504,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             後台管理
         </div>
-        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.1.2</div>
+        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.1.3</div>
     </div>
     <div id="loading" style="display: flex; flex-direction: column; align-items: center; margin-top: 120px;">
         <div class="spinner"></div>
@@ -966,6 +966,8 @@
 
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script>
         const svgEye = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
         const svgEyeOff = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
@@ -989,11 +991,20 @@
         window.likeTimers = {};
 
         const isLocalEnv = window.location.protocol === "file:" || window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
-        const cacheBuster = "&t=" + new Date().getTime();
         
-        initialDataPromise = fetch(GAS_API_URL + "?v=2" + cacheBuster, { cache: 'no-store', redirect: 'follow' })
-            .then(res => res.json())
-            .catch(err => { console.error("背景抓取資料失敗", err); return null; });
+        // 🌟 1. 初始化 Firebase
+        const firebaseConfig = {
+          apiKey: "AIzaSyAibbxL5rnhH8iupuFC0gSxqSoJJftokgY",
+          authDomain: "trip-guide-cfdac.firebaseapp.com",
+          databaseURL: "https://trip-guide-cfdac-default-rtdb.asia-southeast1.firebasedatabase.app",
+          projectId: "trip-guide-cfdac",
+          storageBucket: "trip-guide-cfdac.firebasestorage.app",
+          messagingSenderId: "464557372626",
+          appId: "1:464557372626:web:c2bb8c82b90c6c094c290b"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        let isInitialLoad = true; // 紀錄是否為初次載入
 
         function updateBadgeCount() {
             if (!allMessages || allMessages.length === 0) return;
@@ -1070,70 +1081,11 @@
         let activeMessageUpdates = 0;
         
         async function refreshMessagesOnly(isSilent = true) {
-            if (!isSilent) showCustomAlert("更新中", "正在抓取最新資料...", false);
-            try {
-                const fetchUrl = GAS_API_URL.includes("?") ? GAS_API_URL + cacheBuster : GAS_API_URL + "?v=2" + cacheBuster;
-                const response = await fetch(fetchUrl, { cache: 'no-store', redirect: 'follow' });
-                const data = await response.json();
-                
-                if (!data) return;
-
-                // 🚨 核心防禦：只有當你「沒有」在點擊開關時，背景才允許覆蓋設定檔
-                if (activeConfigUpdates === 0) {
-                    const oldConfig = JSON.stringify(cachedPollData?.config || {});
-                    const newConfig = JSON.stringify(data.config || {});
-                    
-                    if (oldConfig !== newConfig) {
-                        cachedPollData.config = data.config;
-                        renderDynamicUI(data); 
-                    }
-                }
-
-                // 🚨 核心防禦：只有當你「沒有」在操作留言(按讚/發佈)時，背景才允許覆蓋留言板
-                if (data.messages && activeMessageUpdates === 0) {
-                    data.messages.forEach(m => {
-                        const id = m.LineID || m.UserId;
-                        if (id) window.userNameMap[id] = m.Name;
-                        if (id && m.AvatarUrl) window.userAvatarMap[id] = m.AvatarUrl;
-                        if (m.Name && m.AvatarUrl) window.userAvatarMap[m.Name] = m.AvatarUrl; 
-                    });
-
-                    const newMsgs = [...data.messages].reverse();
-                    
-                    let isStructuralChange = true;
-                    if (allMessages.length === newMsgs.length && allMessages.length > 0) {
-                        let match = true;
-                        for (let i = 0; i < Math.min(10, allMessages.length); i++) {
-                            if (allMessages[i].Name !== newMsgs[i].Name || allMessages[i].Time !== newMsgs[i].Time) {
-                                match = false; break;
-                            }
-                        }
-                        if (match) isStructuralChange = false;
-                    } else if (allMessages.length === 0 && newMsgs.length === 0) {
-                        isStructuralChange = false;
-                    }
-
-                    allMessages = newMsgs;
-
-                    if (isStructuralChange) {
-                        renderMessages(); 
-                    } else {
-                        updateExistingMessagesInPlace(); 
-                    }
-                    
-                    if (document.getElementById('view-board').classList.contains('active')) {
-                        clearBadge();
-                    } else {
-                        updateBadgeCount();
-                    }
-                }
-
-                if (!isSilent) closeModal(); 
-            } catch (error) {
-                console.error("同步失敗", error);
-                if (!isSilent) { closeModal(); showCustomAlert("錯誤", "連線超時"); }
-            }
-        }
+         // 🌟 已經交給 Firebase 自動推播，這個函式留空即可
+         if (!isSilent) {
+             showCustomAlert("已是最新狀態", "系統已升級即時連線，不需手動更新！");
+         }
+     }
 
         function togglePasswordVisibility() {
             const inp = document.getElementById('modal-input');
@@ -1227,11 +1179,17 @@
         };
 
         async function processLoadedData() {
-            try {
-                const data = await initialDataPromise;
-                if (!data) throw new Error("資料讀取失敗");
-                cachedPollData = data;
+            document.getElementById('loading-subtext').innerText = "連線即時資料庫中...";
+            
+            // 🌟 2. 訂閱 Firebase 即時資料 (只要後台有變，這裡瞬間觸發！)
+            db.ref('/').on('value', (snapshot) => {
+                let data = snapshot.val();
+                if (!data) {
+                    // 若資料庫是空的，初始化預設架構，避免畫面永遠卡在「載入中」
+                    data = { config: {}, messages: [], votes: [] };
+                }
                 
+                cachedPollData = data;
                 window.userAvatarMap = {};
                 window.userNameMap = {};
                 
@@ -1243,11 +1201,11 @@
                         if (m.Name && m.AvatarUrl) window.userAvatarMap[m.Name] = m.AvatarUrl; 
                     });
                 }
-                
                 if (data.votes) {
                     data.votes.forEach(v => {
-                        const id = v['LINE ID'];
-                        const name = v['LINE 名稱'];
+                        // 🌟 修正：同時支援有空白與無空白的欄位名稱
+                        const id = v['LINE ID'] || v['LINEID']; 
+                        const name = v['LINE 名稱'] || v['LINE名稱'];
                         const pic = v['AvatarUrl'] || v['pictureUrl'] || v['照片'];
                         if (id) {
                             if (name) window.userNameMap[id] = name;
@@ -1256,65 +1214,93 @@
                         if (name && pic) window.userAvatarMap[name] = pic;
                     });
                 }
-                
                 if (currentUser.id && currentUser.name) window.userNameMap[currentUser.id] = currentUser.name;
                 if (currentUser.id && currentUser.pictureUrl) window.userAvatarMap[currentUser.id] = currentUser.pictureUrl;
 
-                const vArray = data.votes || [];
-                const userVote = vArray.find(row => row['LINE ID'] === currentUser.id);
-                
-                if (userVote) {
-                    currentUser.isVoted = true;
-                    const s = userVote['偏好行程'];
-                    if (s && s.includes("方案一")) currentUser.votedOption = 1;
-                    else if (s && s.includes("方案二")) currentUser.votedOption = 2;
-                    else if (s && s.includes("無法參加")) currentUser.votedOption = 3;
-                    try { if(userVote['Checklist']) { userChecklistState = JSON.parse(userVote['Checklist']); } } catch(e) {}
-                } else {
-                    currentUser.isVoted = true;
-                    currentUser.votedOption = 3; // 3 代表訪客
+                // 處理個人狀態 (僅初次載入)
+                if (isInitialLoad) {
+                    let vArray = data.votes || [];
+                    // 🌟 修正：找人時也同時比對兩種 ID 寫法
+                    let userIdx = vArray.findIndex(row => row['LINE ID'] === currentUser.id || row['LINEID'] === currentUser.id);
                     
-                    fetch(GAS_API_URL, { 
-                        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                        body: JSON.stringify({ action: "vote", userName: currentUser.name, userId: currentUser.id, pictureUrl: currentUser.pictureUrl, choice_trip: "無法參加(訪客查看)", time_opt1: "", time_opt2: "" }) 
-                    }).catch(e => console.log(e));
-                    
-                    fetch(GAS_API_URL, {
-                        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify({ action: "updateAvatar", userId: currentUser.id, pictureUrl: currentUser.pictureUrl || "", loginTime: getFormattedTime() })
-                    }).catch(e => console.log(e));
+                    if (userIdx > -1) {
+                        let userVote = vArray[userIdx];
+                        currentUser.isVoted = true;
+                        const s = userVote['偏好行程'];
+                        if (s && s.includes("方案一")) currentUser.votedOption = 1;
+                        else if (s && s.includes("方案二")) currentUser.votedOption = 2;
+                        else if (s && s.includes("無法參加")) currentUser.votedOption = 3;
+                        try { if(userVote['Checklist']) { userChecklistState = JSON.parse(userVote['Checklist']); } } catch(e) {}
+                        
+                        // 🌟 自動檢查並更新 LINE 名字與大頭貼 (相容舊欄位)
+                        let isProfileChanged = false;
+                        let dbName = userVote['LINE 名稱'] || userVote['LINE名稱'];
+                        let dbPic = userVote['AvatarUrl'] || userVote['pictureUrl'] || userVote['照片'];
+
+                        if (dbName !== currentUser.name) {
+                            if (userVote['LINE名稱'] !== undefined) userVote['LINE名稱'] = currentUser.name;
+                            else userVote['LINE 名稱'] = currentUser.name;
+                            isProfileChanged = true;
+                        }
+                        if (currentUser.pictureUrl && dbPic !== currentUser.pictureUrl) {
+                            if (userVote['AvatarUrl'] !== undefined) userVote['AvatarUrl'] = currentUser.pictureUrl;
+                            else userVote['照片'] = currentUser.pictureUrl;
+                            isProfileChanged = true;
+                        }
+                        
+                        if (isProfileChanged) {
+                            db.ref('votes').set(vArray); 
+                        }
+                    } else {
+                        currentUser.isVoted = true;
+                        currentUser.votedOption = 3; 
+                        const newVote = { "LINEID": currentUser.id, "LINE名稱": currentUser.name, "AvatarUrl": currentUser.pictureUrl || "", "偏好行程": "無法參加(訪客查看)", "time_opt1": "", "time_opt2": "" };
+                        vArray.push(newVote);
+                        db.ref('votes').set(vArray);
+                    }
                 }
                 
-                allMessages = [...(data.messages || [])].reverse();
-                
-                renderDynamicUI(data);
-                renderMessages();
-                updateBadgeCount();
+                // 處理留言板即時更新
+                if (data.messages && activeMessageUpdates === 0) {
+                    const newMsgs = [...data.messages].reverse();
+                    let isStructuralChange = true;
+                    if (!isInitialLoad && allMessages.length === newMsgs.length && allMessages.length > 0) {
+                        let match = true;
+                        for (let i = 0; i < Math.min(10, allMessages.length); i++) {
+                            if (allMessages[i].Name !== newMsgs[i].Name || allMessages[i].Time !== newMsgs[i].Time) { match = false; break; }
+                        }
+                        if (match) isStructuralChange = false;
+                    } else if (!isInitialLoad && allMessages.length === 0 && newMsgs.length === 0) {
+                        isStructuralChange = false;
+                    }
+                    allMessages = newMsgs;
 
-                document.getElementById('loading').style.display = 'none';
+                    if (isStructuralChange) renderMessages(); 
+                    else updateExistingMessagesInPlace(); 
+                    
+                    if (document.getElementById('view-board').classList.contains('active')) clearBadge();
+                    else updateBadgeCount();
+                }
                 
-                if (currentUser.isVoted) {
+                // 更新畫面
+                if (activeConfigUpdates === 0) {
+                    renderDynamicUI(data);
+                }
+
+                // 完成初次載入
+                if (isInitialLoad) {
+                    isInitialLoad = false;
+                    document.getElementById('loading').style.display = 'none';
                     const welcomeNameEl = document.getElementById('welcome-name');
                     welcomeNameEl.innerHTML = `<span>${currentUser.name}</span>`;
                     
-                    if (currentUser.votedOption === 3) {
-                        document.getElementById('visitor-badge').style.display = 'inline-flex';
-                    } else {
-                        document.getElementById('visitor-badge').style.display = 'none';
-                    }
+                    if (currentUser.votedOption === 3) document.getElementById('visitor-badge').style.display = 'inline-flex';
+                    else document.getElementById('visitor-badge').style.display = 'none';
 
                     document.getElementById('lock-screen').style.display = 'none';
                     unlockMainApp();
-                } else {
-                    document.getElementById('app').style.display = 'none';
-                    document.getElementById('bottom-nav-block').style.display = 'none';
-                    document.getElementById('lock-screen').style.display = 'block';
-                    initLockScreen();
                 }
-            } catch (error) {
-                console.error("讀取失敗:", error);
-                document.getElementById('loading').innerHTML = '<h2 style="color:red;">資料讀取失敗</h2><p>無法連線到資料庫，請檢查網路。</p>';
-            }
+            });
         }
 
         function toggleMenu(event) { 
@@ -1631,12 +1617,25 @@
         }
 
         function applyVisitorPermissions(cfg) {
-            // 🚨 以下僅限「訪客身分」的權限檢查
+            // 🌟 1. 補報名系統獨立防護 (因為所有人都可以進補報名頁面，所以放在最前面檢查)
+            const currentActive = document.querySelector('.view-section.active');
+            const currentId = currentActive ? currentActive.id.replace('view-', '') : '';
+            
+            if (currentId === 'voting' && String(cfg.VotingLocked).toLowerCase() === 'true') {
+                switchView('voting'); // 轉向灰色鎖頭
+                return;
+            } else if (currentId === 'guest-locked' && !document.querySelector('.nav-item.active')) {
+                // 如果卡在鎖定畫面，且沒有導覽列(代表是補報名的鎖定)，若後台解鎖則自動恢復
+                if (String(cfg.VotingLocked).toLowerCase() !== 'true') {
+                    switchView('voting');
+                    return;
+                }
+            }
+
+            // 🚨 2. 以下僅限「訪客身分」的權限檢查
             if (currentUser.votedOption !== 3) return; 
 
             isGuestViewEnabled = getConfigBool(cfg, 'GuestViewEnabled', false);
-            const currentActive = document.querySelector('.view-section.active');
-            const currentId = currentActive ? currentActive.id.replace('view-', '') : '';
             const isRedLockVisible = document.getElementById('guest-lock-screen').style.display === 'block';
 
             // 🌟 將 voting (補報名系統) 加入特權名單，保證不被總開關紅鎖踢出去
@@ -1994,7 +1993,6 @@
 
         async function toggleLike(index) {
             if (navigator.vibrate) navigator.vibrate(50);
-
             const msgObj = allMessages[index];
             let likesArray = [];
             try {
@@ -2002,72 +2000,28 @@
                 else if (Array.isArray(msgObj.Likes)) likesArray = msgObj.Likes;
             } catch(e) {}
 
-            let idIdx = likesArray.findIndex(id => 
-                String(id).trim() === String(currentUser.id).trim() || 
-                String(id).trim() === String(currentUser.name).trim()
-            );
-            
-            let isAdding = false;
-            if (idIdx > -1) {
-                likesArray.splice(idIdx, 1); 
-            } else {
-                likesArray.push(currentUser.id); 
-                isAdding = true;
-            }
+            let idIdx = likesArray.findIndex(id => String(id).trim() === String(currentUser.id).trim() || String(id).trim() === String(currentUser.name).trim());
+            if (idIdx > -1) likesArray.splice(idIdx, 1); 
+            else likesArray.push(currentUser.id); 
 
-            allMessages[index].Likes = JSON.stringify(likesArray);
-            
-            const btnEl = document.getElementById(`like-btn-${index}`);
-            const textEl = document.getElementById(`like-text-${index}`);
-            
-            if (btnEl) {
-                if (isAdding) {
-                    btnEl.classList.remove('unliked'); btnEl.classList.add('liked');
-                } else {
-                    btnEl.classList.remove('liked'); btnEl.classList.add('unliked');
-                }
-            }
-            
-            if (textEl) {
-                textEl.innerHTML = getLikesIgStyle(likesArray);
-                if (likesArray.length > 0) {
-                    textEl.style.cursor = 'pointer';
-                    textEl.onclick = () => showLikesDrawer(index);
-                } else {
-                    textEl.style.cursor = 'default';
-                    textEl.onclick = null;
-                }
-            }
+            // 🌟 寫入 Firebase：找出真實的排序位置並更新
+            let origMsgs = cachedPollData.messages || [];
+            let origIndex = origMsgs.length - 1 - index;
+            if(origMsgs[origIndex]) {
+                origMsgs[origIndex].Likes = JSON.stringify(likesArray);
+                
+                // 1. 先寫入 Firebase
+                db.ref('messages').set(origMsgs);
 
-            if (window.likeTimers[index]) {
-                clearTimeout(window.likeTimers[index]);
+                // 🌟 2. 新增：背景偷偷同步到 Google Sheets
+                const isAdding = idIdx > -1 ? false : true; // 判斷是按讚還是收回
+                fetch(GAS_API_URL, {
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: "toggleLike", timeStr: msgObj.Time, content: msgObj.Content, userId: currentUser.id, userName: currentUser.name, isAdding: isAdding })
+                }).catch(e => console.error("Sheets 按讚同步失敗:", e));
             }
-
-            // 🌟 新增：鎖定背景留言同步，保護你的操作不被覆蓋
-            activeMessageUpdates++;
-
-            window.likeTimers[index] = setTimeout(async () => {
-                try {
-                    await fetch(GAS_API_URL, {
-                        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify({
-                            action: "toggleLike",
-                            timeStr: msgObj.Time,
-                            content: msgObj.Content, 
-                            userId: currentUser.id,
-                            userName: currentUser.name, 
-                            isAdding: isAdding
-                        })
-                    });
-                } catch(e) { 
-                    console.error("按讚狀態儲存失敗"); 
-                } finally {
-                    // 🌟 延遲解鎖：給伺服器一點緩衝時間
-                    setTimeout(() => { activeMessageUpdates = Math.max(0, activeMessageUpdates - 1); }, 1500);
-                }
-            }, 400);
         }
-
         function loadMoreMessages() { currentMsgPage++; renderMessages(); }
 
         function openEditMessage(index) {
@@ -2082,49 +2036,43 @@
             textarea.style.display = 'block'; textarea.value = msg.Content; 
             document.getElementById('modal-btn-cancel').style.display = 'block';
             const confirmBtn = document.getElementById('modal-btn-confirm');
-            confirmBtn.style.display = 'block';
-            confirmBtn.innerText = "儲存變更";
+            confirmBtn.style.display = 'block'; confirmBtn.innerText = "儲存變更";
             confirmBtn.onclick = function() {
                 const newContent = textarea.value.trim();
                 if (!newContent) return showCustomAlert("提示", "留言不能為空！");
                 if (newContent === msg.Content) { closeModal(); return; }
-                submitEditMessage(index, newContent, msg);
+                
+                // 🌟 寫入 Firebase
+                let origMsgs = cachedPollData.messages || [];
+                let origIndex = origMsgs.length - 1 - index;
+                if(origMsgs[origIndex]) {
+                    origMsgs[origIndex].Content = newContent;
+                    origMsgs[origIndex].IsEdited = "V";
+                    db.ref('messages').set(origMsgs).then(() => closeModal());
+                }
             };
             document.getElementById('custom-modal').style.display = 'flex';
             setTimeout(() => textarea.focus(), 100);
         }
 
-        async function submitEditMessage(index, newContent, msgObj) {
-            showCustomAlert("更新中", "正在儲存修改的留言...", false);
-            
-            activeMessageUpdates++; // 🌟 鎖定背景更新
-            try {
-                await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "editMessage", userId: currentUser.id, timeStr: msgObj.Time, oldContent: msgObj.Content, newContent: newContent }) });
-                showCustomAlert("成功", "留言已更新！");
-                allMessages[index].Content = newContent; allMessages[index].IsEdited = "V"; renderMessages();
-            } catch(e) { 
-                showCustomAlert("錯誤", "更新失敗，請檢查網路連線。"); 
-            } finally {
-                setTimeout(() => { activeMessageUpdates = Math.max(0, activeMessageUpdates - 1); }, 1500); // 🌟 解鎖
-            }
-        }
-
         async function postMessage() {
             const t = document.getElementById('new-msg-text'); const val = t.value.trim(); if (!val) return;
             const time = getFormattedTime();
-            allMessages.unshift({ LineID: currentUser.id, Name: currentUser.name, AvatarText: currentUser.initial, AvatarUrl: currentUser.pictureUrl, Time: time, Content: val, Likes: "[]" });
-            t.value = ''; renderMessages();    
             
-            clearBadge();
+            let msgs = cachedPollData.messages || [];
+            msgs.push({ LineID: currentUser.id, Name: currentUser.name, AvatarText: currentUser.initial, AvatarUrl: currentUser.pictureUrl, Time: time, Content: val, Likes: "[]" });
+            
+            t.value = ''; clearBadge();
+            
+            // 1. 先寫入 Firebase (前台秒更新)
+            db.ref('messages').set(msgs);
 
-            activeMessageUpdates++; // 🌟 鎖定背景更新
-            try { 
-                await fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "addMessage", userName: currentUser.name, userId: currentUser.id, avatarText: currentUser.initial, timeStr: time, content: val }) }); 
-            } catch(e) { 
-                allMessages.shift(); renderMessages(); t.value = val; showCustomAlert("錯誤", "發佈失敗，請檢查網路連線後再試一次。"); 
-            } finally {
-                setTimeout(() => { activeMessageUpdates = Math.max(0, activeMessageUpdates - 1); }, 1500);
-            }
+            // 🌟 2. 新增：背景偷偷傳給 Google Sheets (不影響前台速度)
+            fetch(GAS_API_URL, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                body: JSON.stringify({ action: "addMessage", userName: currentUser.name, userId: currentUser.id, avatarText: currentUser.initial, timeStr: time, content: val }) 
+            }).catch(e => console.error("Sheets 留言同步失敗:", e));
         }
 
         function unlockMainApp() {
@@ -2176,8 +2124,15 @@
         }
 
         function initDaysCountdown() {
-            if(!countdownTargetDate) return;
-            document.getElementById('days-countdown').innerText = Math.max(0, Math.ceil((countdownTargetDate - new Date().getTime()) / 86400000));
+            const targetDate = new Date(2026, 5, 27, 0, 0, 0); 
+            
+            const diffTime = targetDate.getTime() - new Date().getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            // 確保不會出現負數 (如果日期過了就顯示 0)
+            const displayDays = Math.max(0, diffDays);
+            
+            document.getElementById('days-countdown').innerText = isNaN(displayDays) ? "--" : displayDays;
         }
 
         function markArchive() {
@@ -2273,54 +2228,28 @@
                 const id = block.getAttribute('data-id'); 
                 const title = block.querySelector('.admin-n-title').value.trim();
                 const type = block.querySelector('.admin-n-type').value;
-                
                 let rawDateInput = block.querySelector('.admin-n-time').value.replace(/\[PIN\]/g, '').replace(/\[NEW\]/g, '').trim();
-                const timeRaw = rawDateInput; 
-                const time = type + timeRaw; 
-                
+                const timeRaw = rawDateInput; const time = type + timeRaw; 
                 const desc = block.querySelector('.admin-n-desc').value.trim();
                 const imgUrl = block.querySelector('.admin-n-img').value.trim();
+                const isHidden = !block.querySelector('.admin-n-visible').checked; 
                 
-                const isVisible = block.querySelector('.admin-n-visible').checked;
-                const isHidden = !isVisible; 
-                
-                if(title) {
-                    tempNotices.push({ id, title, desc, imgUrl, timeRaw, time, type, isHidden });
-                }
+                if(title) tempNotices.push({ id, title, desc, imgUrl, timeRaw, time, type, isHidden });
             });
             
             let pinnedNotices = tempNotices.filter(n => n.type === '[PIN]');
             let normalNotices = tempNotices.filter(n => n.type !== '[PIN]');
-            
-            pinnedNotices.sort((a, b) => {
-                let dateA = new Date(a.timeRaw.replace(/-/g, '/')).getTime() || 0;
-                let dateB = new Date(b.timeRaw.replace(/-/g, '/')).getTime() || 0;
-                return dateB - dateA; 
-            });
-            
+            pinnedNotices.sort((a, b) => { return new Date(b.timeRaw.replace(/-/g, '/')).getTime() - new Date(a.timeRaw.replace(/-/g, '/')).getTime(); });
             let newNotices = [...pinnedNotices, ...normalNotices];
             
             showCustomAlert("資料儲存中", "資料正在寫入資料庫...", false);
             
-            fetch(GAS_API_URL, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                body: JSON.stringify({ 
-                    action: "updateConfigSingle", 
-                    key: "NoticesData", 
-                    value: JSON.stringify(newNotices) 
-                }) 
-            }).catch(e => console.error("JSON 公告背景儲存失敗"));
-            
-            cachedPollData.config.NoticesData = JSON.stringify(newNotices);
-            
-            setTimeout(() => {
-                renderDynamicUI(cachedPollData);
+            // 🌟 寫入 Firebase
+            db.ref('config/NoticesData').set(JSON.stringify(newNotices)).then(() => {
                 closeModal();
                 switchView('overview');
-                btn.innerText = "儲存所有變更"; 
-                btn.disabled = false;
-            }, 1200); 
+                btn.innerText = "儲存所有變更"; btn.disabled = false;
+            });
         }
 
         function renderChecklist() {
@@ -2380,13 +2309,22 @@
         async function saveChecklistBackground() {
             if (!isChecklistModified) return; 
             isChecklistModified = false; 
-            try {
-                await fetch(GAS_API_URL, { 
-                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            
+            // 🌟 寫入 Firebase：更新個人的 Checklist
+            let currentVotes = cachedPollData.votes || [];
+            let userIdx = currentVotes.findIndex(v => v['LINE ID'] === currentUser.id);
+            if (userIdx > -1) {
+                currentVotes[userIdx].Checklist = JSON.stringify(userChecklistState);
+                
+                // 1. 先寫入 Firebase
+                db.ref('votes').set(currentVotes).catch(e => isChecklistModified = true);
+
+                // 🌟 2. 新增：背景偷偷同步到 Google Sheets
+                fetch(GAS_API_URL, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: "updateChecklist", userId: currentUser.id, data: JSON.stringify(userChecklistState) }) 
-                });
-            } catch(e) { 
-                isChecklistModified = true; 
+                }).catch(e => console.error("Sheets 攜帶物品同步失敗:", e));
             }
         }
 
@@ -2402,23 +2340,12 @@
 
         async function toggleVotingLock(checkbox) {
             const isLocked = checkbox.checked;            
-            
-            if(cachedPollData && cachedPollData.config) {
-                cachedPollData.config["VotingLocked"] = isLocked ? "true" : "false";
-            }
-            
-            // 觸發畫面更新，如果自己剛好停在補報名頁面，會瞬間上鎖
-            renderDynamicUI(cachedPollData); 
-
-            activeConfigUpdates++;
-            fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "updateConfigSingle", key: "VotingLocked", value: isLocked ? "true" : "false" }) })
-            .catch(e => console.error(e))
-            .finally(() => { setTimeout(() => { activeConfigUpdates = Math.max(0, activeConfigUpdates - 1); }, 1500); });
+            // 🌟 寫入 Firebase：直接更新 config 節點
+            db.ref('config/VotingLocked').set(isLocked ? "true" : "false");
         }
         
         async function toggleGuestViewLock(checkbox, key) {
             const isEnabled = checkbox.checked;
-            
             if (key === 'GuestViewEnabled') {
                 isGuestViewEnabled = isEnabled; 
                 const subOptionsDiv = document.getElementById('admin-guest-sub-options');
@@ -2427,17 +2354,8 @@
                     subOptionsDiv.style.pointerEvents = isEnabled ? 'auto' : 'none';
                 }
             }
-
-            if(cachedPollData && cachedPollData.config) {
-                cachedPollData.config[key] = isEnabled ? "true" : "false";
-            }
-            
-            renderDynamicUI(cachedPollData); 
-
-            activeConfigUpdates++;
-            fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "updateConfigSingle", key: key, value: isEnabled ? "true" : "false" }) })
-            .catch(e => console.error(e))
-            .finally(() => { setTimeout(() => { activeConfigUpdates = Math.max(0, activeConfigUpdates - 1); }, 1500); });
+            // 🌟 寫入 Firebase
+            db.ref('config/' + key).set(isEnabled ? "true" : "false");
         }
         
         function selectVote(o) { 
@@ -2452,37 +2370,29 @@
             if (cachedPollData?.config?.VotingLocked === 'true') return showCustomAlert("系統已鎖定", "主辦人已關閉報名系統。");
             showCustomAlert("資料傳送中", "請稍候...", false);
             
-            try {
-                // 🌟 核心修改：寫死方案一，time_opt1 留空，time_opt2 勾選 V
-                await fetch(GAS_API_URL, { 
+            // 🌟 寫入 Firebase：更新個人投票資料
+            let currentVotes = cachedPollData.votes || [];
+            let userIdx = currentVotes.findIndex(v => v['LINE ID'] === currentUser.id);
+            
+            const voteData = { 
+                "LINE ID": currentUser.id, "LINE 名稱": currentUser.name, "照片": currentUser.pictureUrl || "", 
+                "偏好行程": "方案一：宜蘭深度放鬆 (二天一夜)", "time_opt1": "", "time_opt2": "V" 
+            };
+
+            if (userIdx > -1) currentVotes[userIdx] = { ...currentVotes[userIdx], ...voteData, Checklist: currentVotes[userIdx].Checklist || "" };
+            else currentVotes.push(voteData);
+
+            db.ref('votes').set(currentVotes).then(() => {
+                fetch(GAS_API_URL, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                    body: JSON.stringify({ 
-                        action: "vote", 
-                        userName: currentUser.name, 
-                        userId: currentUser.id, 
-                        pictureUrl: currentUser.pictureUrl, 
-                        choice_trip: "方案一：宜蘭深度放鬆 (二天一夜)", 
-                        time_opt1: "", 
-                        time_opt2: "V" 
-                    }) 
-                });
-                
-                fetch(GAS_API_URL, {
-                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ 
-                          action: "updateAvatar", 
-                          userId: currentUser.id, 
-                          pictureUrl: currentUser.pictureUrl || "",
-                          loginTime: getFormattedTime() 
-                     })
-                }).catch(e => console.log("靜默同步資料"));
+                    body: JSON.stringify({ action: "vote", userName: currentUser.name, userId: currentUser.id, pictureUrl: currentUser.pictureUrl, choice_trip: "方案一：宜蘭深度放鬆 (二天一夜)", time_opt1: "", time_opt2: "V" }) 
+                }).catch(e => console.error("Sheets 補報名同步失敗:", e));
 
                 showCustomAlert("報名成功", "");
-                currentUser.isVoted = true; 
-                currentUser.votedOption = 1; // 自動將身分轉為正式參與者
+                currentUser.isVoted = true; currentUser.votedOption = 1;
                 unlockMainApp();
-            } catch(e) { showCustomAlert("錯誤", "網路異常，請稍後再試。"); }
+            }).catch(e => showCustomAlert("錯誤", "網路異常，請稍後再試。"));
         }
         
         async function fetchResults() {
@@ -2498,7 +2408,7 @@
                     totalVotes++; const trip = row['偏好行程']; const name = row['LINE 名稱']; 
                     if (trip && trip.includes("無法參加")) { unableCount++; if (name) unableHtml += `<div style="display: inline-block; background: rgba(255,255,255,0.4); padding: 4px 12px; border-radius: 20px; margin: 4px 6px 4px 0; font-size: 12px; border: 1px solid rgba(255,255,255,0.6); color: var(--text-muted); box-shadow: 0 2px 5px rgba(0,0,0,0.02);">${name}</div>`; return; }
                     const isTrip1 = trip && trip.includes("方案一"); const isTrip2 = trip && trip.includes("方案二");
-                    if (isTrip1) { if (row['6/13-6/14'] === 'V') t1_d1++; if (row['6/27-6/28'] === 'V') t1_d2++; } else if (isTrip2) { if (row['6/13-6/14'] === 'V') t2_d1++; if (row['6/27-6/28'] === 'V') t2_d2++; }
+                    if (isTrip1) { if (row['time_opt1'] === 'V' || row['6/13-6/14'] === 'V') t1_d1++; if (row['time_opt2'] === 'V' || row['6/27-6/28'] === 'V') t1_d2++; } else if (isTrip2) { if (row['time_opt1'] === 'V' || row['6/13-6/14'] === 'V') t2_d1++; if (row['time_opt2'] === 'V' || row['6/27-6/28'] === 'V') t2_d2++; }
                     if (name && (isTrip1 || isTrip2)) votersHtml += `<div style="display: inline-block; background: rgba(255,255,255,0.6); padding: 4px 12px; border-radius: 20px; margin: 4px 6px 4px 0; font-size: 12px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.6), 0 4px 10px rgba(0,0,0,0.04); color: var(--text-main); border: 1px solid rgba(255,255,255,0.8);">${name} <span style="color:var(--primary-green); font-size:11px; margin-left: 4px;">✔</span></div>`;
                 });
                 const t1_max = Math.max(t1_d1, t1_d2); const t2_max = Math.max(t2_d1, t2_d2);
@@ -2690,12 +2600,6 @@
             lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; 
         }, { passive: true });
 
-        // 🌟 啟動系統心跳：每 5 秒在背景默默對答案一次 (同步開關狀態、留言與公告)
-        setInterval(() => {
-            if (currentUser.isVoted && typeof refreshMessagesOnly === "function") {
-                refreshMessagesOnly(true); 
-            }
-        }, 5000);
 
     </script>
 </body>
