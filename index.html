@@ -1271,6 +1271,8 @@
 
         async function processLoadedData() {
             document.getElementById('loading-subtext').innerText = "連線即時資料庫中...";
+
+            listenToReadReceipts();
             
             // 🌟 2. 訂閱 Firebase 即時資料 (只要後台有變，這裡瞬間觸發！)
             db.ref('/').on('value', (snapshot) => {
