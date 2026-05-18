@@ -480,6 +480,20 @@
         }
 
     </style>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => {
+                        console.log('Service Worker 註冊成功:', reg.scope);
+                        if (typeof firebase !== 'undefined' && firebase.messaging && firebase.messaging.isSupported()) {
+                            firebase.messaging().useServiceWorker(reg);
+                        }
+                    })
+                    .catch(err => console.log('Service Worker 註冊失敗:', err));
+            });
+        }
+    </script>
 </head>
 <body>
     <div class="bg-blobs">
@@ -523,7 +537,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             後台管理
         </div>
-        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.1.7</div>
+        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.1.8</div>
     </div>
     <div id="loading" style="display: flex; flex-direction: column; align-items: center; margin-top: 120px;">
         <div class="spinner"></div>
@@ -1000,6 +1014,8 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js"></script>
+
     <script>
         const svgEye = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
         const svgEyeOff = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
@@ -1083,6 +1099,43 @@
                     badge.style.display = 'none';
                 }
             }
+        }
+
+        // 👇 新增這段：索取推播權限並寫入 Firebase
+        function requestPushPermission() {
+            // 檢查瀏覽器和 Firebase 是否支援
+            if (!('Notification' in window) || !firebase.messaging.isSupported()) {
+                console.log("此瀏覽器不支援推播通知");
+                return;
+            }
+            
+            Notification.requestPermission().then(function(permission) {
+                if (permission === 'granted') {
+                    console.log("✅ 成功：用戶允許了通知權限！");
+                    
+                    const messaging = firebase.messaging();
+                    // 這裡已經換成你截圖裡的公鑰了
+                    messaging.getToken({ vapidKey: 'BNtbU-i7ale_MCnwVr_lgCjQCHxugB1IffWBtjgCyQQo1GP03bqca2NQAYYkUYS0vUE4YmW8ncHuX4dyJ0OMS7U' })
+                    .then((currentToken) => {
+                        if (currentToken) {
+                            console.log("🎟️ 成功取得推播 Token");
+                            
+                            // 存入 Firebase 資料庫的 pushTokens 節點
+                            if (currentUser && currentUser.id) {
+                                db.ref('pushTokens/' + currentUser.id).set(currentToken)
+                                .then(() => console.log("💾 Token 已成功存入 Firebase!"))
+                                .catch((error) => console.error("❌ 存入 Firebase 失敗:", error));
+                            }
+                        } else {
+                            console.log('無法取得 Token，請確認瀏覽器設定。');
+                        }
+                    }).catch((err) => {
+                        console.log('取得 Token 發生錯誤:', err);
+                    });
+                } else {
+                    console.log("❌ 失敗：用戶拒絕了通知權限");
+                }
+            });
         }
 
         function clearBadge() {
@@ -2247,6 +2300,8 @@
             document.getElementById('guest-lock-screen').style.display = 'none';
             document.getElementById('app').style.display = 'block';
             
+            requestPushPermission();
+
             if (currentUser.isVoted) {
                 if (currentUser.votedOption === 3) {
                     document.getElementById('visitor-badge').style.display = 'inline-flex';
@@ -2257,8 +2312,6 @@
                 document.getElementById('bottom-nav-block').style.display = 'flex';
                 document.getElementById('bottom-blur-mask').style.display = 'block'; 
                 initDaysCountdown(); markArchive(); 
-
-                requestPushPermission();
                 
                 setTimeout(() => {
                     switchView('overview');
