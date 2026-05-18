@@ -13,9 +13,9 @@
       "type": "image/png"
     }
   ],
-  "start_url": "/church-vote/?openExternalBrowser=1",
+  "start_url": "/church-vote/",
   "background_color": "#e0f2ed",
-  "theme-color": "#f0f4f8",
+  "theme_color": "#f0f4f8",
   "display": "standalone",
   "orientation": "portrait"
 }
