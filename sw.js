@@ -1,24 +1,40 @@
-// 監聽後台推播事件
-self.addEventListener('push', function(event) {
-    if (event.data) {
-        // 這裡未來可以接 Firebase 傳來的資料
-        console.log("收到推播資料:", event.data.text());
-        
-        // 為了讓這階段測試不報錯，先放一個簡單的預設通知
-        const title = "收到新訊息";
-        const options = {
-            body: "有新的小組動態！",
-            icon: "yilan.png",
-            badge: "yilan.png"
-        };
-        event.waitUntil(self.registration.showNotification(title, options));
-    }
+// ==========================================
+// 🚀 Firebase FCM 推播背景接收器 (Service Worker)
+// ==========================================
+
+// 1. 引入 Firebase SDK (Service Worker 專用版)
+importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js');
+importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js');
+
+// 2. 初始化 Firebase (與前端 index.html 保持一致)
+firebase.initializeApp({
+    apiKey: "AIzaSyAibbxL5rnhH8iupuFC0gSxqSoJJftokgY",
+    projectId: "trip-guide-cfdac",
+    messagingSenderId: "464557372626",
+    appId: "1:464557372626:web:c2bb8c82b90c6c094c290b"
 });
 
-// 點擊通知 Banner 時自動打開網頁
+const messaging = firebase.messaging();
+
+// 3. 攔截背景推播並顯示 (會自動抓取 GAS 後台傳來的 title 和 body)
+messaging.onBackgroundMessage(function(payload) {
+    console.log('[sw.js] 收到背景推播：', payload);
+    
+    const notificationTitle = payload.notification.title;
+    const notificationOptions = {
+        body: payload.notification.body,
+        icon: 'https://raw.githubusercontent.com/GuanTing-Lin/church-vote/main/yilan.png',
+        badge: 'https://raw.githubusercontent.com/GuanTing-Lin/church-vote/main/yilan.png',
+        data: payload.notification.click_action // 取出 GAS 裡設定的 click_action 網址
+    };
+
+    self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+// 4. 監聽使用者點擊通知的動作，並打開網頁
 self.addEventListener('notificationclick', function(event) {
     event.notification.close();
-    event.waitUntil(
-        clients.openWindow('/church-vote/')
-    );
+    // 如果推播有帶網址就開該網址，沒有就開首頁
+    const urlToOpen = event.notification.data || "https://guanting-lin.github.io/church-vote/?openExternalBrowser=1";
+    event.waitUntil( clients.openWindow(urlToOpen) );
 });
