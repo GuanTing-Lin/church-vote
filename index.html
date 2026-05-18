@@ -607,11 +607,15 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
             歷史方案回顧
         </div>
+        <div class="menu-item" onclick="openSettings()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            通知設定
+        </div>
         <div class="menu-item" onclick="handleAdminLogin()" style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 2px;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             後台管理
         </div>
-        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.1.9</div>
+        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.2.0</div>
     </div>
     <div id="loading" style="display: flex; flex-direction: column; align-items: center; margin-top: 120px;">
         <div class="spinner"></div>
@@ -946,7 +950,54 @@
         <div id="view-result" class="view-section">
             <div id="result-chart-area"></div>
         </div>
+        <div id="view-settings" class="view-section">
+            <div style="display: flex; align-items: center; margin-bottom: 20px; position: relative; justify-content: center; height: 40px;">
+                <div onclick="switchView('overview')" style="position: absolute; left: 0; color: var(--text-main); font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 6px 12px; background: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.9); border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); transition: 0.2s; backdrop-filter: blur(10px);">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                    返回
+                </div>
+                <h2 style="color: var(--text-main); margin: 0; font-size: 22px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; text-shadow: 0 1px 2px rgba(255,255,255,0.5);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    通知設定
+                </h2>
+            </div>
+            
+            <div class="card" style="padding: 16px 20px;">
+                <div class="admin-menu-item" style="border-bottom: 1px dashed rgba(0,0,0,0.08); padding: 5px 0 15px 0; cursor: default;">
+                    <div>
+                        <div style="font-size: 15px; font-weight: 700; color: var(--text-main);">接收推播通知 (總開關)</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">開啟後才能設定此裝置的通知類型</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="user-push-master-toggle" onchange="handlePushMasterToggle(this)">
+                        <span class="slider"></span>
+                    </label>
+                </div>
 
+                <div id="push-sub-options" style="padding-top: 15px; display: none; animation: fadeIn 0.3s ease-out;">
+                    <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; margin-bottom: 15px; letter-spacing: 0.5px;">通知類型 (可複選)</div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                        <div style="font-size: 14px; font-weight: 600; color: var(--text-main);">所有新留言</div>
+                        <label class="switch" style="transform: scale(0.8); margin: 0;">
+                            <input type="checkbox" id="push-pref-all" onchange="savePushPrefs()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-size: 14px; font-weight: 600; color: var(--text-main);">當有人 @ 標記我時</div>
+                        <label class="switch" style="transform: scale(0.8); margin: 0;">
+                            <input type="checkbox" id="push-pref-mentions" onchange="savePushPrefs()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div id="view-admin" class="view-section">
             <h2 style="text-align: center; color: var(--text-main); margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; gap: 8px;">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> 後台管理
@@ -1176,46 +1227,48 @@
             }
         }
 
-        // 👇 升級版：索取推播權限並寫入 Firebase
-        function requestPushPermission() {
-            // 檢查瀏覽器和 Firebase 是否支援
+        // 👇 升級版：索取權限並連動 UI 開關
+        // 👇 升級版：索取權限並預設子選項
+        function requestPushPermission(fromToggle = false) {
             if (!('Notification' in window) || !firebase.messaging.isSupported()) {
-                console.log("此瀏覽器不支援推播通知");
+                if (!fromToggle) console.log("此瀏覽器不支援推播通知");
+                else showCustomAlert("不支援", "您的裝置或瀏覽器不支援推播通知。");
+                if (fromToggle) document.getElementById('user-push-master-toggle').checked = false;
                 return;
             }
             
             Notification.requestPermission().then(function(permission) {
                 if (permission === 'granted') {
-                    console.log("✅ 成功：用戶允許了通知權限！正在產生 Token...");
+                    console.log("✅ 成功允許權限！正在產生 Token...");
                     
-                    // 🌟 關鍵升級：確保 Service Worker (郵差) 完全準備好，再跟 Firebase 要 Token
                     navigator.serviceWorker.ready.then((registration) => {
                         const messaging = firebase.messaging();
-                        
                         messaging.getToken({ 
                             vapidKey: 'BNtbU-i7ale_MCnwVr_lgCjQCHxugB1IffWBtjgCyQQo1GP03bqca2NQAYYkUYS0vUE4YmW8ncHuX4dyJ0OMS7U',
-                            serviceWorkerRegistration: registration // 直接指定我們準備好的郵差
-                        })
-                        .then((currentToken) => {
+                            serviceWorkerRegistration: registration 
+                        }).then((currentToken) => {
                             if (currentToken) {
-                                console.log("🎟️ 成功取得推播 Token:", currentToken);
-                                
-                                // 存入 Firebase 資料庫的 pushTokens 節點
+                                console.log("🎟️ 成功取得推播 Token");
                                 if (currentUser && currentUser.id) {
-                                    db.ref('pushTokens/' + currentUser.id).set(currentToken)
-                                    .then(() => console.log("💾 Token 已成功存入 Firebase!"))
-                                    .catch((error) => console.error("❌ 存入 Firebase 失敗:", error));
+                                    db.ref('pushTokens/' + currentUser.id).set(currentToken);
+                                    
+                                    if (fromToggle) {
+                                        // 確保總開關打開，並顯示子選單
+                                        document.getElementById('user-push-master-toggle').checked = true;
+                                        document.getElementById('push-sub-options').style.display = 'block';
+                                        
+                                        // 第一次開啟，給予預設值 (全通知關，@通知開)，並寫入資料庫
+                                        document.getElementById('push-pref-all').checked = false;
+                                        document.getElementById('push-pref-mentions').checked = true;
+                                        savePushPrefs();
+                                    }
                                 }
-                            } else {
-                                console.log('無法取得 Token，請確認瀏覽器設定。');
                             }
-                        }).catch((err) => {
-                            console.log('取得 Token 發生錯誤:', err);
-                        });
+                        }).catch((err) => console.log('取得 Token 發生錯誤:', err));
                     });
-
                 } else {
                     console.log("❌ 失敗：用戶拒絕了通知權限");
+                    if (fromToggle) document.getElementById('user-push-master-toggle').checked = false;
                 }
             });
         }
@@ -1323,6 +1376,71 @@
                 };
             }
         }
+
+        // ==========================================
+        // 🔔 通知設定開關邏輯
+        // ==========================================
+        
+        // 1. 打開設定頁面
+        function openSettings() {
+            document.getElementById('avatar-menu').style.display = 'none';
+            const hIcon = document.getElementById('hamburger-icon');
+            if(hIcon) hIcon.classList.remove('open');
+            switchView('settings');
+        }
+
+        // 2. 處理開關切換動作
+        // 2. 處理總開關切換動作
+        function handlePushMasterToggle(checkbox) {
+            const isTurningOn = checkbox.checked;
+            
+            if (isTurningOn) {
+                if (Notification.permission === 'default') {
+                    checkbox.checked = false; // 先把開關關回去，等他確認才打開
+                    
+                    document.getElementById('modal-title').innerText = "開啟推播通知？";
+                    document.getElementById('modal-desc').innerText = "開啟通知，才不會錯過重要訊息喔！";
+                    document.getElementById('modal-desc').style.display = 'block';
+                    document.getElementById('modal-btn-group').style.display = 'flex';
+                    
+                    const btnConfirm = document.getElementById('modal-btn-confirm');
+                    btnConfirm.innerText = "開啟";
+                    btnConfirm.onclick = function() {
+                        closeModal();
+                        requestPushPermission(true); 
+                    };
+                    document.getElementById('custom-modal').style.display = 'flex';
+                    
+                } else if (Notification.permission === 'granted') {
+                    requestPushPermission(true);
+                } else {
+                    checkbox.checked = false;
+                    showCustomAlert("無法開啟", "您已封鎖通知，請前往系統設定解除封鎖。");
+                }
+            } else {
+                // 用戶想關閉通知：刪除 Token 並隱藏子選單
+                if (currentUser && currentUser.id) {
+                    db.ref('pushTokens/' + currentUser.id).remove()
+                    .then(() => {
+                        console.log("🗑️ 已關閉通知，Token 刪除成功");
+                        document.getElementById('push-sub-options').style.display = 'none';
+                    }).catch(err => console.error("刪除 Token 失敗", err));
+                }
+            }
+        }
+
+        // 3. 儲存子開關設定到 Firebase
+        function savePushPrefs() {
+            if (!currentUser || !currentUser.id) return;
+            const allChecked = document.getElementById('push-pref-all').checked;
+            const mentionsChecked = document.getElementById('push-pref-mentions').checked;
+            
+            db.ref('pushPrefs/' + currentUser.id).set({
+                all: allChecked,
+                mentions: mentionsChecked
+            }).then(() => console.log("💾 通知偏好已更新！"));
+        }
+
 
         // ==========================================
         // 🎯 @提及選單核心邏輯
@@ -1524,13 +1642,39 @@
             document.getElementById('loading-subtext').innerText = "連線即時資料庫中...";
 
             listenToReadReceipts();
-            
+
+
+            // 👇 更新：同時監聽 Token (總開關) 與 Prefs (子開關)
+            if (currentUser && currentUser.id) {
+                // 監聽總開關
+                db.ref('pushTokens/' + currentUser.id).on('value', snap => {
+                    const hasToken = !!snap.val();
+                    const masterToggle = document.getElementById('user-push-master-toggle');
+                    const subOptions = document.getElementById('push-sub-options');
+                    if (masterToggle) {
+                        const isOn = hasToken && Notification.permission === 'granted';
+                        masterToggle.checked = isOn;
+                        if (subOptions) subOptions.style.display = isOn ? 'block' : 'none';
+                    }
+                });
+                
+                // 監聽子偏好設定
+                db.ref('pushPrefs/' + currentUser.id).on('value', snap => {
+                    // 如果資料庫沒資料，就給一個預設值
+                    const prefs = snap.val() || { all: false, mentions: true };
+                    const allToggle = document.getElementById('push-pref-all');
+                    const mentionsToggle = document.getElementById('push-pref-mentions');
+                    if (allToggle) allToggle.checked = prefs.all;
+                    if (mentionsToggle) mentionsToggle.checked = prefs.mentions;
+                });
+            }
+
             // 🌟 2. 訂閱 Firebase 即時資料 (只要後台有變，這裡瞬間觸發！)
-            db.ref('/').on('value', (snapshot) => {
-                let data = snapshot.val();
-                if (!data) {
-                    // 若資料庫是空的，初始化預設架構，避免畫面永遠卡在「載入中」
-                    data = { config: {}, messages: [], votes: [] };
+                db.ref('/').on('value', (snapshot) => {
+                    let data = snapshot.val();
+                    if (!data) {
+                        // 若資料庫是空的，初始化預設架構，避免畫面永遠卡在「載入中」
+                        data = { config: {}, messages: [], votes: [] };
                 }
                 
                 cachedPollData = data;
