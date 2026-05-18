@@ -1225,25 +1225,6 @@
             return `${y}/${m}/${d} ${ampm} ${h12}:${mins}`;
         }
 
-        // 👇 步驟一：新增請求通知權限的函數
-        function requestPushPermission() {
-            // 1. 先檢查瀏覽器有沒有支援通知功能
-            if (!('Notification' in window)) {
-                console.log("此瀏覽器不支援推播通知");
-                return;
-            }
-            
-            // 2. 跳出系統彈窗詢問用戶
-            Notification.requestPermission().then(function(permission) {
-                if (permission === 'granted') {
-                    console.log("成功：用戶允許了通知權限！");
-                    // 💡 下一步：我們會在這裡寫「向 Firebase 索取 Token 的程式碼」
-                } else {
-                    console.log("失敗：用戶拒絕或關閉了通知權限");
-                }
-            });
-        }
-
         function initLockScreen() {
             let c = 0; let t = null;
             const lockCard = document.querySelector('#lock-screen .card');
