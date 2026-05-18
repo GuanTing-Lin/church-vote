@@ -279,7 +279,20 @@
         .admin-menu-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer; }
         .admin-menu-item:last-child { border-bottom: none; }
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
+        .switch input:disabled + .slider {
+            background-color: #e2e8f0; /* 柔和的淡灰底色 */
+            cursor: not-allowed;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .switch input:disabled + .slider:before {
+            background-color: #f7fafc; /* 圓鈕變成灰白色 */
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        /* 如果是被禁用，且是被勾選的狀態（以防萬一） */
+        .switch input:disabled:checked + .slider {
+            background-color: #a0aec0; /* 灰掉的綠色 */
+        }
+         input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e0; transition: .4s; border-radius: 30px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); }
         .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         input:checked + .slider { background-color: var(--primary-green); }
@@ -638,7 +651,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             後台管理
         </div>
-        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.2.3</div>
+        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.2.4</div>
     </div>
     <div id="loading" style="display: flex; flex-direction: column; align-items: center; margin-top: 120px;">
         <div class="spinner"></div>
@@ -1273,6 +1286,7 @@
                             if (currentToken) {
                                 console.log("🎟️ 成功取得推播 Token");
                                 if (currentUser && currentUser.id) {
+                                    localStorage.setItem('myDeviceFCMToken', currentToken);
                                     db.ref('pushTokens/' + currentUser.id).set(currentToken);
                                     
                                     if (fromToggle) {
@@ -1421,24 +1435,19 @@
             const descDiv = masterToggle.closest('.admin-menu-item').querySelector('div > div:nth-child(2)');
 
             if (isIOS && !isStandalone) {
-                // 狀況 A：是用 iPhone，而且是從 Safari (一般網頁) 打開的
-                // 動作：鎖死開關，並把說明文字變成紅色警告！
-                masterToggle.disabled = true;
-                masterToggle.closest('.switch').style.opacity = '0.4'; // 讓開關看起來變灰
-                masterToggle.closest('.switch').style.cursor = 'not-allowed';
+                // 狀況 A：是用 iPhone 一般網頁打開
+                masterToggle.disabled = true; // 只要這行，CSS 就會自動套用禁用樣式！
+                // (把原本手動改 opacity 跟 cursor 的兩行刪除)
                 
                 if (descDiv) {
-                    descDiv.innerHTML = '<span style="color:#ff4d4f; font-weight:700;">⚠️ iOS 系統限制：請先點擊瀏覽器下方分享按鈕「加入主畫面」，從桌面開啟 App 後即可設定通知！</span>';
+                    descDiv.innerHTML = '<span style="color:#ff4d4f; font-weight:700;">⚠️ iOS 系統限制：請點擊「分享」按鈕 >「加入主畫面」，從桌面開啟後即可設定通知！</span>';
                 }
             } else {
-                // 狀況 B：是 Android、電腦，或是已經乖乖從 iPhone 桌面打開的
-                // 動作：恢復正常
+                // 狀況 B：正常狀態
                 masterToggle.disabled = false;
-                masterToggle.closest('.switch').style.opacity = '1';
-                masterToggle.closest('.switch').style.cursor = 'pointer';
                 
                 if (descDiv) {
-                    descDiv.innerHTML = '開啟後才能設定此裝置的通知類型'; // 恢復原本的文字
+                    descDiv.innerHTML = '開啟後才能設定此裝置的通知類型';
                 }
             }
         }
@@ -1473,11 +1482,20 @@
             } else {
                 // 用戶想關閉通知：刪除 Token 並隱藏子選單
                 if (currentUser && currentUser.id) {
-                    db.ref('pushTokens/' + currentUser.id).remove()
-                    .then(() => {
-                        console.log("🗑️ 已關閉通知，Token 刪除成功");
-                        document.getElementById('push-sub-options').style.display = 'none';
-                    }).catch(err => console.error("刪除 Token 失敗", err));
+                    const myLocalToken = localStorage.getItem('myDeviceFCMToken');
+                    
+                    // 先偷看一下雲端的 Token 是不是我的
+                    db.ref('pushTokens/' + currentUser.id).once('value', snap => {
+                        if (snap.val() === myLocalToken) {
+                            // 💡 只有當雲端 Token 是我這台機器的，我才有資格刪除它！
+                            db.ref('pushTokens/' + currentUser.id).remove()
+                            .then(() => {
+                                console.log("🗑️ 已關閉通知，Token 刪除成功");
+                            }).catch(err => console.error("刪除 Token 失敗", err));
+                        }
+                    });
+                    
+                    document.getElementById('push-sub-options').style.display = 'none';
                 }
             }
         }
@@ -1701,11 +1719,18 @@
             if (currentUser && currentUser.id) {
                 // 監聽總開關
                 db.ref('pushTokens/' + currentUser.id).on('value', snap => {
-                    const hasToken = !!snap.val();
+                    const dbToken = snap.val();
+                    // 抓取這台手機自己保管的 Token
+                    const myLocalToken = localStorage.getItem('myDeviceFCMToken');
+                    
+                    // 💡 關鍵防護：雲端有 Token，而且必須「等於我的 Token」才算數！
+                    const isMyTokenActive = dbToken && (dbToken === myLocalToken);
+                    
                     const masterToggle = document.getElementById('user-push-master-toggle');
                     const subOptions = document.getElementById('push-sub-options');
+                    
                     if (masterToggle) {
-                        const isOn = hasToken && Notification.permission === 'granted';
+                        const isOn = isMyTokenActive && Notification.permission === 'granted';
                         masterToggle.checked = isOn;
                         if (subOptions) subOptions.style.display = isOn ? 'block' : 'none';
                     }
