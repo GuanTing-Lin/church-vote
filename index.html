@@ -1101,7 +1101,7 @@
             }
         }
 
-        // 👇 新增這段：索取推播權限並寫入 Firebase
+        // 👇 升級版：索取推播權限並寫入 Firebase
         function requestPushPermission() {
             // 檢查瀏覽器和 Firebase 是否支援
             if (!('Notification' in window) || !firebase.messaging.isSupported()) {
@@ -1111,27 +1111,34 @@
             
             Notification.requestPermission().then(function(permission) {
                 if (permission === 'granted') {
-                    console.log("✅ 成功：用戶允許了通知權限！");
+                    console.log("✅ 成功：用戶允許了通知權限！正在產生 Token...");
                     
-                    const messaging = firebase.messaging();
-                    // 這裡已經換成你截圖裡的公鑰了
-                    messaging.getToken({ vapidKey: 'BNtbU-i7ale_MCnwVr_lgCjQCHxugB1IffWBtjgCyQQo1GP03bqca2NQAYYkUYS0vUE4YmW8ncHuX4dyJ0OMS7U' })
-                    .then((currentToken) => {
-                        if (currentToken) {
-                            console.log("🎟️ 成功取得推播 Token");
-                            
-                            // 存入 Firebase 資料庫的 pushTokens 節點
-                            if (currentUser && currentUser.id) {
-                                db.ref('pushTokens/' + currentUser.id).set(currentToken)
-                                .then(() => console.log("💾 Token 已成功存入 Firebase!"))
-                                .catch((error) => console.error("❌ 存入 Firebase 失敗:", error));
+                    // 🌟 關鍵升級：確保 Service Worker (郵差) 完全準備好，再跟 Firebase 要 Token
+                    navigator.serviceWorker.ready.then((registration) => {
+                        const messaging = firebase.messaging();
+                        
+                        messaging.getToken({ 
+                            vapidKey: 'BNtbU-i7ale_MCnwVr_lgCjQCHxugB1IffWBtjgCyQQo1GP03bqca2NQAYYkUYS0vUE4YmW8ncHuX4dyJ0OMS7U',
+                            serviceWorkerRegistration: registration // 直接指定我們準備好的郵差
+                        })
+                        .then((currentToken) => {
+                            if (currentToken) {
+                                console.log("🎟️ 成功取得推播 Token:", currentToken);
+                                
+                                // 存入 Firebase 資料庫的 pushTokens 節點
+                                if (currentUser && currentUser.id) {
+                                    db.ref('pushTokens/' + currentUser.id).set(currentToken)
+                                    .then(() => console.log("💾 Token 已成功存入 Firebase!"))
+                                    .catch((error) => console.error("❌ 存入 Firebase 失敗:", error));
+                                }
+                            } else {
+                                console.log('無法取得 Token，請確認瀏覽器設定。');
                             }
-                        } else {
-                            console.log('無法取得 Token，請確認瀏覽器設定。');
-                        }
-                    }).catch((err) => {
-                        console.log('取得 Token 發生錯誤:', err);
+                        }).catch((err) => {
+                            console.log('取得 Token 發生錯誤:', err);
+                        });
                     });
+
                 } else {
                     console.log("❌ 失敗：用戶拒絕了通知權限");
                 }
