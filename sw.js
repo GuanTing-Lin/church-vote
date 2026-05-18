@@ -19,16 +19,16 @@ const messaging = firebase.messaging();
 // 3. 攔截背景推播並顯示 (會自動抓取 GAS 後台傳來的 title 和 body)
 messaging.onBackgroundMessage(function(payload) {
     console.log('[sw.js] 收到背景推播：', payload);
-    
+    /*
     const notificationTitle = payload.notification.title;
     const notificationOptions = {
         body: payload.notification.body,
         icon: 'https://raw.githubusercontent.com/GuanTing-Lin/church-vote/main/yilan.png',
         badge: 'https://raw.githubusercontent.com/GuanTing-Lin/church-vote/main/yilan.png',
-        data: payload.notification.click_action // 取出 GAS 裡設定的 click_action 網址
+        data: payload.notification.click_action
     };
-
     self.registration.showNotification(notificationTitle, notificationOptions);
+    */
 });
 
 // 4. 監聽使用者點擊通知的動作，並打開網頁
