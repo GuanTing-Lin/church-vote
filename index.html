@@ -25,6 +25,23 @@
             --radius-main: 20px;
         }
         html { background-color: #e0f2ed; overscroll-behavior-y: none; }
+        /* 👇 全域客製化圓角 Scrollbar 👇 */
+        ::-webkit-scrollbar {
+            width: 6px;  /* 直向捲軸寬度 */
+            height: 6px; /* 橫向捲軸高度 (預防萬一) */
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent; 
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e0; 
+            border-radius: 10px; 
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0; 
+        }
+
         body { font-family: 'Noto Sans TC', sans-serif; background-color: transparent !important; margin: 0; padding: 0; color: var(--text-main); padding-bottom: 110px; overflow-x: hidden; }
         body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to bottom, #f0f4f8, #e0f2ed); z-index: -2; pointer-events: none; }
         .bg-blobs { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; z-index: -1; overflow: hidden; pointer-events: none; }
@@ -173,7 +190,17 @@
         .prep-item-label { font-size: 14px; color: var(--text-main); transition: 0.2s; font-weight: 600; margin-bottom: 2px; }
         .prep-item.checked .prep-item-label { color: #a0aec0; text-decoration: line-through; }
         .prep-item-desc { font-size: 11px; color: #718096; line-height: 1.4; }
-        .msg-input-box { display: flex; flex-direction: column; gap: 10px; background: rgba(255,255,255,0.3) !important; border: 1px solid rgba(255,255,255,0.5); box-shadow: inset 0 1px 1px rgba(255,255,255,0.4); }
+        .msg-input-box { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+            background: rgba(255,255,255,0.3) !important; 
+            border: 1px solid rgba(255,255,255,0.5); 
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.4); 
+            overflow: visible !important; 
+            position: relative; 
+            z-index: 20;
+        }
         .msg-textarea { width: 100%; box-sizing: border-box; padding: 12px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.15); font-family: inherit; font-size: 14px; resize: vertical; min-height: 80px; background: rgba(255,255,255,0.5); backdrop-filter: blur(10px); transition: 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
         .msg-textarea:focus { outline: none; background: rgba(255,255,255,0.9); border-color: #718096; box-shadow: 0 0 0 3px rgba(113, 128, 150, 0.15); }
         
@@ -479,6 +506,53 @@
             background: rgba(255,255,255,0.4);
         }
 
+        /* 👇 @提及選單專屬樣式 (RWD 升級版) 👇 */
+        .mention-menu {
+            position: absolute;
+            top: 95px; 
+            
+            /* 1. 寬度調整：只綁定左邊，不強制滿版，讓它依賴最小/最大寬度 */
+            left: 12px;
+            min-width: 180px; 
+            max-width: 250px; 
+            
+            /* 2. 不透明背景：改為純白實體，並加深一點陰影讓它立體浮出 */
+            background: #ffffff; 
+            border: 1px solid rgba(0,0,0,0.08); 
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+            
+            max-height: 35vh; 
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+            padding: 6px;
+        }
+
+        .mention-item {
+            padding: 10px 12px; /* 稍微增加上下間距，讓手機胖胖手指更好點擊 */
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+            transition: all 0.2s;
+        }
+        .mention-item:hover, .mention-item.selected {
+            background: rgba(59, 208, 175, 0.15); 
+            color: var(--primary-green);
+        }
+        .mention-avatar {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-orange), #ff8c00);
+            color: white; display: flex; justify-content: center; align-items: center;
+            font-size: 12px; font-weight: 700; overflow: hidden;
+            flex-shrink: 0; /* 確保長輩名字太長時，頭像不會被擠壓變形 */
+        }
+
     </style>
     <script>
         if ('serviceWorker' in navigator) {
@@ -537,7 +611,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             後台管理
         </div>
-        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.1.8</div>
+        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.1.9</div>
     </div>
     <div id="loading" style="display: flex; flex-direction: column; align-items: center; margin-top: 120px;">
         <div class="spinner"></div>
@@ -815,9 +889,10 @@
         <h2 style="text-align: center; color: var(--primary-green); margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; gap: 8px;">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> 留言板
         </h2>
-            <div class="card msg-input-box">
-                <textarea id="new-msg-text" class="msg-textarea" placeholder="想留什麼都可以~"></textarea>
-                <button class="btn-primary" onclick="postMessage()">送出留言</button>
+            <div class="card msg-input-box" style="position: relative;">
+            <div id="mention-menu" class="mention-menu"></div>
+            <textarea id="new-msg-text" class="msg-textarea" placeholder="想留什麼都可以~，試試看輸入 @ 標記組員！"></textarea>
+            <button class="btn-primary" onclick="postMessage()">送出留言</button>
             </div>
             <div class="card" style="padding: 10px 20px;">
                 <div id="msg-list-container"></div>
@@ -1248,6 +1323,143 @@
                 };
             }
         }
+
+        // ==========================================
+        // 🎯 @提及選單核心邏輯
+        // ==========================================
+        let mentionActive = false;
+        let mentionStartIndex = -1;
+        let mentionFilter = "";
+        let mentionList = [];
+        let mentionSelectedIndex = 0;
+
+        function initMentionLogic() {
+            const textarea = document.getElementById('new-msg-text');
+            if (!textarea) return;
+
+            // 1. 監聽打字事件
+            textarea.addEventListener('input', (e) => {
+                const val = textarea.value;
+                const cursorPos = textarea.selectionStart;
+
+                // 往前找，看看游標前面有沒有 @
+                const textBeforeCursor = val.substring(0, cursorPos);
+                const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+
+                if (lastAtIndex !== -1) {
+                    // 確保 @ 是在最前面，或者是接在空白/換行後面（避免 Email 格式觸發）
+                    const isStartOrSpaced = lastAtIndex === 0 || /\s/.test(textBeforeCursor[lastAtIndex - 1]);
+                    
+                    if (isStartOrSpaced) {
+                        mentionActive = true;
+                        mentionStartIndex = lastAtIndex;
+                        mentionFilter = textBeforeCursor.substring(lastAtIndex + 1); // 抓出 @ 後面的字
+                        updateMentionMenu();
+                        return;
+                    }
+                }
+                closeMentionMenu();
+            });
+
+            // 2. 監聽鍵盤方向鍵與 Enter 事件
+            textarea.addEventListener('keydown', (e) => {
+                if (!mentionActive) return;
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault(); // 阻止游標亂跑
+                    mentionSelectedIndex = (mentionSelectedIndex + 1) % mentionList.length;
+                    renderMentionMenu();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    mentionSelectedIndex = (mentionSelectedIndex - 1 + mentionList.length) % mentionList.length;
+                    renderMentionMenu();
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    selectMention(mentionList[mentionSelectedIndex]);
+                } else if (e.key === 'Escape') {
+                    closeMentionMenu();
+                }
+            });
+
+            // 3. 點擊旁邊空白處時，關閉選單
+            document.addEventListener('click', (e) => {
+                if (mentionActive && e.target.id !== 'new-msg-text' && !e.target.closest('.mention-menu')) {
+                    closeMentionMenu();
+                }
+            });
+        }
+
+        // 過濾名單
+        function updateMentionMenu() {
+            // 從我們辛苦建立的 userNameMap 裡面，把所有不重複的名字抓出來
+            let uniqueNames = [...new Set(Object.values(window.userNameMap))];
+            
+            // 排除自己，並根據打的字進行過濾
+            mentionList = uniqueNames.filter(name => 
+                name !== currentUser.name && 
+                name.toLowerCase().includes(mentionFilter.toLowerCase())
+            );
+
+            if (mentionList.length === 0) {
+                closeMentionMenu();
+                return;
+            }
+            mentionSelectedIndex = 0;
+            renderMentionMenu();
+        }
+
+        // 把名單畫在畫面上
+        function renderMentionMenu() {
+            const menu = document.getElementById('mention-menu');
+            menu.innerHTML = '';
+            
+            mentionList.forEach((name, idx) => {
+                const div = document.createElement('div');
+                div.className = 'mention-item' + (idx === mentionSelectedIndex ? ' selected' : '');
+                
+                // 嘗試抓大頭貼，沒有就秀第一個字
+                let picUrl = window.userAvatarMap[name];
+                let avHtml = picUrl 
+                    ? `<img src="${picUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` 
+                    : name[0];
+
+                div.innerHTML = `<div class="mention-avatar">${avHtml}</div><span>${name}</span>`;
+                // 點擊滑鼠時帶入
+                div.onmousedown = (e) => {
+                    e.preventDefault(); // 防止 textarea 失去焦點
+                    selectMention(name);
+                };
+                menu.appendChild(div);
+            });
+            menu.style.display = 'block';
+        }
+
+        // 選擇某人後，把名字塞回輸入框
+        function selectMention(name) {
+            if (!name) return;
+            const textarea = document.getElementById('new-msg-text');
+            const val = textarea.value;
+            
+            // 把字串切成兩半：@前面的 + 選中的名字 + 游標後面的
+            const before = val.substring(0, mentionStartIndex);
+            const after = val.substring(textarea.selectionStart);
+            const insertText = `@${name} `; // 名字後面補一個空白，方便繼續打字
+            
+            textarea.value = before + insertText + after;
+
+            // 把游標移到剛塞入的名字後面
+            textarea.selectionStart = textarea.selectionEnd = mentionStartIndex + insertText.length;
+            textarea.focus();
+            closeMentionMenu();
+        }
+
+        function closeMentionMenu() {
+            mentionActive = false;
+            document.getElementById('mention-menu').style.display = 'none';
+        }
+
+        // 綁定初始化啟動！(把它跟 DOMContentLoaded 綁在一起確保元素都生出來了)
+        window.addEventListener('DOMContentLoaded', initMentionLogic);
 
         window.onload = async function() {
             if (isLocalEnv) {
