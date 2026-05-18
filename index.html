@@ -331,11 +331,6 @@
         }
         .hero-map-btn:hover { transform: scale(1.1); background: rgba(255,255,255,0.95); color: var(--primary-blue); } /* 👈 2. Hover 改為亮藍色 */
         .hero-map-btn:active { transform: scale(0.9); }
-
-        .acc-hero-content { position: absolute; bottom: 0; left: 0; right: 0; padding: 30px 16px 12px; background: linear-gradient(to top, rgba(255,255,255,1) 5%, rgba(255,255,255,0.8) 40%, transparent 100%); }
-        .acc-tag { font-size: 10px; font-weight: 700; color: var(--primary-orange); margin-bottom: 2px; }
-        .acc-title { font-size: 20px; font-weight: 800; color: var(--text-main); margin: 0 0 2px; line-height: 1.2; letter-spacing: 0.5px; }
-        .acc-subtitle { font-size: 11px; color: var(--text-muted); font-weight: 500; }
         
         /* 👇 2. 頁籤切換器加入 Hover 效果 👇 */
         .acc-tabs-container { display: flex; background: rgba(255, 255, 255, 0.45); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-radius: 100px; padding: 4px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.9); box-shadow: 0 4px 12px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.7); }
@@ -528,7 +523,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             後台管理
         </div>
-        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.1.6</div>
+        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.1.7</div>
     </div>
     <div id="loading" style="display: flex; flex-direction: column; align-items: center; margin-top: 120px;">
         <div class="spinner"></div>
@@ -1042,7 +1037,6 @@
 
         const isLocalEnv = window.location.protocol === "file:" || window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
         
-        // 🌟 1. 初始化 Firebase
         const firebaseConfig = {
           apiKey: "AIzaSyAibbxL5rnhH8iupuFC0gSxqSoJJftokgY",
           authDomain: "trip-guide-cfdac.firebaseapp.com",
@@ -1056,14 +1050,6 @@
         const db = firebase.database();
         let isInitialLoad = true; // 紀錄是否為初次載入
 
-        // 👇 1. 新增一個防彈特徵碼產生器
-        function getMessageFingerprint(msg) {
-            // 將時間、名字、內容組合，並剔除所有空白與換行，GAS 後台怎麼改格式都不怕
-            let str = (msg.Time || "") + (msg.Name || "") + (msg.Content || "");
-            return str.replace(/\s+/g, '');
-        }
-
-        // 👇 2. 替換舊的 updateBadgeCount
         function updateBadgeCount() {
             if (!allMessages || allMessages.length === 0) return;
             
@@ -1071,22 +1057,18 @@
             let unreadCount = 0;
             
             if (!lastReadId) {
-                unreadCount = allMessages.length;
+                unreadCount = 0;
             } else {
                 for (let i = 0; i < allMessages.length; i++) {
                     let msg = allMessages[i];
-                    let currentFingerprint = getMessageFingerprint(msg);
                     let currentMsgId = msg.MsgID || "";
                     
-                    // 只要「防彈特徵」或「MsgID」其中一個對得上，就代表找到書籤了！
-                    if (currentFingerprint === lastReadId || currentMsgId === lastReadId) {
+                    if (currentMsgId === lastReadId) {
                         break;
                     }
                     unreadCount++;
                 }
                 
-                // 🛡️ 防呆機制：如果真的一路找到底都找不到（代表舊紀錄完全對不上）
-                // 為了避免 12 個紅點嚇到人，最多只提示 1 個未讀
                 if (unreadCount === allMessages.length && allMessages.length > 0) {
                     unreadCount = 1;
                 }
@@ -1103,15 +1085,12 @@
             }
         }
 
-        // 👇 3. 替換舊的 clearBadge
         function clearBadge() {
             if (allMessages && allMessages.length > 0) {
-                let msg = allMessages[0]; // 抓最新的一筆
+                let msg = allMessages[0];
                 
-                // 🎯 核心修正：首選絕對不會變的 MsgID！萬一真的出錯沒有 MsgID，才用文字特徵備用
-                let readMarker = msg.MsgID || getMessageFingerprint(msg);
+                let readMarker = msg.MsgID || "";
                 
-                // 寫入到 Firebase 雲端
                 if (currentUser && currentUser.id) {
                     db.ref('readReceipts/' + currentUser.id).set(readMarker);
                 }
@@ -1184,6 +1163,25 @@
             const ampm = hours >= 12 ? '下午' : '上午';
             const h12 = hours % 12 || 12; 
             return `${y}/${m}/${d} ${ampm} ${h12}:${mins}`;
+        }
+
+        // 👇 步驟一：新增請求通知權限的函數
+        function requestPushPermission() {
+            // 1. 先檢查瀏覽器有沒有支援通知功能
+            if (!('Notification' in window)) {
+                console.log("此瀏覽器不支援推播通知");
+                return;
+            }
+            
+            // 2. 跳出系統彈窗詢問用戶
+            Notification.requestPermission().then(function(permission) {
+                if (permission === 'granted') {
+                    console.log("成功：用戶允許了通知權限！");
+                    // 💡 下一步：我們會在這裡寫「向 Firebase 索取 Token 的程式碼」
+                } else {
+                    console.log("失敗：用戶拒絕或關閉了通知權限");
+                }
+            });
         }
 
         function initLockScreen() {
@@ -1310,7 +1308,6 @@
                 if (currentUser.id && currentUser.name) window.userNameMap[currentUser.id] = currentUser.name;
                 if (currentUser.id && currentUser.pictureUrl) window.userAvatarMap[currentUser.id] = currentUser.pictureUrl;
 
-                // 處理個人狀態 (僅初次載入)
                 if (isInitialLoad) {
                     // 🌟 修改：改從 members 陣列中找人
                     let vArray = data.members || [];
@@ -1554,7 +1551,9 @@
         });
 
         async function shareNotice(title, id) {
-            const shareUrl = window.location.href.split('?')[0] + '?notice=' + id;
+            // 🎯 重點：在網址最後面加上 &openExternalBrowser=1
+            const shareUrl = window.location.href.split('?')[0] + '?notice=' + id + '&openExternalBrowser=1';
+            
             const shareTextContent = "【出遊指南公告】\n" + title + "\n👉 點擊查看完整內容：";
             
             if (navigator.share) {
@@ -2258,6 +2257,8 @@
                 document.getElementById('bottom-nav-block').style.display = 'flex';
                 document.getElementById('bottom-blur-mask').style.display = 'block'; 
                 initDaysCountdown(); markArchive(); 
+
+                requestPushPermission();
                 
                 setTimeout(() => {
                     switchView('overview');
