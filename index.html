@@ -566,12 +566,24 @@
                             const messaging = firebase.messaging();
                             messaging.onMessage((payload) => {
                                 console.log('[index.html] 前景收到推播：', payload);
-                                const notificationTitle = payload.notification.title;
-                                const notificationOptions = {
-                                    body: payload.notification.body,
-                                    icon: 'https://raw.githubusercontent.com/GuanTing-Lin/church-vote/main/yilan.png'
-                                };
-                                reg.showNotification(notificationTitle, notificationOptions);
+                                
+                                // 1. 抓取留言板的容器
+                                const boardView = document.getElementById('view-board');
+                                
+                                // 2. 判斷它目前是不是包含 'active' (代表正在畫面上)
+                                const isLookingAtBoard = boardView && boardView.classList.contains('active');
+                                
+                                // 3. 如果「不是」停留在留言板，才強制喚醒系統通知
+                                if (!isLookingAtBoard) {
+                                    const notificationTitle = payload.notification.title;
+                                    const notificationOptions = {
+                                        body: payload.notification.body,
+                                        icon: 'https://raw.githubusercontent.com/GuanTing-Lin/church-vote/main/yilan.png'
+                                    };
+                                    reg.showNotification(notificationTitle, notificationOptions);
+                                } else {
+                                    console.log('使用者正在看留言板，自動隱藏多餘的推播通知');
+                                }
                             });
                         }
                     })
@@ -626,7 +638,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             後台管理
         </div>
-        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.2.2</div>
+        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.2.3</div>
     </div>
     <div id="loading" style="display: flex; flex-direction: column; align-items: center; margin-top: 120px;">
         <div class="spinner"></div>
@@ -979,7 +991,7 @@
             <div class="card" style="padding: 16px 20px;">
                 <div class="admin-menu-item" style="border-bottom: 1px dashed rgba(0,0,0,0.08); padding: 5px 0 15px 0; cursor: default;">
                     <div>
-                        <div style="font-size: 15px; font-weight: 700; color: var(--text-main);">接收推播通知 (總開關)</div>
+                        <div style="font-size: 15px; font-weight: 700; color: var(--text-main);">接收推播通知</div>
                         <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">開啟後才能設定此裝置的通知類型</div>
                     </div>
                     <label class="switch">
@@ -989,7 +1001,7 @@
                 </div>
 
                 <div id="push-sub-options" style="padding-top: 15px; display: none; animation: fadeIn 0.3s ease-out;">
-                    <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; margin-bottom: 15px; letter-spacing: 0.5px;">通知類型 (可複選)</div>
+                    <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; margin-bottom: 15px; letter-spacing: 0.5px;">通知類型</div>
                     
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
                         <div style="font-size: 14px; font-weight: 600; color: var(--text-main);">所有新留言</div>
@@ -1392,15 +1404,45 @@
         // 🔔 通知設定開關邏輯
         // ==========================================
         
-        // 1. 打開設定頁面
+        // 1. 打開設定頁面 (含 iOS Safari 防呆機制)
         function openSettings() {
             document.getElementById('avatar-menu').style.display = 'none';
             const hIcon = document.getElementById('hamburger-icon');
             if(hIcon) hIcon.classList.remove('open');
             switchView('settings');
+
+            // 👇 核心邏輯：判斷作業系統與開啟模式 👇
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            // 判斷是否為「加入桌面後」的獨立 App 模式
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+            const masterToggle = document.getElementById('user-push-master-toggle');
+            // 抓取開關旁邊的說明文字 (用 DOM 結構相對位置抓取，不需改 HTML)
+            const descDiv = masterToggle.closest('.admin-menu-item').querySelector('div > div:nth-child(2)');
+
+            if (isIOS && !isStandalone) {
+                // 狀況 A：是用 iPhone，而且是從 Safari (一般網頁) 打開的
+                // 動作：鎖死開關，並把說明文字變成紅色警告！
+                masterToggle.disabled = true;
+                masterToggle.closest('.switch').style.opacity = '0.4'; // 讓開關看起來變灰
+                masterToggle.closest('.switch').style.cursor = 'not-allowed';
+                
+                if (descDiv) {
+                    descDiv.innerHTML = '<span style="color:#ff4d4f; font-weight:700;">⚠️ iOS 系統限制：請先點擊瀏覽器下方分享按鈕「加入主畫面」，從桌面開啟 App 後即可設定通知！</span>';
+                }
+            } else {
+                // 狀況 B：是 Android、電腦，或是已經乖乖從 iPhone 桌面打開的
+                // 動作：恢復正常
+                masterToggle.disabled = false;
+                masterToggle.closest('.switch').style.opacity = '1';
+                masterToggle.closest('.switch').style.cursor = 'pointer';
+                
+                if (descDiv) {
+                    descDiv.innerHTML = '開啟後才能設定此裝置的通知類型'; // 恢復原本的文字
+                }
+            }
         }
 
-        // 2. 處理開關切換動作
         // 2. 處理總開關切換動作
         function handlePushMasterToggle(checkbox) {
             const isTurningOn = checkbox.checked;
