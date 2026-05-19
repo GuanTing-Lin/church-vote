@@ -70,6 +70,7 @@ function updateBadgeCount() {
         }
     }
 
+    // 1. 更新 App 內的紅點
     const badge = document.getElementById('board-badge');
     if (badge) {
         if (unreadCount > 0 && !document.getElementById('view-board').classList.contains('active')) {
@@ -77,6 +78,17 @@ function updateBadgeCount() {
             badge.style.display = 'block';
         } else {
             badge.style.display = 'none';
+        }
+    }
+
+    // 👇 2. 升級：更新手機桌面的 App Icon 紅點數字 👇
+    if ('setAppBadge' in navigator) {
+        if (unreadCount > 0) {
+            // 設定數字
+            navigator.setAppBadge(unreadCount).catch(error => console.error("桌面紅點設定失敗:", error));
+        } else {
+            // 清除數字
+            navigator.clearAppBadge().catch(error => console.error("桌面紅點清除失敗:", error));
         }
     }
 }
@@ -131,15 +143,21 @@ function requestPushPermission(fromToggle = false) {
 function clearBadge() {
     if (allMessages && allMessages.length > 0) {
         let msg = allMessages[0];
-        
         let readMarker = msg.MsgID || "";
         
         if (currentUser && currentUser.id) {
             db.ref('readReceipts/' + currentUser.id).set(readMarker);
         }
     }
+    
+    // 1. 清除 App 內的紅點
     const badge = document.getElementById('board-badge');
     if (badge) badge.style.display = 'none';
+
+    // 👇 2. 升級：清除手機桌面的 App Icon 紅點 👇
+    if ('clearAppBadge' in navigator) {
+        navigator.clearAppBadge().catch(error => console.error("桌面紅點清除失敗:", error));
+    }
 }
 
 
