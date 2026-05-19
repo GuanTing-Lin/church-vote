@@ -112,8 +112,8 @@ function requestPushPermission(fromToggle = false) {
                                 document.getElementById('user-push-master-toggle').checked = true;
                                 document.getElementById('push-sub-options').style.display = 'block';
                                 
-                                // 第一次開啟，給予預設值 (全通知關，@通知開)，並寫入資料庫
-                                document.getElementById('push-pref-all').checked = false;
+                                //第一次開啟，給予預設值 (全通知關，@通知開)，並寫入資料庫
+                                document.getElementById('push-pref-all').checked = true;
                                 document.getElementById('push-pref-mentions').checked = true;
                                 savePushPrefs();
                             }
@@ -528,7 +528,6 @@ window.onload = async function() {
 };
 
 async function processLoadedData() {
-    document.getElementById('loading-subtext').innerText = "連線即時資料庫中...";
 
     listenToReadReceipts();
     initMessageListeners(); // 啟動三劍客監聽
@@ -556,8 +555,8 @@ async function processLoadedData() {
         
         // 監聽子偏好設定
         db.ref('pushPrefs/' + currentUser.id).on('value', snap => {
-            // 如果資料庫沒資料，就給一個預設值
-            const prefs = snap.val() || { all: false, mentions: true };
+            // 如果資料庫沒資料，預設改為兩個都 true
+            const prefs = snap.val() || { all: true, mentions: true };
             const allToggle = document.getElementById('push-pref-all');
             const mentionsToggle = document.getElementById('push-pref-mentions');
             if (allToggle) allToggle.checked = prefs.all;
