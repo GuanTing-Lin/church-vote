@@ -47,21 +47,36 @@ const db = firebase.database();
 let isInitialLoad = true; // 紀錄是否為初次載入
 
 function updateBadgeCount() {
-    if (!allMessages || allMessages.length === 0) return;
+    // 防呆：如果資料庫完全沒留言，直接隱藏紅點
+    if (!allMessages || allMessages.length === 0) {
+        const badge = document.getElementById('board-badge');
+        if (badge) badge.style.display = 'none';
+        if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {});
+        return;
+    }
     
     const lastReadId = cloudLastReadId; 
     let unreadCount = 0;
     
     if (!lastReadId) {
-        // 💡 修正：如果雲端完全沒有已讀紀錄，代表全新開通，未讀數就是所有留言總數
-        unreadCount = allMessages.length;
+        // 🌟 依據新規則：完全沒紀錄的人，在點開或開開關前，什麼都不顯示
+        unreadCount = 0;
     } else {
-        // allMessages 是最新留言在最前面 (reverse 過的陣列)
+        let found = false;
+        
+        // allMessages 是反轉過的陣列，最新留言在最前面
         for (let i = 0; i < allMessages.length; i++) {
             if (allMessages[i].MsgID === lastReadId) {
+                found = true; // 順利找到已讀基準點
                 break;
             }
-            unreadCount++;
+            unreadCount++; // 這代表此留言比已讀 ID 還要新，列入未讀計算
+        }
+        
+        // 🌟【關鍵防呆】如果跑完現存留言，發現原本記錄的那則已讀 ID 被從後台刪除了（找不到對應編號）
+        // 依據你的需求：直接歸零，什麼都不顯示！直到他下一次讀取到新 ID 再重新計算
+        if (!found) {
+            unreadCount = 0;
         }
     }
 
@@ -110,12 +125,15 @@ function requestPushPermission(fromToggle = false) {
                             localStorage.setItem('myDeviceFCMToken', currentToken);
                             db.ref('pushTokens/' + currentUser.id).set(currentToken);
                             
+                            db.ref('readReceipts/' + currentUser.id).once('value', (snap) => {
+                                if (!snap.exists() && allMessages && allMessages.length > 0) {
+                                    db.ref('readReceipts/' + currentUser.id).set(allMessages[0].MsgID);
+                                }
+                            });
+                            
                             if (fromToggle) {
-                                // 確保總開關打開，並顯示子選單
                                 document.getElementById('user-push-master-toggle').checked = true;
                                 document.getElementById('push-sub-options').style.display = 'block';
-                                
-                                //第一次開啟，給予預設值 (全通知關，@通知開)，並寫入資料庫
                                 document.getElementById('push-pref-all').checked = true;
                                 document.getElementById('push-pref-mentions').checked = true;
                                 savePushPrefs();
