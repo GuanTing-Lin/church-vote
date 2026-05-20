@@ -53,24 +53,19 @@ function updateBadgeCount() {
     let unreadCount = 0;
     
     if (!lastReadId) {
-        unreadCount = 0;
+        // 💡 修正：如果雲端完全沒有已讀紀錄，代表全新開通，未讀數就是所有留言總數
+        unreadCount = allMessages.length;
     } else {
+        // allMessages 是最新留言在最前面 (reverse 過的陣列)
         for (let i = 0; i < allMessages.length; i++) {
-            let msg = allMessages[i];
-            let currentMsgId = msg.MsgID || "";
-            
-            if (currentMsgId === lastReadId) {
+            if (allMessages[i].MsgID === lastReadId) {
                 break;
             }
             unreadCount++;
         }
-        
-        if (unreadCount === allMessages.length && allMessages.length > 0) {
-            unreadCount = 1;
-        }
     }
 
-    // 1. 更新 App 內的紅點
+    // 1. 更新 App 內留言板旁邊的紅點
     const badge = document.getElementById('board-badge');
     if (badge) {
         if (unreadCount > 0 && !document.getElementById('view-board').classList.contains('active')) {
@@ -81,13 +76,11 @@ function updateBadgeCount() {
         }
     }
 
-    // 👇 2. 升級：更新手機桌面的 App Icon 紅點數字 👇
+    // 2. 更新手機桌面的 App Icon 紅點數字
     if ('setAppBadge' in navigator) {
         if (unreadCount > 0) {
-            // 設定數字
             navigator.setAppBadge(unreadCount).catch(error => console.error("桌面紅點設定失敗:", error));
         } else {
-            // 清除數字
             navigator.clearAppBadge().catch(error => console.error("桌面紅點清除失敗:", error));
         }
     }
