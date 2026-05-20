@@ -281,15 +281,36 @@ function openSettings() {
 
     if (isIOS && !isStandalone) {
         // 狀況 A：是用 iPhone 一般網頁打開
-        masterToggle.disabled = true; // 只要這行，CSS 就會自動套用禁用樣式！
-        // (把原本手動改 opacity 跟 cursor 的兩行刪除)
+        masterToggle.disabled = true; 
+        masterToggle.checked = false; // 🌟 確保強制維持在關閉狀態
+        masterToggle.style.cursor = "not-allowed";
+
+        // 🌟【新增強制樣式修正】防止開關元件被 Flex 壓縮或底色遺失
+        const toggleWrapper = masterToggle.parentElement; // 取得 <label class="switch">
+        if (toggleWrapper) {
+            toggleWrapper.style.flexShrink = "0"; // 防止被壓縮變形
+            toggleWrapper.style.display = "inline-block";
+        }
+
+        const slider = masterToggle.nextElementSibling; // 取得 <span class="slider">
+        if (slider) {
+            slider.style.backgroundColor = "#cbd5e0"; // 🌟 強制給予明確的灰色禁用底色
+            slider.style.opacity = "0.7";
+            slider.style.cursor = "not-allowed";
+        }
         
         if (descDiv) {
             descDiv.innerHTML = '<span style="color:#ff4d4f; font-weight:700;">⚠️ iOS 系統限制：請點擊「分享」按鈕 >「加入主畫面」，從桌面開啟後即可設定通知！</span>';
         }
     } else {
-        // 狀況 B：正常狀態
+        // 狀況 B：正常狀態 (加回原本可能被影響的樣式)
         masterToggle.disabled = false;
+        const slider = masterToggle.nextElementSibling;
+        if (slider) {
+            slider.style.backgroundColor = ""; // 恢復原本 CSS 的設定
+            slider.style.opacity = "";
+            slider.style.cursor = "";
+        }
         
         if (descDiv) {
             descDiv.innerHTML = '開啟後才能設定此裝置的通知類型';
