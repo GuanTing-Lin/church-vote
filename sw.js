@@ -1,5 +1,5 @@
 // ==================================================
-// 🚀 Firebase FCM 推播背景接收器 (iOS/Android 終極相容版)
+// 🚀 Firebase FCM 推播背景接收器 (安全復原版)
 // ==================================================
 
 importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js');
@@ -14,61 +14,39 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// 1. 當 App 處於背景，或使用者在使用其他分頁時觸發
+// 🌟 讓 Firebase SDK 原生接管背景通知，這能 100% 保證通知絕對跳得出來
 messaging.onBackgroundMessage(function(payload) {
-    console.log('[sw.js] 攔截到背景資料：', payload);
+    console.log('[sw.js] 收到背景推播：', payload);
     
-    // 提取紅點數字
-    let badgeCount = 1;
-    if (payload.data && payload.data.badge) {
-        badgeCount = parseInt(payload.data.badge, 10);
-    }
-
-    // 🌟 如果使用者開著 App 但在看其他分頁，動態把桌面跟網頁內的數字同步刷新
-    if ('setAppBadge' in navigator) {
-        navigator.setAppBadge(badgeCount).catch(() => {});
-    }
-});
-
-// 2. 監聽標準 push 事件 (確保系統在各種休眠狀態下都能相容)
-self.addEventListener('push', function(event) {
-    if (!event.data) return;
-    
+    // 如果系統有支援，且收到的資料有 badge，嘗試在背景更新紅點
     try {
-        const rawData = event.data.json();
-        // 優先讀取自訂的 data 欄位
-        const pushData = rawData.data || rawData;
-        const badgeCount = parseInt(pushData.badge || "1", 10);
-        
-        if ('setAppBadge' in navigator) {
-            event.waitUntil(navigator.setAppBadge(badgeCount).catch(() => {}));
+        if (payload.data && payload.data.badge) {
+            const badgeCount = parseInt(payload.data.badge, 10);
+            if ('setAppBadge' in navigator) {
+                navigator.setAppBadge(badgeCount).catch(() => {});
+            }
         }
     } catch (e) {
-        console.log("Push 事件背景處理略過");
+        console.error("更新紅點失敗", e);
     }
 });
 
-// 3. 監聽點擊通知動作 (直接跳轉至留言板分頁)
+// 監聽點擊通知動作：精準導流到留言板
 self.addEventListener('notificationclick', function(event) {
     event.notification.close();
     
-    // 點擊直接開啟並切換至留言板
-    let targetUrl = "https://guanting-lin.github.io/church-vote/?openExternalBrowser=1&view=board";
+    let baseUrl = "https://guanting-lin.github.io/church-vote/?openExternalBrowser=1&view=board";
     
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(windowClients) {
-            // 如果已經有開著的 App 視窗，直接導航並導焦
             for (var i = 0; i < windowClients.length; i++) {
                 var client = windowClients[i];
                 if ('navigate' in client && 'focus' in client) {
-                    client.navigate(targetUrl);
+                    client.navigate(baseUrl);
                     return client.focus();
                 }
             }
-            // 如果都沒開，才開新視窗
-            if (clients.openWindow) {
-                return clients.openWindow(targetUrl);
-            }
+            if (clients.openWindow) return clients.openWindow(baseUrl);
         })
     );
 });
