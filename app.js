@@ -2224,7 +2224,7 @@ function initMessageListeners() {
             if (!msg || !msg.Content) return;
             msg._firebaseKey = key;
 
-            // 檢查這筆留言是否已經在 allMessages 中 (避免初次載入的資料重複渲染)
+            // 檢查這筆留言是否已經在 allMessages 中
             const exists = allMessages.find(m => m._firebaseKey === key);
             if (!exists) {
                 allMessages.unshift(msg); // 放入陣列最前方
@@ -2233,10 +2233,16 @@ function initMessageListeners() {
                     const emptyText = container.querySelector('.empty-msg');
                     if (emptyText) emptyText.remove();
                     
-                    // 瞬間插入在最上方，不影響下方的分頁狀態！
+                    // 瞬間插入在最上方
                     container.insertAdjacentHTML('afterbegin', generateSingleMessageHTML(msg));
                 }
                 updateBadgeCount();
+                
+                // 🌟【關鍵修正】如果使用者目前正停留在留言板畫面上，代表他已經即時看到了這則新留言！
+                // 必須立刻呼叫 clearBadge()，把最新這則留言的 ID 寫入 Firebase 的 readReceipts 節點！
+                if (document.getElementById('view-board') && document.getElementById('view-board').classList.contains('active')) {
+                    clearBadge();
+                }
             }
         });
 
