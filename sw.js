@@ -1,5 +1,5 @@
 // ==================================================
-// 🚀 Firebase FCM 推播背景接收器 (安全復原版)
+// 🚀 Firebase FCM 推播背景接收器 (終極穩定版)
 // ==================================================
 
 importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js');
@@ -14,11 +14,9 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// 🌟 讓 Firebase SDK 原生接管背景通知，這能 100% 保證通知絕對跳得出來
+// 讓 Firebase SDK 原生接管通知彈窗，保證通知 100% 跳出
 messaging.onBackgroundMessage(function(payload) {
     console.log('[sw.js] 收到背景推播：', payload);
-    
-    // 如果系統有支援，且收到的資料有 badge，嘗試在背景更新紅點
     try {
         if (payload.data && payload.data.badge) {
             const badgeCount = parseInt(payload.data.badge, 10);
@@ -31,12 +29,25 @@ messaging.onBackgroundMessage(function(payload) {
     }
 });
 
+// 監聽原生 push 事件做為雙重保險（確保 Android/部分 iOS 在背景能同步刷上數字）
+self.addEventListener('push', function(event) {
+    if (!event.data) return;
+    try {
+        const rawData = event.data.json();
+        const pushData = rawData.data || rawData;
+        if (pushData && pushData.badge) {
+            const badgeCount = parseInt(pushData.badge, 10);
+            if ('setAppBadge' in navigator) {
+                event.waitUntil(navigator.setAppBadge(badgeCount).catch(() => {}));
+            }
+        }
+    } catch (e) {}
+});
+
 // 監聽點擊通知動作：精準導流到留言板
 self.addEventListener('notificationclick', function(event) {
     event.notification.close();
-    
     let baseUrl = "https://guanting-lin.github.io/church-vote/?openExternalBrowser=1&view=board";
-    
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(windowClients) {
             for (var i = 0; i < windowClients.length; i++) {

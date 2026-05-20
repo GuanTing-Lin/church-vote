@@ -93,8 +93,6 @@ function updateBadgeCount() {
     }
 }
 
-// 👇 升級版：索取權限並連動 UI 開關
-// 👇 升級版：索取權限並預設子選項
 function requestPushPermission(fromToggle = false) {
     if (!('Notification' in window) || !firebase.messaging.isSupported()) {
         if (!fromToggle) console.log("此瀏覽器不支援推播通知");
@@ -2218,6 +2216,9 @@ function initMessageListeners() {
         
         allMessages = tempMsgs.reverse(); // 最新留言在最上面
         renderMessagesPaginated(); // 渲染第一頁 (10筆)
+
+        // 🌟 關鍵修正：當 messages 陣列確實載入完畢後，立刻強制觸發一次紅點計算！
+        updateBadgeCount();
 
         // =====================================
         // 2. 啟動三劍客：接管後續的即時變更 (不重繪整頁)
