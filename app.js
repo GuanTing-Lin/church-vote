@@ -1313,9 +1313,33 @@ function unlockMainApp() {
         initDaysCountdown(); markArchive(); 
         
         setTimeout(() => {
-            switchView('overview');
-            
+            // 1. 先抓取網址所有的參數
             const params = new URLSearchParams(window.location.search);
+            const targetView = params.get('view');  // 抓取 view 參數
+            const targetMsgId = params.get('msgId'); // 抓取 msgId 參數 (選填)
+
+            // 2. 判斷如果要直接去留言板
+            if (targetView === 'board') {
+                switchView('board'); // 呼叫你原本的切換分頁函數
+                
+                // 3. 進階：如果網址連特定的留言 ID 都有帶
+                if (targetMsgId) {
+                    setTimeout(() => {
+                        // 尋找對應的三劍客 DOM 節點 (格式：msg-item-node-真實FirebaseKey)
+                        // 注意：如果該留言在很後面、還沒被分頁載入，可能會抓不到，這屬於正常分頁限制
+                        const msgNode = document.getElementById('msg-item-node-' + targetMsgId);
+                        if (msgNode) {
+                            msgNode.style.background = "rgba(59, 208, 175, 0.2)"; // 給它一個淡淡的亮色提示
+                            msgNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }, 800); // 延遲一下下等 Firebase 資料載入並渲染完畢
+                }
+            } else {
+                // 如果沒有指定去留言板，就走原本的預設首頁
+                switchView('overview');
+            }
+            
+            // 4. 原本就有的 notice 判斷邏輯（保持不動）
             const noticeId = params.get('notice');
             if (noticeId) {
                 setTimeout(() => {
@@ -1325,9 +1349,10 @@ function unlockMainApp() {
                         card.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
                 }, 300); 
-                
-                window.history.replaceState({}, document.title, window.location.pathname);
             }
+
+            // 清除網址列的參數，讓畫面乾淨
+            window.history.replaceState({}, document.title, window.location.pathname + (params.get('openExternalBrowser') ? '?openExternalBrowser=1' : ''));
 
         }, 50);
     } else { 
