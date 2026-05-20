@@ -2267,6 +2267,14 @@ function initMessageListeners() {
             allMessages = allMessages.filter(m => m._firebaseKey !== key);
             const dom = document.getElementById(`msg-item-node-${key}`);
             if (dom) dom.remove();
+            
+            // 🌟 修正：留言被刪除時，立刻重新計算未讀紅點！
+            updateBadgeCount();
+            
+            // 🌟 修正：如果使用者正開著留言板，當最後一則被刪除時，立刻自動把已讀標記「即時向前滾動」到新的最後一則！
+            if (document.getElementById('view-board') && document.getElementById('view-board').classList.contains('active')) {
+                clearBadge();
+            }
         });
     });
 }
