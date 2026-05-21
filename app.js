@@ -2655,3 +2655,46 @@ function pushSingleNotice(noticeId, btn) {
         btn.disabled = false;
     });
 }
+
+// 🌟 新增在 app.js 最底部：接收來自 sw.js 醒來後的即時跳轉訊號（完美解決熱啟動不跳轉）
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', function(event) {
+        if (event.data && event.data.action === 'urlNotificationClicked') {
+            console.log("📥 APP 已清醒，收到熱啟動跳轉指令:", event.data.url);
+            handleDirectNavigation(event.data.url);
+        }
+    });
+}
+
+// 🌟 熱啟動專屬跳轉器：負責切換分頁、展開公告與平滑滾動
+function handleDirectNavigation(urlStr) {
+    try {
+        const url = new URL(urlStr);
+        const params = url.searchParams;
+        const noticeId = params.get('notice');
+        const targetView = params.get('view');
+        const targetMsgId = params.get('msgId');
+
+        if (noticeId) {
+            switchView('overview'); // 切回首頁
+            setTimeout(() => {
+                const card = document.getElementById('notice-card-' + noticeId);
+                if (card) {
+                    card.classList.add('expanded'); // 自動展開
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' }); // 平滑置中
+                }
+            }, 400); // 400ms 緩衝確保 DOM 完全對位
+        } else if (targetView === 'board') {
+            switchView('board');
+            if (targetMsgId) {
+                setTimeout(() => {
+                    const msgNode = document.getElementById('msg-item-node-' + targetMsgId);
+                    if (msgNode) {
+                        msgNode.style.background = "rgba(59, 208, 175, 0.2)";
+                        msgNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 400);
+            }
+        }
+    } catch (e) { console.error("熱啟動即時導流失敗:", e); }
+}

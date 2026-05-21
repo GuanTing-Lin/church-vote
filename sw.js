@@ -48,28 +48,31 @@ self.addEventListener('push', function(event) {
 self.addEventListener('notificationclick', function(event) {
     event.notification.close();
     
-    // 1. 動態解包：優先抓取後端傳來的公告專屬網址（內含 &notice=4位碼）
     let baseUrl = "https://guanting-lin.github.io/church-vote/?openExternalBrowser=1&view=overview";
-
-    // 🌟【關鍵修改】：智慧解包，從所有可能的 Firebase 推播欄位中，精準撈出 GAS 傳過來的專屬公告網址
     if (event.notification.data) {
         const nData = event.notification.data;
-        if (nData.click_url) {
-            baseUrl = nData.click_url;
-        } else if (nData.FCM_MSG && nData.FCM_MSG.data && nData.FCM_MSG.data.click_url) {
-            baseUrl = nData.FCM_MSG.data.click_url;
-        } else if (nData.FCM_MSG && nData.FCM_MSG.notification && nData.FCM_MSG.notification.click_action) {
-            baseUrl = nData.FCM_MSG.notification.click_action;
-        }
+        if (nData.click_url) baseUrl = nData.click_url;
+        else if (nData.FCM_MSG && nData.FCM_MSG.data && nData.FCM_MSG.data.click_url) baseUrl = nData.FCM_MSG.data.click_url;
+        else if (nData.FCM_MSG && nData.FCM_MSG.notification && nData.FCM_MSG.notification.click_action) baseUrl = nData.FCM_MSG.notification.click_action;
     }
     
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(windowClients) {
             for (var i = 0; i < windowClients.length; i++) {
                 var client = windowClients[i];
-                if ('navigate' in client && 'focus' in client) {
-                    client.navigate(baseUrl);
-                    return client.focus();
+                if ('focus' in client) {
+                    // 🌟【核心修正】：先呼叫 focus() 逼 iPhone 把背景凍結的網頁強制叫醒解凍
+                    return client.focus().then(function(focusedClient) {
+                        // 建立一個 Promise 延遲 200ms，等前台網頁 JS 完全清醒後再 postMessage，訊息絕不漏接！
+                        return new Promise(function(resolve) {
+                            setTimeout(function() {
+                                if (focusedClient && 'postMessage' in focusedClient) {
+                                    focusedClient.postMessage({ action: 'urlNotificationClicked', url: baseUrl });
+                                }
+                                resolve();
+                            }, 200);
+                        });
+                    });
                 }
             }
             if (clients.openWindow) return clients.openWindow(baseUrl);
