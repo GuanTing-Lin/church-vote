@@ -48,21 +48,28 @@ self.addEventListener('push', function(event) {
 self.addEventListener('notificationclick', function(event) {
     event.notification.close();
     
-    // 1. 動態解包：優先抓取後端傳來的公告專屬網址（內含 &notice=4位碼），若沒有則回退到留言板
-    let baseUrl = "https://guanting-lin.github.io/church-vote/?openExternalBrowser=1&view=board";
-    if (event.notification.data && event.notification.data.FCM_MSG && event.notification.data.FCM_MSG.notification && event.notification.data.FCM_MSG.notification.click_action) {
-        baseUrl = event.notification.data.FCM_MSG.notification.click_action;
+    // 1. 動態解包：優先抓取後端傳來的公告專屬網址（內含 &notice=4位碼）
+    let baseUrl = "https://guanting-lin.github.io/church-vote/?openExternalBrowser=1";
+    
+    // 🌟【關鍵修改】：智慧解包，從所有可能的 Firebase 推播欄位中，精準撈出 GAS 傳過來的專屬公告網址
+    if (event.notification.data) {
+        const nData = event.notification.data;
+        if (nData.click_url) {
+            baseUrl = nData.click_url;
+        } else if (nData.FCM_MSG && nData.FCM_MSG.data && nData.FCM_MSG.data.click_url) {
+            baseUrl = nData.FCM_MSG.data.click_url;
+        } else if (nData.FCM_MSG && nData.FCM_MSG.notification && nData.FCM_MSG.notification.click_action) {
+            baseUrl = nData.FCM_MSG.notification.click_action;
+        }
     }
     
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(windowClients) {
             for (var i = 0; i < windowClients.length; i++) {
                 var client = windowClients[i];
-                // 2. 核心優化：直接利用 client.navigate 強制原本已開啟的 PWA 視窗轉跳至新網址！
-                // 這樣能徹底繞過 iOS 背景凍結的限制，強迫網頁重新解析網址參數！
                 if ('navigate' in client && 'focus' in client) {
                     client.navigate(baseUrl);
-                    return client.focus(); // 喚醒並推到最前台
+                    return client.focus();
                 }
             }
             if (clients.openWindow) return clients.openWindow(baseUrl);
