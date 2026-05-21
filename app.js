@@ -371,10 +371,12 @@ function savePushPrefs() {
     if (!currentUser || !currentUser.id) return;
     const allChecked = document.getElementById('push-pref-all').checked;
     const mentionsChecked = document.getElementById('push-pref-mentions').checked;
+    const noticesChecked = document.getElementById('push-pref-notices').checked; // 🌟 新增公告
     
     db.ref('pushPrefs/' + currentUser.id).set({
         all: allChecked,
-        mentions: mentionsChecked
+        mentions: mentionsChecked,
+        notices: noticesChecked // 🌟 新增公告
     }).then(() => console.log("💾 通知偏好已更新！"));
 }
 
@@ -575,10 +577,37 @@ window.onload = async function() {
     }, 100);
 };
 
-async function processLoadedData() {
+// 🌟 1. 在 app.js 的全域變數區（例如 cloudLastReadId 下方）補上這兩個旗標
+let hasLoadedFromFirebase = false;
+let isProfileChecked = false;
 
+// 🌟 2. 找到 function processLoadedData()，將其內容修改為：
+async function processLoadedData() {
     listenToReadReceipts();
     initMessageListeners(); // 啟動三劍客監聽
+
+    // 🌟【新增】啟動 2 秒超時弱網防護定時器
+    setTimeout(() => {
+        if (!hasLoadedFromFirebase && !isProfileChecked) {
+            console.log("⏳ 網路連線較慢，正在嘗試載入本地快取資料...");
+            const cachedRaw = localStorage.getItem('trip_cache_data');
+            if (cachedRaw) {
+                try {
+                    const cachedData = JSON.parse(cachedRaw);
+                    
+                    // 顯示「網路連線較慢」提示橫幅
+                    const banner = document.getElementById('cache-warning-banner');
+                    if (banner) banner.style.display = 'block';
+                    
+                    // 用快取先渲染畫面並解鎖進首頁
+                    renderDynamicUI(cachedData);
+                    
+                    // 執行身分驗證邏輯
+                    checkUserMemberStatus(cachedData);
+                } catch(e) { console.error("快取解析失敗:", e); }
+            }
+        }
+    }, 2000);
 
     // 👇 更新：同時監聽 Token (總開關) 與 Prefs (子開關)
     if (currentUser && currentUser.id) {
@@ -603,22 +632,29 @@ async function processLoadedData() {
         
         // 監聽子偏好設定
         db.ref('pushPrefs/' + currentUser.id).on('value', snap => {
-            // 如果資料庫沒資料，預設改為兩個都 true
-            const prefs = snap.val() || { all: true, mentions: true };
-            const allToggle = document.getElementById('push-pref-all');
+            const prefs = snap.val() || { all: true, mentions: true, notices: true }; // 預設 notices 為 true
+            const allToggle = document.getElementById('push-pref-all'); 
             const mentionsToggle = document.getElementById('push-pref-mentions');
-            if (allToggle) allToggle.checked = prefs.all;
+            const noticesToggle = document.getElementById('push-pref-notices'); // 🌟 新增
+            if (allToggle) allToggle.checked = prefs.all; 
             if (mentionsToggle) mentionsToggle.checked = prefs.mentions;
+            if (noticesToggle) noticesToggle.checked = prefs.notices !== false; // 🌟 防呆
         });
     }
 
-    // 🌟 2. 訂閱 Firebase 即時資料 (只要後台有變，這裡瞬間觸發！)
-        db.ref('/').on('value', (snapshot) => {
-            let data = snapshot.val();
-            if (!data) {
-                // 若資料庫是空的，初始化預設架構，避免畫面永遠卡在「載入中」
-                data = { config: {}, messages: [], votes: [] };
-        }
+    
+
+    // 3. 訂閱 Firebase 即時資料 (只要後台有變，這裡瞬間觸發！)
+    db.ref('/').on('value', (snapshot) => {
+        hasLoadedFromFirebase = true; // 🌟 標記雲端資料已順利接通
+        let data = snapshot.val() || { config: {}, messages: [], votes: [] };
+        
+        // 🌟【精簡修正】：移除多餘重複宣告的 cachedPollData 與 Map 欄位，直接覆蓋最新手機快取
+        localStorage.setItem('trip_cache_data', JSON.stringify(data));
+        
+        // 雲端接通了，立刻隱藏連線慢的提示橫幅
+        const banner = document.getElementById('cache-warning-banner');
+        if (banner) banner.style.display = 'none';
         
         cachedPollData = data;
         window.userAvatarMap = {};
@@ -632,7 +668,7 @@ async function processLoadedData() {
                 if (m.Name && m.AvatarUrl) window.userAvatarMap[m.Name] = m.AvatarUrl; 
             });
         }
-        // 🌟 修改：改為讀取 members 節點
+        
         if (data.members) {
             data.members.forEach(v => {
                 const id = v['LINE ID'] || v['LINEID']; 
@@ -648,83 +684,11 @@ async function processLoadedData() {
         if (currentUser.id && currentUser.name) window.userNameMap[currentUser.id] = currentUser.name;
         if (currentUser.id && currentUser.pictureUrl) window.userAvatarMap[currentUser.id] = currentUser.pictureUrl;
 
-        if (isInitialLoad) {
-            // 🌟 修改：改從 members 陣列中找人
-            let vArray = data.members || [];
-            let userIdx = vArray.findIndex(row => row['LINE ID'] === currentUser.id || row['LINEID'] === currentUser.id);
-            
-            if (userIdx > -1) {
-                let userVote = vArray[userIdx];
-                currentUser.isVoted = true;
-                const s = userVote['偏好行程'];
-                if (s && s.includes("方案一")) currentUser.votedOption = 1;
-                else if (s && s.includes("方案二")) currentUser.votedOption = 2;
-                else if (s && s.includes("無法參加")) currentUser.votedOption = 3;
-                try { if(userVote['Checklist']) { userChecklistState = JSON.parse(userVote['Checklist']); } } catch(e) {}
-                
-                // 自動檢查並更新 LINE 名字與大頭貼
-                let isProfileChanged = false;
-                let dbName = userVote['LINE 名稱'] || userVote['LINE名稱'];
-                let dbPic = userVote['AvatarUrl'] || userVote['pictureUrl'] || userVote['照片'];
+        // 🌟 修正：身分驗證與解鎖改用獨立旗標控制，防止快取與雲端時間差漏掉驗證
+        checkUserMemberStatus(data);
 
-                if (dbName !== currentUser.name) {
-                    if (userVote['LINE名稱'] !== undefined) userVote['LINE名稱'] = currentUser.name;
-                    else userVote['LINE 名稱'] = currentUser.name;
-                    isProfileChanged = true;
-                }
-                if (currentUser.pictureUrl && dbPic !== currentUser.pictureUrl) {
-                    if (userVote['AvatarUrl'] !== undefined) userVote['AvatarUrl'] = currentUser.pictureUrl;
-                    else userVote['照片'] = currentUser.pictureUrl;
-                    isProfileChanged = true;
-                }
-                
-                if (isProfileChanged) {
-                    // 🌟 修改：寫入 members 節點
-                    db.ref('members').set(vArray); 
-                    
-                    fetch(GAS_API_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify({
-                            action: "vote",
-                            userName: currentUser.name,
-                            userId: currentUser.id,
-                            pictureUrl: currentUser.pictureUrl || "",
-                            choice_trip: userVote['偏好行程'] || "無法參加(訪客查看)",
-                            time_opt1: userVote['time_opt1'] || userVote['6/13-6/14'] || "",
-                            time_opt2: userVote['time_opt2'] || userVote['6/27-6/28'] || ""
-                        })
-                    }).catch(e => console.error("Sheets 同步失敗:", e));
-                }
-            } else {
-                currentUser.isVoted = true;
-                currentUser.votedOption = 3; 
-                const newVote = { "LINEID": currentUser.id, "LINE名稱": currentUser.name, "AvatarUrl": currentUser.pictureUrl || "", "偏好行程": "無法參加(訪客查看)", "time_opt1": "", "time_opt2": "" };
-                vArray.push(newVote);
-                
-                // 🌟 修改：寫入 members 節點
-                db.ref('members').set(vArray);
-                
-                fetch(GAS_API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({
-                        action: "vote",
-                        userName: currentUser.name,
-                        userId: currentUser.id,
-                        pictureUrl: currentUser.pictureUrl || "",
-                        choice_trip: "無法參加(訪客查看)",
-                        time_opt1: "",
-                        time_opt2: ""
-                    })
-                }).catch(e => console.error("Sheets 新訪客自動建立失敗:", e));
-            }
-        }         
-        
         // 更新畫面
-        if (activeConfigUpdates === 0) {
-            renderDynamicUI(data);
-        }
+        if (activeConfigUpdates === 0) renderDynamicUI(data);
 
         // 完成初次載入
         if (isInitialLoad) {
@@ -741,6 +705,34 @@ async function processLoadedData() {
         }
     });
 }
+
+
+
+// 🌟 3. 在 processLoadedData 下方新增這個獨立的身分驗證抽離函數：
+function checkUserMemberStatus(data) {
+    if (isProfileChecked) return; // 確保只執行一次
+    isProfileChecked = true;
+
+    let vArray = data.members || [];
+    let userIdx = vArray.findIndex(row => row['LINE ID'] === currentUser.id || row['LINEID'] === currentUser.id);
+    if (userIdx > -1) {
+        let userVote = vArray[userIdx]; currentUser.isVoted = true; const s = userVote['偏好行程'];
+        if (s && s.includes("方案一")) currentUser.votedOption = 1;
+        else if (s && s.includes("方案二")) currentUser.votedOption = 2;
+        else currentUser.votedOption = 3;
+        try { if(userVote['Checklist']) { userChecklistState = JSON.parse(userVote['Checklist']); } } catch(e) {}
+    } else {
+        currentUser.isVoted = true; currentUser.votedOption = 3; 
+        vArray.push({ "LINEID": currentUser.id, "LINE名稱": currentUser.name, "AvatarUrl": currentUser.pictureUrl || "", "偏好行程": "無法參加(訪客查看)" });
+        db.ref('members').set(vArray);
+    }
+    
+    // 關閉轉圈圈並解鎖
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('lock-screen').style.display = 'none'; 
+    unlockMainApp();
+}
+
 
 function toggleMenu(event) { 
     event.stopPropagation(); 
@@ -1443,16 +1435,23 @@ function generateNoticeInputHTML(notice = {id:'', title:'', desc:'', imgUrl:'', 
 
     return `<div class="admin-notice-block" data-id="${noticeId}" style="transition: opacity 0.3s; opacity: ${notice.isHidden ? '0.5' : '1'};">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
-            <div style="display:flex; align-items:center;">
+            <div style="display:flex; align-items:center; gap:6px;">
                 <span class="drag-handle" title="按住拖曳可排序">☰</span>
                 <label style="font-size:12px; color:var(--text-muted); font-weight: 600; margin:0;">公告標題 <span style="color:#ff4d4f;">*</span></label>
-            </div>
-            <div style="display:flex; align-items:center; gap:12px;">
-                <label class="switch" style="transform: scale(0.75); margin: 0;" title="綠色為顯示，灰色為隱藏">
+                <label class="switch" style="transform: scale(0.72); margin: 0 0 0 2px;" title="綠色為顯示，灰色為隱藏">
                     <input type="checkbox" class="admin-n-visible" ${!notice.isHidden ? 'checked' : ''} onchange="this.closest('.admin-notice-block').style.opacity = this.checked ? '1' : '0.5'">
                     <span class="slider"></span>
                 </label>
-                <button class="admin-delete-btn" style="position:static;" onclick="removeAdminNoticeField(this)">刪除</button>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <button style="background: rgba(0,123,255,0.08); color: var(--primary-blue); border: 1px solid rgba(0,123,255,0.2); border-radius: 6px; padding: 5px 10px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: 0.2s;" 
+                        onclick="pushSingleNotice('${noticeId}', this)" 
+                        onmouseover="this.style.background='rgba(0,123,255,0.15)'" 
+                        onmouseout="this.style.background='rgba(0,123,255,0.08)'">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform: translateY(-0.5px);"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    推播通知
+                </button>
+                <button class="admin-delete-btn" style="position:static; margin:0; padding: 5px 10px;" onclick="removeAdminNoticeField(this)">刪除</button>
             </div>
         </div>
         <input type="text" class="msg-textarea admin-n-title" placeholder="請輸入標題 (必填)" style="min-height:36px; margin-bottom:10px; background: rgba(255,255,255,0.9); transition: 0.3s;" value="${notice.title}">
@@ -1468,7 +1467,6 @@ function generateNoticeInputHTML(notice = {id:'', title:'', desc:'', imgUrl:'', 
         
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
             <label style="font-size:12px; color:var(--text-muted); font-weight: 600;">詳細內容</label>
-            
             <select onchange="if(this.value){ insertMagicTag(this, this.value); this.selectedIndex=0; }" 
                     style="padding: 3px 8px; border-radius: 8px; border: 1px solid #cbd5e0; font-size: 12px; font-weight: 700; color: #4a5568; background: white; outline: none; cursor: pointer; max-width: 140px;">
                 <option value="" disabled selected>+ 插入捷徑按鈕</option>
@@ -1481,7 +1479,7 @@ function generateNoticeInputHTML(notice = {id:'', title:'', desc:'', imgUrl:'', 
         </div>
         <textarea class="msg-textarea admin-n-desc" style="background: rgba(255,255,255,0.9); margin-bottom:10px;">${notice.desc}</textarea>
         <label style="font-size:12px; color:var(--text-muted); font-weight: 600;">圖片連結</label>
-        <textarea class="msg-textarea admin-n-img" placeholder="請貼上圖片網址(若有多張請換行)" style="min-height:72px; background: rgba(255,255,255,0.9);">${notice.imgUrl || ''}</textarea>
+        <textarea class="msg-textarea admin-n-img" placeholder="請貼上圖片網址(若有多張請換行)" style="min-height:72px; background: rgba(255,255,255,0.9); margin-bottom:0;">${notice.imgUrl || ''}</textarea>
     </div>`;
 }
 // 自動將指令標籤插入到輸入框的游標位置
@@ -2579,4 +2577,57 @@ async function postMessage() {
         headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
         body: JSON.stringify({ action: "addMessage", msgId: msgId, userName: currentUser.name, userId: currentUser.id, avatarText: currentUser.initial, timeStr: time, content: val }) 
     }).catch(e => console.error("Sheets 留言同步失敗:", e));
+}
+
+// 🌟 新增：單獨發送公告推播（含未儲存草稿防呆攔截）
+function pushSingleNotice(noticeId, btn) {
+    const blocks = document.querySelectorAll('.admin-notice-block');
+    let isDirty = false;
+    
+    // 智慧比對：拿當前畫面的輸入文字，去比對資料庫原本下載的 adminNoticesArray
+    for (let block of blocks) {
+        if (block.getAttribute('data-id') === noticeId) {
+            const currentTitle = block.querySelector('.get-title || .admin-n-title').value.trim();
+            const currentDesc = block.querySelector('.admin-n-desc').value.trim();
+            
+            const original = adminNoticesArray.find(n => n.id === noticeId);
+            // 如果在原陣列找不到（代表是全新按新增的），或者文字被改過
+            if (!original || original.title !== currentTitle || original.desc !== currentDesc) {
+                isDirty = true;
+            }
+            break;
+        }
+    }
+    
+    // ❌ 攔截：如果發現有修改但沒按大儲存
+    if (isDirty) {
+        showCustomAlert("提示", "您修改了公告內容但尚未儲存！請先點選下方的「儲存所有變更」發布至前台，才能發送最新通知喔。");
+        return;
+    }
+    
+    // ✅ 通過：內容一致，開始發送
+    const targetNotice = adminNoticesArray.find(n => n.id === noticeId);
+    if (!targetNotice) return;
+    
+    btn.innerText = "推播通知"; btn.disabled = true;
+    
+    fetch(GAS_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+            action: "pushNoticeBroadcast",
+            title: targetNotice.title,
+            content: targetNotice.desc
+        })
+    })
+    .then(res => res.text())
+    .then(resText => {
+        showCustomAlert("發送成功", "公告通知已順利推播給全體成員！");
+    })
+    .catch(err => {
+        showCustomAlert("錯誤", "發送失敗：" + err.message);
+    })
+    .finally(() => {
+        btn.innerText = "推播通知"; btn.disabled = false;
+    });
 }
