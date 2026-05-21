@@ -2659,115 +2659,34 @@ function pushSingleNotice(noticeId, btn) {
     });
 }
 
-// 🌟 新增在 app.js 最底部：接收來自 sw.js 醒來後的即時跳轉訊號（完美解決熱啟動不跳轉）
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.addEventListener('message', function(event) {
-        if (event.data && event.data.action === 'urlNotificationClicked') {
-            console.log("📥 APP 已清醒，收到熱啟動跳轉指令:", event.data.url);
-            handleDirectNavigation(event.data.url);
-        }
-    });
-}
 
-// 🌟 熱啟動專屬跳轉器：負責切換分頁、展開公告與平滑滾動
-function handleDirectNavigation(urlStr) {
-    try {
-        const url = new URL(urlStr);
-        const params = url.searchParams;
-        const noticeId = params.get('notice');
-        const targetView = params.get('view');
-        const targetMsgId = params.get('msgId');
+// 🌟 完整覆蓋並閉合 app.js 最底部的殘缺段落
+// 熱啟動終極核心：當 App 從背景被叫醒（Visibility 轉為可見）或網址發生異動時，立刻活體解析參數跳轉
+document.addEventListener('visibilitychange', handleWarmStartNavigation);
+window.addEventListener('popstate', handleWarmStartNavigation);
 
-        if (noticeId) {
-            switchView('overview'); // 切回首頁
-            setTimeout(() => {
-                const card = document.getElementById('notice-card-' + noticeId);
-                if (card) {
-                    card.classList.add('expanded'); // 自動展開
-                    card.scrollIntoView({ behavior: 'smooth', block: 'center' }); // 平滑置中
-                }
-            }, 400); // 400ms 緩衝確保 DOM 完全對位
-        } else if (targetView === 'board') {
-            switchView('board');
-            if (targetMsgId) {
-                setTimeout(() => {
-                    const msgNode = document.getElementById('msg-item-node-' + targetMsgId);
-                    if (msgNode) {
-                        msgNode.style.background = "rgba(59, 208, 175, 0.2)";
-                        msgNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                }, 400);
-            }
-        }
-    } catch (e) { console.error("熱啟動即時導流失敗:", e); }
-}
-
-// 🌟 直接貼在 app.js 的最尾端（在 postMessage 函式的大括號外面）
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.addEventListener('message', function(event) {
-        if (event.data && event.data.action === 'urlNotificationClicked') {
-            console.log("📥 APP 成功解凍！收到背景推播跳轉指令:", event.data.url);
-            handleDirectNavigation(event.data.url);
-        }
-    });
-}
-
-// 🌟 熱啟動專屬無跳轉定位核心：負責在原地切換分頁、展開卡片與平滑滾動置中
-function handleDirectNavigation(urlStr) {
-    try {
-        const url = new URL(urlStr);
-        const params = url.searchParams;
-        const noticeId = params.get('notice');
-
-        if (noticeId) {
-            switchView('overview'); // 1. 瞬間切回首頁總覽
-            
-            setTimeout(() => {
-                const card = document.getElementById('notice-card-' + noticeId);
-                if (card) {
-                    card.classList.add('expanded'); // 2. 自動展開全內文
-                    card.scrollIntoView({ behavior: 'smooth', block: 'center' }); // 3. 平滑滾動置中
-                }
-            }, 350); // 給予 350ms 緩衝確保分頁 DOM 切換到位
-        }
-    } catch (e) { console.error("熱啟動導流解析失敗:", e); }
-}
-
-// 🌟 新增在 app.js 最底部：完美處理熱啟動（App 沒關閉、從背景叫醒）時的即時網址參數跳轉
-window.addEventListener('popstate', handleUrlParamChange);
-window.addEventListener('hashchange', handleUrlParamChange);
-
-// 智慧接管 sw.js 傳過來的 navigate 網址異動
-function handleUrlParamChange() {
-    const currentParams = new URLSearchParams(window.location.search);
-    const noticeId = currentParams.get('notice');
-    
-    // 只要發現網址突然出現公告 ID，且跟上一次處理的不同，代表是熱啟動點擊通知進來的！
-    if (noticeId && noticeId !== window.lastProcessedNoticeId) {
-        window.lastProcessedNoticeId = noticeId; // 標記已處理
-        console.log("🎯 偵測到熱啟動公告通知，立刻執行滑動定位:", noticeId);
-        
-        switchView('overview'); // 1. 瞬間切回首頁總覽
-        
-        setTimeout(() => {
-            const card = document.getElementById('notice-card-' + noticeId);
-            if (card) {
-                card.classList.add('expanded'); // 2. 自動展開全內文
-                card.scrollIntoView({ behavior: 'smooth', block: 'center' }); // 3. 平滑滾動置中
-                
-                // 4. 清理網址列，保持畫面乾淨
-                window.history.replaceState({}, document.title, window.location.pathname + (currentParams.get('openExternalBrowser') ? '?openExternalBrowser=1' : ''));
-            } else {
-                // 🌟 符合規格二：如果後台將該公告隱藏或刪除了，卡片生不出來，就安靜留存在首頁(Overview)
-                switchView('overview');
-            }
-        }, 550); // 給予 550 毫秒緩衝確保 DOM 完全對位
-    }
-}
-
-// 雙重防護：當 App 從背景切回前景時，主動逼程式對齊一次網址
-document.addEventListener('visibilitychange', () => {
+function handleWarmStartNavigation() {
     if (document.visibilityState === 'visible') {
-        setTimeout(handleUrlParamChange, 300);
+        // 給予 150ms 讓 iOS 系統與網頁完全解凍歸位
+        setTimeout(() => {
+            const freshParams = new URLSearchParams(window.location.search);
+            const noticeId = freshParams.get('notice');
+
+            if (noticeId) {
+                console.log("🎯 偵測到熱啟動公告通知，立刻執行滑動定位:", noticeId);
+                switchView('overview'); // 1. 瞬間切回首頁總覽
+
+                setTimeout(() => {
+                    const card = document.getElementById('notice-card-' + noticeId);
+                    if (card) {
+                        card.classList.add('expanded'); // 2. 自動展開全內文
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' }); // 3. 平滑滾動置中
+
+                        // 4. 清理網址列參數，避免重新整理時重複觸發
+                        window.history.replaceState({}, document.title, window.location.pathname + (freshParams.get('openExternalBrowser') ? '?openExternalBrowser=1' : ''));
+                    }
+                }, 450); // 緩衝確保 Firebase 資料與 DOM 渲染就緒
+            }
+        }, 150);
     }
-});
+}
