@@ -2626,7 +2626,7 @@ function pushSingleNotice(noticeId, btn) {
     })
     .then(res => res.text())
     .then(resText => {
-        showCustomAlert("發送成功", "公告通知已順利推播！");
+        showCustomAlert("發送成功", "公告已順利推播！");
     })
     .catch(err => {
         showCustomAlert("錯誤", "發送失敗：" + err.message);
@@ -2635,49 +2635,4 @@ function pushSingleNotice(noticeId, btn) {
         btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform: translateY(-0.5px);"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg> 推播公告`;
         btn.disabled = false;
     });
-}
-
-// 🌟 新增在 app.js 最底部：接收來自 Service Worker 的即時跳轉訊號（免重新整理）
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.addEventListener('message', function(event) {
-        if (event.data && event.data.action === 'urlNotificationClicked') {
-            handleDirectNavigation(event.data.url);
-        }
-    });
-}
-
-// 🌟 專屬即時導流核心：負責處理已開啟狀態下的分頁切換、公告展開與滑動對位
-function handleDirectNavigation(urlStr) {
-    try {
-        const url = new URL(urlStr);
-        const params = url.searchParams;
-        const targetView = params.get('view');
-        const noticeId = params.get('notice');
-        const targetMsgId = params.get('msgId');
-
-        if (targetView === 'board') {
-            switchView('board');
-            if (targetMsgId) {
-                setTimeout(() => {
-                    const msgNode = document.getElementById('msg-item-node-' + targetMsgId);
-                    if (msgNode) {
-                        msgNode.style.background = "rgba(59, 208, 175, 0.2)";
-                        msgNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                }, 400);
-            }
-        } else {
-            // 預設切回首頁公告欄
-            switchView('overview');
-            if (noticeId) {
-                setTimeout(() => {
-                    const card = document.getElementById('notice-card-' + noticeId);
-                    if (card) {
-                        card.classList.add('expanded'); // 🌟 自動展開全內文與圖片
-                        card.scrollIntoView({ behavior: 'smooth', block: 'center' }); // 🌟 平滑滾動置中
-                    }
-                }, 400); // 給予 400 毫秒緩衝確保 DOM 完美對位
-            }
-        }
-    } catch (e) { console.error("即時導流解析失敗:", e); }
 }

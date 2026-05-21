@@ -48,7 +48,7 @@ self.addEventListener('push', function(event) {
 self.addEventListener('notificationclick', function(event) {
     event.notification.close();
     
-    // 1. 智慧解包：優先抓取後端 GAS 傳過來的動態導流網址，防呆回退至留言板
+    // 1. 動態解包：優先抓取後端傳來的公告專屬網址（內含 &notice=4位碼），若沒有則回退到留言板
     let baseUrl = "https://guanting-lin.github.io/church-vote/?openExternalBrowser=1&view=board";
     if (event.notification.data && event.notification.data.FCM_MSG && event.notification.data.FCM_MSG.notification && event.notification.data.FCM_MSG.notification.click_action) {
         baseUrl = event.notification.data.FCM_MSG.notification.click_action;
@@ -58,12 +58,11 @@ self.addEventListener('notificationclick', function(event) {
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(windowClients) {
             for (var i = 0; i < windowClients.length; i++) {
                 var client = windowClients[i];
-                if ('focus' in client) {
-                    // 🌟【核心優化】：如果 App 已經開啟，直接發送訊息通知前端切換頁面，免去全頁重新整理閃爍！
-                    if ('postMessage' in client) {
-                        client.postMessage({ action: 'urlNotificationClicked', url: baseUrl });
-                    }
-                    return client.focus(); // 喚醒視窗推到最前台
+                // 2. 核心優化：直接利用 client.navigate 強制原本已開啟的 PWA 視窗轉跳至新網址！
+                // 這樣能徹底繞過 iOS 背景凍結的限制，強迫網頁重新解析網址參數！
+                if ('navigate' in client && 'focus' in client) {
+                    client.navigate(baseUrl);
+                    return client.focus(); // 喚醒並推到最前台
                 }
             }
             if (clients.openWindow) return clients.openWindow(baseUrl);
