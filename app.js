@@ -581,7 +581,6 @@ window.onload = async function() {
 let hasLoadedFromFirebase = false;
 let isProfileChecked = false;
 
-// 🌟 2. 找到 function processLoadedData()，將其內容修改為：
 async function processLoadedData() {
     listenToReadReceipts();
     initMessageListeners(); // 啟動三劍客監聽
@@ -604,6 +603,8 @@ async function processLoadedData() {
                     
                     // 執行身分驗證邏輯
                     checkUserMemberStatus(cachedData);
+                    // 讓快取路徑渲染完後安全解鎖
+                    unlockMainApp();
                 } catch(e) { console.error("快取解析失敗:", e); }
             }
         }
@@ -730,7 +731,6 @@ function checkUserMemberStatus(data) {
     // 關閉轉圈圈並解鎖
     document.getElementById('loading').style.display = 'none';
     document.getElementById('lock-screen').style.display = 'none'; 
-    unlockMainApp();
 }
 
 
@@ -1449,7 +1449,7 @@ function generateNoticeInputHTML(notice = {id:'', title:'', desc:'', imgUrl:'', 
                         onmouseover="this.style.background='rgba(0,123,255,0.15)'" 
                         onmouseout="this.style.background='rgba(0,123,255,0.08)'">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform: translateY(-0.5px);"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-                    推播通知
+                    推播公告
                 </button>
                 <button class="admin-delete-btn" style="position:static; margin:0; padding: 5px 10px;" onclick="removeAdminNoticeField(this)">刪除</button>
             </div>
@@ -2579,7 +2579,6 @@ async function postMessage() {
     }).catch(e => console.error("Sheets 留言同步失敗:", e));
 }
 
-// 🌟 新增：單獨發送公告推播（含未儲存草稿防呆攔截）
 function pushSingleNotice(noticeId, btn) {
     const blocks = document.querySelectorAll('.admin-notice-block');
     let isDirty = false;
@@ -2587,8 +2586,12 @@ function pushSingleNotice(noticeId, btn) {
     // 智慧比對：拿當前畫面的輸入文字，去比對資料庫原本下載的 adminNoticesArray
     for (let block of blocks) {
         if (block.getAttribute('data-id') === noticeId) {
-            const currentTitle = block.querySelector('.get-title || .admin-n-title').value.trim();
-            const currentDesc = block.querySelector('.admin-n-desc').value.trim();
+            // 🌟 修正：拔除錯誤的 || 語法，改為標準精確選取器，徹底解決無反應崩潰
+            const titleEl = block.querySelector('.admin-n-title');
+            const descEl = block.querySelector('.admin-n-desc');
+            
+            const currentTitle = titleEl ? titleEl.value.trim() : "";
+            const currentDesc = descEl ? descEl.value.trim() : "";
             
             const original = adminNoticesArray.find(n => n.id === noticeId);
             // 如果在原陣列找不到（代表是全新按新增的），或者文字被改過
@@ -2601,7 +2604,7 @@ function pushSingleNotice(noticeId, btn) {
     
     // ❌ 攔截：如果發現有修改但沒按大儲存
     if (isDirty) {
-        showCustomAlert("提示", "您修改了公告內容但尚未儲存！請先點選下方的「儲存所有變更」發布至前台，才能發送最新通知喔。");
+        showCustomAlert("提示", "您修改了公告內容！\n請先「儲存所有變更」，才能發送最新通知。");
         return;
     }
     
@@ -2609,7 +2612,7 @@ function pushSingleNotice(noticeId, btn) {
     const targetNotice = adminNoticesArray.find(n => n.id === noticeId);
     if (!targetNotice) return;
     
-    btn.innerText = "推播通知"; btn.disabled = true;
+    btn.innerText = "發送中..."; btn.disabled = true;
     
     fetch(GAS_API_URL, {
         method: 'POST',
@@ -2617,17 +2620,19 @@ function pushSingleNotice(noticeId, btn) {
         body: JSON.stringify({
             action: "pushNoticeBroadcast",
             title: targetNotice.title,
-            content: targetNotice.desc
+            content: targetNotice.desc,
+            noticeId: noticeId
         })
     })
     .then(res => res.text())
     .then(resText => {
-        showCustomAlert("發送成功", "公告通知已順利推播給全體成員！");
+        showCustomAlert("發送成功", "公告通知已順利推播！");
     })
     .catch(err => {
         showCustomAlert("錯誤", "發送失敗：" + err.message);
     })
     .finally(() => {
-        btn.innerText = "推播通知"; btn.disabled = false;
+        btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform: translateY(-0.5px);"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg> 推播公告`;
+        btn.disabled = false;
     });
 }
