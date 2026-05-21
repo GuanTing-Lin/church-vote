@@ -1309,6 +1309,7 @@ function switchView(t) {
 
 function loadMoreMessages() { currentMsgPage++; renderMessages(); }
 
+// 🌟 完整替換 app.js 中的 unlockMainApp 函數
 function unlockMainApp() {
     if (currentUser.votedOption === 3 && !isGuestViewEnabled) {
         document.getElementById('app').style.display = 'none';
@@ -1335,45 +1336,46 @@ function unlockMainApp() {
         initDaysCountdown(); markArchive(); 
         
         setTimeout(() => {
-            // 1. 先抓取網址所有的參數
             const params = new URLSearchParams(window.location.search);
-            const targetView = params.get('view');  // 抓取 view 參數
-            const targetMsgId = params.get('msgId'); // 抓取 msgId 參數 (選填)
+            const targetView = params.get('view');  
+            const targetMsgId = params.get('msgId'); 
+            const noticeId = params.get('notice'); // 🌟 將公告 ID 提到最上方優先判斷
 
-            // 2. 判斷如果要直接去留言板
-            if (targetView === 'board') {
-                switchView('board'); // 呼叫你原本的切換分頁函數
-                
-                // 3. 進階：如果網址連特定的留言 ID 都有帶
-                if (targetMsgId) {
-                    setTimeout(() => {
-                        // 尋找對應的三劍客 DOM 節點 (格式：msg-item-node-真實FirebaseKey)
-                        // 注意：如果該留言在很後面、還沒被分頁載入，可能會抓不到，這屬於正常分頁限制
-                        const msgNode = document.getElementById('msg-item-node-' + targetMsgId);
-                        if (msgNode) {
-                            msgNode.style.background = "rgba(59, 208, 175, 0.2)"; // 給它一個淡淡的亮色提示
-                            msgNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }
-                    }, 800); // 延遲一下下等 Firebase 資料載入並渲染完畢
-                }
-            } else {
-                // 如果沒有指定去留言板，就走原本的預設首頁
-                switchView('overview');
-            }
-            
-            // 4. 原本就有的 notice 判斷邏輯（保持不動）
-            const noticeId = params.get('notice');
+            // 🌟 核心分流優化：只要網址有帶 notice 參數，無論如何一律由首頁公告路由主導
             if (noticeId) {
+                switchView('overview'); // 強制切回首頁
+                
                 setTimeout(() => {
                     const card = document.getElementById('notice-card-' + noticeId);
                     if (card) {
-                        card.classList.add('expanded');
-                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        card.classList.add('expanded'); // 自動展開全內文
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' }); // 平滑滾動置中
+                    } else {
+                        // 🌟【完美處裡情境二】如果在後台被管理員刪除或切換成隱藏，卡片不會被渲染生出。
+                        // 這時直接執行防護：不做任何動作，安靜留存在首頁(Overview)，絕不亂跳去留言板！
+                        console.log("💡 提示：該公告可能已被管理員隱藏或刪除，系統自動安全留存在首頁。");
+                        switchView('overview');
                     }
-                }, 300); 
+                }, 550); // 給予 550 毫秒緩衝確保 Firebase 資料與 DOM 節點完全對位長好
+                
+            } else if (targetView === 'board') {
+                // 只有在「沒有公告通知」的前提下，才去檢查是否要單純切換到留言板
+                switchView('board'); 
+                if (targetMsgId) {
+                    setTimeout(() => {
+                        const msgNode = document.getElementById('msg-item-node-' + targetMsgId);
+                        if (msgNode) {
+                            msgNode.style.background = "rgba(59, 208, 175, 0.2)"; 
+                            msgNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }, 800);
+                }
+            } else {
+                // 其餘一般開機情境預設回歸首頁
+                switchView('overview');
             }
 
-            // 清除網址列的參數，讓畫面乾淨
+            // 清除網址列參數保持畫面乾淨
             window.history.replaceState({}, document.title, window.location.pathname + (params.get('openExternalBrowser') ? '?openExternalBrowser=1' : ''));
 
         }, 50);

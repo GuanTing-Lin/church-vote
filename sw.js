@@ -49,8 +49,8 @@ self.addEventListener('notificationclick', function(event) {
     event.notification.close();
     
     // 1. 動態解包：優先抓取後端傳來的公告專屬網址（內含 &notice=4位碼）
-    let baseUrl = "https://guanting-lin.github.io/church-vote/?openExternalBrowser=1";
-    
+    let baseUrl = "https://guanting-lin.github.io/church-vote/?openExternalBrowser=1&view=overview";
+
     // 🌟【關鍵修改】：智慧解包，從所有可能的 Firebase 推播欄位中，精準撈出 GAS 傳過來的專屬公告網址
     if (event.notification.data) {
         const nData = event.notification.data;
