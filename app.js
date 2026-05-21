@@ -1385,11 +1385,14 @@ function unlockMainApp() {
                 switchView('overview');
             }
 
-            // 🌟【安全清理】：成功解鎖導流後，清除備份快取，防止重新整理時重複觸發
+            // 🌟成功解鎖導流後，清除備份快取，防止重新整理時重複觸發
             sessionStorage.removeItem('pending_notice_id');
             sessionStorage.removeItem('pending_view');
             sessionStorage.removeItem('pending_msg_id');
             urlParamsCache = { view: null, msgId: null, noticeId: null };
+
+            // 🌟成功定位後，在全域標記此公告 ID 已經在冷啟動處理完畢，防止熱啟動重複觸發
+            if (noticeId) window.lastProcessedNoticeId = noticeId;
 
             // 清除網址列參數保持畫面乾淨
             const params = new URLSearchParams(window.location.search);
@@ -2729,3 +2732,42 @@ function handleDirectNavigation(urlStr) {
         }
     } catch (e) { console.error("熱啟動導流解析失敗:", e); }
 }
+
+// 🌟 新增在 app.js 最底部：完美處理熱啟動（App 沒關閉、從背景叫醒）時的即時網址參數跳轉
+window.addEventListener('popstate', handleUrlParamChange);
+window.addEventListener('hashchange', handleUrlParamChange);
+
+// 智慧接管 sw.js 傳過來的 navigate 網址異動
+function handleUrlParamChange() {
+    const currentParams = new URLSearchParams(window.location.search);
+    const noticeId = currentParams.get('notice');
+    
+    // 只要發現網址突然出現公告 ID，且跟上一次處理的不同，代表是熱啟動點擊通知進來的！
+    if (noticeId && noticeId !== window.lastProcessedNoticeId) {
+        window.lastProcessedNoticeId = noticeId; // 標記已處理
+        console.log("🎯 偵測到熱啟動公告通知，立刻執行滑動定位:", noticeId);
+        
+        switchView('overview'); // 1. 瞬間切回首頁總覽
+        
+        setTimeout(() => {
+            const card = document.getElementById('notice-card-' + noticeId);
+            if (card) {
+                card.classList.add('expanded'); // 2. 自動展開全內文
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' }); // 3. 平滑滾動置中
+                
+                // 4. 清理網址列，保持畫面乾淨
+                window.history.replaceState({}, document.title, window.location.pathname + (currentParams.get('openExternalBrowser') ? '?openExternalBrowser=1' : ''));
+            } else {
+                // 🌟 符合規格二：如果後台將該公告隱藏或刪除了，卡片生不出來，就安靜留存在首頁(Overview)
+                switchView('overview');
+            }
+        }, 550); // 給予 550 毫秒緩衝確保 DOM 完全對位
+    }
+}
+
+// 雙重防護：當 App 從背景切回前景時，主動逼程式對齊一次網址
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        setTimeout(handleUrlParamChange, 300);
+    }
+});
