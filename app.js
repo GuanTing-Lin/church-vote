@@ -2698,3 +2698,34 @@ function handleDirectNavigation(urlStr) {
         }
     } catch (e) { console.error("熱啟動即時導流失敗:", e); }
 }
+
+// 🌟 直接貼在 app.js 的最尾端（在 postMessage 函式的大括號外面）
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', function(event) {
+        if (event.data && event.data.action === 'urlNotificationClicked') {
+            console.log("📥 APP 成功解凍！收到背景推播跳轉指令:", event.data.url);
+            handleDirectNavigation(event.data.url);
+        }
+    });
+}
+
+// 🌟 熱啟動專屬無跳轉定位核心：負責在原地切換分頁、展開卡片與平滑滾動置中
+function handleDirectNavigation(urlStr) {
+    try {
+        const url = new URL(urlStr);
+        const params = url.searchParams;
+        const noticeId = params.get('notice');
+
+        if (noticeId) {
+            switchView('overview'); // 1. 瞬間切回首頁總覽
+            
+            setTimeout(() => {
+                const card = document.getElementById('notice-card-' + noticeId);
+                if (card) {
+                    card.classList.add('expanded'); // 2. 自動展開全內文
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' }); // 3. 平滑滾動置中
+                }
+            }, 350); // 給予 350ms 緩衝確保分頁 DOM 切換到位
+        }
+    } catch (e) { console.error("熱啟動導流解析失敗:", e); }
+}
