@@ -1,3 +1,15 @@
+// 🌟【終極優化】開機最頂端：立刻攔截並備份網址參數，防止後續被 LIFF 初始化或重導向機制抹除
+const earlyParams = new URLSearchParams(window.location.search);
+let urlParamsCache = {
+    view: earlyParams.get('view'),
+    msgId: earlyParams.get('msgId'),
+    noticeId: earlyParams.get('notice')
+};
+// 雙重保險：同步備份到 sessionStorage 中，防止非同步刷新時遺失
+if (urlParamsCache.noticeId) sessionStorage.setItem('pending_notice_id', urlParamsCache.noticeId);
+if (urlParamsCache.view) sessionStorage.setItem('pending_view', urlParamsCache.view);
+if (urlParamsCache.msgId) sessionStorage.setItem('pending_msg_id', urlParamsCache.msgId);
+
 const svgEye = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
 const svgEyeOff = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
 const svgHeart = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="100%" height="100%"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
@@ -1336,14 +1348,14 @@ function unlockMainApp() {
         initDaysCountdown(); markArchive(); 
         
         setTimeout(() => {
-            const params = new URLSearchParams(window.location.search);
-            const targetView = params.get('view');  
-            const targetMsgId = params.get('msgId'); 
-            const noticeId = params.get('notice'); // 🌟 將公告 ID 提到最上方優先判斷
+            // 🌟【關鍵修改】：改為讀取最一開始快取下來的安全參數，徹底免疫被 LIFF 抹除的硬傷
+            const targetView = urlParamsCache.view || sessionStorage.getItem('pending_view');  
+            const targetMsgId = urlParamsCache.msgId || sessionStorage.getItem('pending_msg_id'); 
+            const noticeId = urlParamsCache.noticeId || sessionStorage.getItem('pending_notice_id');
 
-            // 🌟 核心分流優化：只要網址有帶 notice 參數，無論如何一律由首頁公告路由主導
+            // 優先處理公告定位
             if (noticeId) {
-                switchView('overview'); // 強制切回首頁
+                switchView('overview'); // 確保在首頁
                 
                 setTimeout(() => {
                     const card = document.getElementById('notice-card-' + noticeId);
@@ -1351,15 +1363,14 @@ function unlockMainApp() {
                         card.classList.add('expanded'); // 自動展開全內文
                         card.scrollIntoView({ behavior: 'smooth', block: 'center' }); // 平滑滾動置中
                     } else {
-                        // 🌟【完美處裡情境二】如果在後台被管理員刪除或切換成隱藏，卡片不會被渲染生出。
-                        // 這時直接執行防護：不做任何動作，安靜留存在首頁(Overview)，絕不亂跳去留言板！
+                        // 🌟【規格二優化】：如果在後台被管理員隱藏或刪除，卡片不會被生出。
+                        // 這時執行安全防護：完全不做動作，安靜留存在首頁(Overview)，絕不亂跳去留言板！
                         console.log("💡 提示：該公告可能已被管理員隱藏或刪除，系統自動安全留存在首頁。");
                         switchView('overview');
                     }
-                }, 550); // 給予 550 毫秒緩衝確保 Firebase 資料與 DOM 節點完全對位長好
+                }, 550); 
                 
             } else if (targetView === 'board') {
-                // 只有在「沒有公告通知」的前提下，才去檢查是否要單純切換到留言板
                 switchView('board'); 
                 if (targetMsgId) {
                     setTimeout(() => {
@@ -1371,11 +1382,17 @@ function unlockMainApp() {
                     }, 800);
                 }
             } else {
-                // 其餘一般開機情境預設回歸首頁
                 switchView('overview');
             }
 
+            // 🌟【安全清理】：成功解鎖導流後，清除備份快取，防止重新整理時重複觸發
+            sessionStorage.removeItem('pending_notice_id');
+            sessionStorage.removeItem('pending_view');
+            sessionStorage.removeItem('pending_msg_id');
+            urlParamsCache = { view: null, msgId: null, noticeId: null };
+
             // 清除網址列參數保持畫面乾淨
+            const params = new URLSearchParams(window.location.search);
             window.history.replaceState({}, document.title, window.location.pathname + (params.get('openExternalBrowser') ? '?openExternalBrowser=1' : ''));
 
         }, 50);

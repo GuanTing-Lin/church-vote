@@ -46,7 +46,8 @@
                                     const notificationTitle = payload.notification.title;
                                     const notificationOptions = {
                                         body: payload.notification.body,
-                                        icon: 'https://raw.githubusercontent.com/GuanTing-Lin/church-vote/main/yilan.png'
+                                        icon: payload.notification.icon || 'https://raw.githubusercontent.com/GuanTing-Lin/church-vote/main/yilan.png',
+                                        data: payload.data 
                                     };
                                     reg.showNotification(notificationTitle, notificationOptions);
                                 } else {
