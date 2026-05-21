@@ -2636,3 +2636,48 @@ function pushSingleNotice(noticeId, btn) {
         btn.disabled = false;
     });
 }
+
+// 🌟 新增在 app.js 最底部：接收來自 Service Worker 的即時跳轉訊號（免重新整理）
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', function(event) {
+        if (event.data && event.data.action === 'urlNotificationClicked') {
+            handleDirectNavigation(event.data.url);
+        }
+    });
+}
+
+// 🌟 專屬即時導流核心：負責處理已開啟狀態下的分頁切換、公告展開與滑動對位
+function handleDirectNavigation(urlStr) {
+    try {
+        const url = new URL(urlStr);
+        const params = url.searchParams;
+        const targetView = params.get('view');
+        const noticeId = params.get('notice');
+        const targetMsgId = params.get('msgId');
+
+        if (targetView === 'board') {
+            switchView('board');
+            if (targetMsgId) {
+                setTimeout(() => {
+                    const msgNode = document.getElementById('msg-item-node-' + targetMsgId);
+                    if (msgNode) {
+                        msgNode.style.background = "rgba(59, 208, 175, 0.2)";
+                        msgNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 400);
+            }
+        } else {
+            // 預設切回首頁公告欄
+            switchView('overview');
+            if (noticeId) {
+                setTimeout(() => {
+                    const card = document.getElementById('notice-card-' + noticeId);
+                    if (card) {
+                        card.classList.add('expanded'); // 🌟 自動展開全內文與圖片
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' }); // 🌟 平滑滾動置中
+                    }
+                }, 400); // 給予 400 毫秒緩衝確保 DOM 完美對位
+            }
+        }
+    } catch (e) { console.error("即時導流解析失敗:", e); }
+}

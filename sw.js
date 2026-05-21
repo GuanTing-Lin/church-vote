@@ -47,14 +47,23 @@ self.addEventListener('push', function(event) {
 // 監聽點擊通知動作：精準導流到留言板
 self.addEventListener('notificationclick', function(event) {
     event.notification.close();
+    
+    // 1. 智慧解包：優先抓取後端 GAS 傳過來的動態導流網址，防呆回退至留言板
     let baseUrl = "https://guanting-lin.github.io/church-vote/?openExternalBrowser=1&view=board";
+    if (event.notification.data && event.notification.data.FCM_MSG && event.notification.data.FCM_MSG.notification && event.notification.data.FCM_MSG.notification.click_action) {
+        baseUrl = event.notification.data.FCM_MSG.notification.click_action;
+    }
+    
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(windowClients) {
             for (var i = 0; i < windowClients.length; i++) {
                 var client = windowClients[i];
-                if ('navigate' in client && 'focus' in client) {
-                    client.navigate(baseUrl);
-                    return client.focus();
+                if ('focus' in client) {
+                    // 🌟【核心優化】：如果 App 已經開啟，直接發送訊息通知前端切換頁面，免去全頁重新整理閃爍！
+                    if ('postMessage' in client) {
+                        client.postMessage({ action: 'urlNotificationClicked', url: baseUrl });
+                    }
+                    return client.focus(); // 喚醒視窗推到最前台
                 }
             }
             if (clients.openWindow) return clients.openWindow(baseUrl);
