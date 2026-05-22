@@ -1257,7 +1257,7 @@ function renderNoticesWithMagic(cfg) {
                 cleanTime = !isNaN(d.getTime()) ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : cleanTime.split('T')[0];
             }
             adminNoticesArray.push({
-                id: Math.random().toString(36).substring(2, 6),
+                id: 'Notice' + i, // 🌟【關鍵修正】：從 Math.random() 改為固定字串 'Notice1'、'Notice2'，冷啟動網址對齊絕對成功！
                 title: cfg[`Notice${i}_Title`],
                 desc: cfg[`Notice${i}_Desc`] || '',
                 imgUrl: cfg[`Notice${i}_ImgUrl`] || '',
@@ -1439,16 +1439,13 @@ function unlockMainApp() {
                     }
                 }, 550); 
                 
+           // 🌟 找到 unlockMainApp 內部的 targetView === 'board' 區塊，完整覆蓋為雷達整合版
             } else if (targetView === 'board') {
-                switchView('board'); 
                 if (targetMsgId) {
-                    setTimeout(() => {
-                        const msgNode = document.getElementById('msg-item-node-' + targetMsgId);
-                        if (msgNode) {
-                            msgNode.style.background = "rgba(59, 208, 175, 0.2)"; 
-                            msgNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }
-                    }, 800);
+                    console.log("❄️ 發現開機帶有特定留言 ID，立刻啟動智慧分頁雷達...");
+                    handleMessageDeepLink(targetMsgId); // 🌟【關鍵修正】：直接交給雷達去自動翻頁搜尋，不論第幾頁都挖得出來！
+                } else {
+                    switchView('board');
                 }
             } else {
                 switchView('overview');
@@ -2469,73 +2466,6 @@ function renderMessagesPaginated() {
     container.innerHTML = htmlStr;
 }
 
-// =========================================================================
-// 💬 留言深層連結雷達：全自動跨頁搜尋、遞迴展開、絲滑置中與高亮系統
-// =========================================================================
-function handleMessageDeepLink(msgId) {
-    if (!msgId) return;
-
-    // 1. 自動秒轉至留言板分頁面
-    // 💡 提示：如果你的留言板分頁代號不是 'messages'，請將下方改為你的對應代號（例如 'board'）
-    if (typeof switchView === 'function') {
-        switchView('messages'); 
-    }
-
-    let checkCount = 0;
-    const maxPages = 25; // 安全閥防止無窮遞迴
-
-    function findAndScroll() {
-        // 尋找 DOM 裡的留言卡片，相容多種你可能設計的 ID 格式
-        const targetCard = document.getElementById('msg-card-' + msgId) || 
-                           document.getElementById('message-' + msgId) || 
-                           document.querySelector(`[data-msg-id="${msgId}"]`);
-        
-        if (targetCard) {
-            console.log("🎯 成功捕獲目標留言！執行流暢置中與高亮特效:", msgId);
-            
-            // 延遲 350 毫秒等分頁切換與結構定型，再執行置中滑動
-            setTimeout(() => {
-                targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                
-                // 注入精緻的暖橘色高亮動態閃爍，提示組員是哪一則訊息
-                targetCard.style.transition = 'background-color 0.4s ease, transform 0.4s ease';
-                targetCard.style.backgroundColor = 'rgba(249, 168, 38, 0.25)'; 
-                targetCard.style.transform = 'scale(1.025)';
-                
-                setTimeout(() => {
-                    targetCard.style.backgroundColor = '';
-                    targetCard.style.transform = '';
-                }, 2500);
-            }, 350);
-
-            // 成功就位後清理網址上的參數，防範組員手動重新整理網頁時無限重複觸發
-            const params = new URLSearchParams(window.location.search);
-            if (params.has('msgId')) {
-                params.delete('msgId');
-                const newSearch = params.toString() ? '?' + params.toString() : '';
-                window.history.replaceState({}, document.title, window.location.pathname + newSearch);
-            }
-            return;
-        }
-
-        // 🌟【核心功能】：如果 DOM 找不到，代表藏在超過 10 則以後的較舊頁數，啟動全自動往下展開
-        if (typeof currentMsgPage !== 'undefined' && typeof renderMessagesPaginated === 'function') {
-            if (checkCount < maxPages) {
-                console.log(`⏳ 在當前頁面查無此留言，全自動往下翻開第 ${currentMsgPage + 1} 頁...`);
-                checkCount++;
-                currentMsgPage++; // 分頁計數器加 1
-                renderMessagesPaginated(); // 重新觸發你現有的分頁繪製功能
-                
-                // 給予瀏覽器異步渲染 300 毫秒的黃金緩衝時間，隨後再次遞迴尋找
-                setTimeout(findAndScroll, 300);
-            }
-        } else {
-            console.log("⚠️ 偵測不到分頁變數 currentMsgPage 或功能 renderMessagesPaginated，請確認命名。");
-        }
-    }
-
-    findAndScroll();
-}
 
 function loadMoreMessages() {
     currentMsgPage++;
@@ -2581,7 +2511,7 @@ function generateSingleMessageHTML(msg) {
     </div>`;
 
     return `
-        <div class="msg-item fade-in" id="msg-item-node-${key}">
+        <div class="msg-item fade-in" id="msg-item-node-${key}" data-msg-id="${msg.MsgID || ''}">
             <div class="msg-avatar">${avatarHtml}</div>
             <div class="msg-body">
                 <div class="msg-header">
@@ -2834,10 +2764,72 @@ function pushSingleNotice(noticeId, btn) {
 }
 
 // =========================================================================
+// 💬 留言深層連結雷達：全自動跨頁搜尋、遞迴展開、絲滑置中與高亮系統 (實體分頁校正版)
+// =========================================================================
+function handleMessageDeepLink(msgId) {
+    if (!msgId) return;
+
+    // 1. 🌟【精準修正】：分頁 ID 必須是 'board'，完美對齊 index.html 的 view-board！
+    if (typeof switchView === 'function') {
+        switchView('board'); 
+    }
+
+    let checkCount = 0;
+    const maxPages = 25; // 安全防護
+
+    function findAndScroll() {
+        // 🌟【精準修正】：透過前面綁定的 data-msg-id 進行絕對精準捕捉
+        const targetCard = document.querySelector(`[data-msg-id="${msgId}"]`);
+        
+        if (targetCard) {
+            console.log("🎯 智慧雷達成功捕獲目標留言！執行流暢置中與高亮特效:", msgId);
+            
+            setTimeout(() => {
+                targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // 注入精緻的暖橘色高亮動態閃爍
+                targetCard.style.transition = 'background-color 0.4s ease, transform 0.4s ease';
+                targetCard.style.backgroundColor = 'rgba(249, 168, 38, 0.25)'; 
+                targetCard.style.transform = 'scale(1.025)';
+                
+                setTimeout(() => {
+                    targetCard.style.backgroundColor = '';
+                    targetCard.style.transform = '';
+                }, 2500);
+            }, 350);
+
+            // 成功就位後清理網址參數
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('msgId')) {
+                params.delete('msgId');
+                const newSearch = params.toString() ? '?' + params.toString() : '';
+                window.history.replaceState({}, document.title, window.location.pathname + newSearch);
+            }
+            return;
+        }
+
+        // 2. 如果當前 DOM 找不到，代表在第 10 則之後，驅動分頁計數器自動往下翻頁
+        if (typeof currentMsgPage !== 'undefined' && typeof renderMessagesPaginated === 'function') {
+            if (checkCount < maxPages) {
+                console.log(`⏳ 當前頁面未見該留言，全自動往下展開第 ${currentMsgPage + 1} 頁...`);
+                checkCount++;
+                currentMsgPage++; 
+                renderMessagesPaginated(); // 觸發下一頁渲染
+                
+                // 給予瀏覽器 300 毫秒異步繪製時間，隨後再次遞迴尋找
+                setTimeout(findAndScroll, 300);
+            }
+        }
+    }
+
+    // 啟動雷達
+    setTimeout(findAndScroll, 400);
+}
+
+// =========================================================================
 // 🚀 終極完全體整合：熱啟動優化、廣播監聽與 3D 全體同頻導覽列水滴系統
 // =========================================================================
 
-// 1. 監聽 App 熱啟動時的視窗清醒與歷史網址異動（冷熱啟動安全路由）
 document.addEventListener('visibilitychange', handleWarmStartNavigation);
 window.addEventListener('popstate', handleWarmStartNavigation);
 
@@ -2846,7 +2838,7 @@ function handleWarmStartNavigation() {
         setTimeout(() => {
             const freshParams = new URLSearchParams(window.location.search);
             const noticeId = freshParams.get('notice');
-            const msgId = freshParams.get('msgId'); // 擷取訊息通知參數
+            const msgId = freshParams.get('msgId'); 
             
             if (noticeId) {
                 console.log("🎯 偵測到熱啟動公告通知，立刻執行滑動定位:", noticeId);
@@ -2860,7 +2852,6 @@ function handleWarmStartNavigation() {
                     }
                 }, 450);
             } 
-            // 熱啟動解凍時，如果是留言通知，直接引爆分頁雷達
             else if (msgId) {
                 console.log("🎯 偵測到熱啟動留言深層連結，執行定位:", msgId);
                 handleMessageDeepLink(msgId);
@@ -2869,7 +2860,6 @@ function handleWarmStartNavigation() {
     }
 }
 
-// 2. 接收來自 Service Worker 的即時叫醒廣播訊號（免刷新秒轉定位）
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('message', function(event) {
         if (event.data && event.data.action === 'urlNotificationClicked') {
@@ -2879,13 +2869,12 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// 熱啟動專屬秒轉器：完全跳過 Loading 驗證畫面，原地執行切頁、展開與滑動置中
 function handleWarmStartInstantNavigation(urlStr) {
     try {
         const url = new URL(urlStr);
         const params = url.searchParams;
         const noticeId = params.get('notice');
-        const msgId = params.get('msgId'); // 擷取推播網址內的訊息 ID
+        const msgId = params.get('msgId'); 
 
         if (noticeId) {
             window.lastProcessedNoticeId = noticeId; 
@@ -2899,7 +2888,6 @@ function handleWarmStartInstantNavigation(urlStr) {
                 }
             }, 300);
         } 
-        // 當收到來自背景 Service Worker 的免刷新叫醒訊號，直接交給雷達執行秒轉跨頁搜尋
         else if (msgId) {
             console.log("📥 [熱啟動解凍] 收到 SW 留言推播廣播，立刻秒轉搜尋:", msgId);
             handleMessageDeepLink(msgId);
@@ -2907,13 +2895,11 @@ function handleWarmStartInstantNavigation(urlStr) {
     } catch (e) { console.error("熱啟動秒轉定位失敗:", e); }
 }
 
-// 3. 導覽列 GPU 3D 放大鏡效果 (全體同頻縮放 · 絕殺 Icon 獨立放大版)
 function initNavTouchTracking() {
     const navBlock = document.getElementById('bottom-nav-block');
     const indicator = document.getElementById('nav-indicator');
     if (!navBlock || !indicator) return;
 
-    // 核心物理防護牆：暴力全時段鎖死任何單一 Icon 或文字的縮放，只允許自然變色高亮
     if (!document.getElementById('liquid-clean-style')) {
         const style = document.createElement('style');
         style.id = 'liquid-clean-style';
@@ -2939,9 +2925,8 @@ function initNavTouchTracking() {
     let touchedTab = null;
     
     let transitionStart = 0;
-    let currentDuration = 820; // 橫向慢速滑行時間 (820毫秒)
+    let currentDuration = 820; 
 
-    // 智慧型即時座標追蹤雷達：每一幀精準捕捉水滴座標，只命令沿途分頁「純粹變色」
     function runLiveTabsTracking() {
         if (!indicator || !navBlock) return;
         
@@ -2968,7 +2953,7 @@ function initNavTouchTracking() {
             tabs.forEach(tab => {
                 if (tab !== closestTab) tab.classList.remove('active');
             });
-            closestTab.classList.add('active'); // 沿途只變色，Icon 絕對不放大
+            closestTab.classList.add('active'); 
         }
         
         if (Date.now() - transitionStart < currentDuration + 80) {
@@ -2982,7 +2967,6 @@ function initNavTouchTracking() {
         requestAnimationFrame(runLiveTabsTracking);
     }
 
-    // 觸控壓下：整條導覽列外殼與水滴，以同頻率「一起絲滑變大」
     navBlock.addEventListener('touchstart', (e) => {
         let touchX = e.touches[0].clientX;
         let navRect = navBlock.getBoundingClientRect();
@@ -3008,11 +2992,9 @@ function initNavTouchTracking() {
         originWidth = touchedTab.offsetWidth;
         isTracking = false; 
 
-        // 外殼與水滴同步掛上 0.3秒 的原生轉場
         navBlock.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
         indicator.style.transition = 'left 0.45s cubic-bezier(0.19, 1, 0.22, 1), width 0.45s cubic-bezier(0.19, 1, 0.22, 1), transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), top 0.3s cubic-bezier(0.25, 1, 0.5, 1), bottom 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
         
-        // 全體同頻放大（外殼放大 1.025 倍，水滴等比拉高拉寬，頂部底部優雅溢出 5px）
         navBlock.style.transform = 'scale(1.025)';
         indicator.style.top = '-5px';    
         indicator.style.bottom = '-5px'; 
@@ -3037,12 +3019,9 @@ function initNavTouchTracking() {
 
         if (!isTracking) return;
 
-        // 手指盲滑拖曳中，左右位移進入絕對 1:1 零延遲黏手軌道
         indicator.style.transition = 'none';
-
         let currentLeft = originLeft + deltaX;
         
-        // 左右兩端邊界緊緻橡皮筋阻尼吸附
         let minLeft = 4;
         let maxLeft = navBlock.offsetWidth - originWidth - 4;
         if (currentLeft < minLeft) {
@@ -3081,14 +3060,12 @@ function initNavTouchTracking() {
         if (closestTab) closestTab.classList.add('active');
     }, { passive: true });
 
-    // 手指放開：全體同頻在一條轉場時間線上，100% 同步優雅縮小歸位
     function handleTouchRelease() {
         if (!touchedTab) return;
 
         navBlock.style.transition = 'transform 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
         indicator.style.transition = 'left 0.82s cubic-bezier(0.19, 1, 0.22, 1), width 0.82s cubic-bezier(0.19, 1, 0.22, 1), transform 0.6s cubic-bezier(0.19, 1, 0.22, 1), top 0.6s cubic-bezier(0.19, 1, 0.22, 1), bottom 0.6s cubic-bezier(0.19, 1, 0.22, 1)'; 
         
-        // 還原 1:1
         navBlock.style.transform = 'scale(1)';
         indicator.style.top = '5px';    
         indicator.style.bottom = '5px';
