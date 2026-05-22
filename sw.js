@@ -75,24 +75,41 @@ self.addEventListener('notificationclick', function(event) {
             }
             if (!targetClient && windowClients.length > 0) targetClient = windowClients[0];
 
-            // 🌟 完美對齊 LINE 流程：如果 App 活在背景（熱啟動），直接將參數以 URL Intent 形式注入導航
-            if (targetClient && 'navigate' in targetClient && 'focus' in targetClient) {
-                console.log("🎯 [熱啟動喚醒] 發現背景程序，精準注入 URL Intent 導航:", baseUrl);
+            // =========================================================================
+            // 🌟 完美對齊 LINE 流程：熱啟動（App活在背景）絕不重新整理網頁，改用高頻 Intent 轟炸
+            // =========================================================================
+            if (targetClient && 'focus' in targetClient) {
+                console.log("🎯 [熱啟動喚醒] 偵測到背景 PWA，執行 100% 零刷新直達導航...");
                 
-                // 1. 強制讓背景網頁直接跳轉至帶有新通知參數的網址（100% 絕不丟包）
-                return targetClient.navigate(baseUrl).then(function(navigatedClient) {
-                    // 2. 導航完成的瞬間，立刻將視窗拉回前景呈現給組員（直達指定頁面）
-                    return navigatedClient.focus();
+                // 1. 先把網頁拉回前景
+                return targetClient.focus().then(function(focusedClient) {
+                    // 2. 🚀【Intent 衝擊波迴圈】：為了對抗手機硬體解凍 JavaScript 的時間差
+                    // 我們在 1 秒內以極高頻率（每 80 毫秒）連續轟炸發射 12 次 postMessage
+                    // 網頁不論在第幾毫秒清醒，都一定會無縫咬合接到參數，原地秒轉，完全不用重新整理！
+                    var attempts = 0;
+                    var maxAttempts = 12;
+                    
+                    function blastIntentLoop() {
+                        if (attempts >= maxAttempts) return;
+                        if (focusedClient && 'postMessage' in focusedClient) {
+                            focusedClient.postMessage({
+                                action: 'urlNotificationClicked',
+                                url: baseUrl
+                            });
+                        }
+                        attempts++;
+                        setTimeout(blastIntentLoop, 80); // 每 80 毫秒發射一次，完美覆蓋整段解凍安全期
+                    }
+                    
+                    blastIntentLoop(); // 轟炸引爆
                 });
             }
             
-            // 如果完全沒有開啟任何視窗（冷啟動），維持原樣開新視窗
+            // 冷啟動路徑維持不變（App完全關閉時）：直接開新視窗
             if (clients.openWindow) {
                 return clients.openWindow(baseUrl);
             }
             
-            // 如果完全沒有開啟任何視窗（冷啟動），照常開新視窗
-            if (clients.openWindow) return clients.openWindow(baseUrl);
         })
     );
 });

@@ -2830,6 +2830,7 @@ function handleMessageDeepLink(msgId) {
 // 🚀 終極完全體整合：熱啟動優化、廣播監聽與 3D 全體同頻導覽列水滴系統
 // =========================================================================
 
+// 1. 監聽 App 熱啟動時的視窗清醒與歷史網址異動（冷熱啟動安全路由）
 document.addEventListener('visibilitychange', handleWarmStartNavigation);
 window.addEventListener('popstate', handleWarmStartNavigation);
 
@@ -2841,6 +2842,11 @@ function handleWarmStartNavigation() {
             const msgId = freshParams.get('msgId'); 
             
             if (noticeId) {
+                // 🌟【防重複鎖】：如果這則公告正在處理，直接攔截，2秒後解鎖
+                if (window.lastProcessedNoticeId === noticeId) return;
+                window.lastProcessedNoticeId = noticeId; 
+                setTimeout(() => { window.lastProcessedNoticeId = null; }, 2000);
+
                 console.log("🎯 偵測到熱啟動公告通知，立刻執行滑動定位:", noticeId);
                 switchView('overview');
                 setTimeout(() => {
@@ -2853,6 +2859,11 @@ function handleWarmStartNavigation() {
                 }, 450);
             } 
             else if (msgId) {
+                // 🌟【防重複鎖】：如果這則留言正在處理，直接攔截，2秒後解鎖
+                if (window.lastProcessedMsgId === msgId) return;
+                window.lastProcessedMsgId = msgId;
+                setTimeout(() => { window.lastProcessedMsgId = null; }, 2000);
+
                 console.log("🎯 偵測到熱啟動留言深層連結，執行定位:", msgId);
                 handleMessageDeepLink(msgId);
             }
@@ -2860,15 +2871,16 @@ function handleWarmStartNavigation() {
     }
 }
 
+// 2. 接收來自 Service Worker 的即時叫醒廣播訊號（免刷新秒轉定位完全體）
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('message', function(event) {
         if (event.data && event.data.action === 'urlNotificationClicked') {
-            console.log("📥 [熱啟動解凍] 成功接收 SW 廣播訊號，執行免刷新秒轉:", event.data.url);
             handleWarmStartInstantNavigation(event.data.url);
         }
     });
 }
 
+// 熱啟動專屬秒轉器：100% 繞過重新整理，原地執行切頁、展開與滑動置中
 function handleWarmStartInstantNavigation(urlStr) {
     try {
         const url = new URL(urlStr);
@@ -2877,9 +2889,12 @@ function handleWarmStartInstantNavigation(urlStr) {
         const msgId = params.get('msgId'); 
 
         if (noticeId) {
+            // 🌟 絕殺高頻重複撞擊：2秒防護網
+            if (window.lastProcessedNoticeId === noticeId) return;
             window.lastProcessedNoticeId = noticeId; 
-            switchView('overview'); 
+            setTimeout(() => { window.lastProcessedNoticeId = null; }, 2000);
 
+            switchView('overview'); 
             setTimeout(() => {
                 const card = document.getElementById('notice-card-' + noticeId);
                 if (card) {
@@ -2889,8 +2904,13 @@ function handleWarmStartInstantNavigation(urlStr) {
             }, 300);
         } 
         else if (msgId) {
-            console.log("📥 [熱啟動解凍] 收到 SW 留言推播廣播，立刻秒轉搜尋:", msgId);
-            handleMessageDeepLink(msgId);
+            // 🌟 絕殺高頻重複撞擊：2秒防護網
+            if (window.lastProcessedMsgId === msgId) return;
+            window.lastProcessedMsgId = msgId;
+            setTimeout(() => { window.lastProcessedMsgId = null; }, 2000);
+            
+            console.log("📥 [熱啟動解凍成功] 順暢咬合 Intent 訊號，免刷新直達跳轉:", msgId);
+            handleMessageDeepLink(msgId); // 引爆分頁自動展開雷達
         }
     } catch (e) { console.error("熱啟動秒轉定位失敗:", e); }
 }
