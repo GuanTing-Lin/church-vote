@@ -2713,10 +2713,10 @@ function pushSingleNotice(noticeId, btn) {
 }
 
 // =========================================================================
-// 🚀 核心優化：整合後的全新底欄 3D 放大鏡流體水滴系統 (去蕪存菁完全體)
+// 🚀 終極完全體整合：熱啟動優化、廣播監聽與 3D 導覽列水滴放大鏡系統
 // =========================================================================
 
-// 1. 監聽 App 熱啟動時的視窗清醒與歷史網址異動
+// 1. 監聽 App 熱啟動時的視窗清醒與歷史網址異動（冷熱啟動安全路由）
 document.addEventListener('visibilitychange', handleWarmStartNavigation);
 window.addEventListener('popstate', handleWarmStartNavigation);
 
@@ -2741,9 +2741,39 @@ function handleWarmStartNavigation() {
     }
 }
 
-// =========================================================================
-// 💧 終極完全體：導覽列 3D 放大鏡效果 (精緻收斂版：修復比例錯位、加入防卡死監聽)
-// =========================================================================
+// 2. 接收來自 Service Worker 的即時叫醒廣播訊號（免刷新秒轉定位）
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', function(event) {
+        if (event.data && event.data.action === 'urlNotificationClicked') {
+            console.log("📥 [熱啟動解凍] 成功接收 SW 廣播訊號，執行免刷新秒轉:", event.data.url);
+            handleWarmStartInstantNavigation(event.data.url);
+        }
+    });
+}
+
+// 熱啟動專屬秒轉器：完全跳過 Loading 驗證畫面，原地執行切頁、展開與滑動置中
+function handleWarmStartInstantNavigation(urlStr) {
+    try {
+        const url = new URL(urlStr);
+        const params = url.searchParams;
+        const noticeId = params.get('notice');
+
+        if (noticeId) {
+            window.lastProcessedNoticeId = noticeId; // 標記已處理，防止冷啟動衝突
+            switchView('overview'); // 1. 瞬間切回首頁總覽
+
+            setTimeout(() => {
+                const card = document.getElementById('notice-card-' + noticeId);
+                if (card) {
+                    card.classList.add('expanded'); // 2. 自動展開全內文
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' }); // 3. 平滑滾動置中
+                }
+            }, 300);
+        }
+    } catch (e) { console.error("熱啟動秒轉定位失敗:", e); }
+}
+
+// 3. 導覽列 3D 放大鏡效果與液態水滴物理系統
 function initNavTouchTracking() {
     const navBlock = document.getElementById('bottom-nav-block');
     const indicator = document.getElementById('nav-indicator');
@@ -2817,7 +2847,7 @@ function initNavTouchTracking() {
         indicator.style.left = currentLeft + 'px';
         indicator.style.width = originWidth + 'px';
         
-        // 🌟【精準修正數值】：將先前誤貼成 1.03 的代碼，精確調整回你最喜歡的 1.12 水滴等比膨脹率！
+        // 🌟 參數確認：內部白色小水滴放大比例設定為你最喜歡的 1.12
         indicator.style.transform = 'scale(1.12)'; 
 
         // 保持鏡面高光折射質感
@@ -2854,7 +2884,6 @@ function initNavTouchTracking() {
         }
     }, { passive: true });
 
-    // 🌟【防卡死流體核心優化】：將重置邏輯獨立抽離成單一函式
     function handleTouchRelease() {
         if (!isTracking) return;
         isTracking = false;
@@ -2894,6 +2923,5 @@ function initNavTouchTracking() {
     }
 
     navBlock.addEventListener('touchend', handleTouchRelease, { passive: true });
-    // 🌟【絕殺卡死監聽】：當手指移動觸發到網頁滾動、導致手勢被系統中斷時，強制立刻解鎖還原，水滴 100% 絕不卡死！
     navBlock.addEventListener('touchcancel', handleTouchRelease, { passive: true });
-} // 💡 修正後：這裡乾乾淨淨地閉合，後面絕對沒有任何多餘的大括號了！
+}
