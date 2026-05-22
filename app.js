@@ -2170,17 +2170,16 @@ function switchAccTab(tabId) {
         }, { passive: true });
 
         // 🌟 新增：手指移動中！不放開就能連續無限左右推拉
+        // 🌟 修正後：移除重複宣告，直接套用 0.8 阻尼係數的黃金版本
         accTrack.addEventListener('touchmove', (e) => {
             if (!isDragging) return;
             currentX = e.touches[0].clientX;
             let deltaX = currentX - startX;
             
-            // 計算輪播圖基礎寬度，並將手指位移即時疊加進 transform 內
             let trackWidth = accTrack.offsetWidth;
             let baseTranslate = -currentDomIndex * trackWidth;
-            let currentTranslate = baseTranslate + deltaX;
             
-            // 🌟【精細微調】：為 deltaX 乘以 0.8 的物理阻尼，讓手指按住拖曳時有很高階的絲滑厚重感
+            // 💡 修正點：只宣告一次，並完美融合物理阻尼
             let currentTranslate = baseTranslate + (deltaX * 0.8);
             
             accTrack.style.transform = `translateX(${currentTranslate}px)`;
