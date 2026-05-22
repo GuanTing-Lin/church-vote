@@ -2774,29 +2774,29 @@ function handleWarmStartInstantNavigation(urlStr) {
 }
 
 // =========================================================================
-// 💧 終極完全體：導覽列 GPU 3D 放大鏡效果 (智慧跨頁變色 + 完美收縮防死鎖版)
+// 💧 終極完全體：導覽列 GPU 3D 放大鏡效果 (智慧跨頁變色 + 點擊免劫持鎖死版)
 // =========================================================================
 function initNavTouchTracking() {
     const navBlock = document.getElementById('bottom-nav-block');
     const indicator = document.getElementById('nav-indicator');
     if (!navBlock || !indicator) return;
 
-    // 💡 調整位置二：加強版果凍效應與水波漣漪震幅參數 (純 GPU 3D 矩陣形變)
+    // 💡 調整位置二：果凍效應與水波漣漪震幅參數 (純 GPU 3D 矩陣形變)
     if (!document.getElementById('liquid-jelly-style')) {
         const style = document.createElement('style');
         style.id = 'liquid-jelly-style';
         style.innerHTML = `
             @keyframes liquidJellyBouncePop {
-                0% { transform: scale3d(1.02, 1.15, 1); }
-                /* 🌟 果凍震幅加強：X 軸拉寬至 1.16、Y 軸壓扁至 0.84，大拇指放開時的Q彈震顫感會非常明顯 */
-                22% { transform: scale3d(1.16, 0.84, 1); } 
-                /* 🌟 水波漣漪加強：Y 軸反彈拉高至 1.12，創造上下強烈凸出黑框的波紋體感 */
-                50% { transform: scale3d(0.92, 1.12, 1); }    
-                /* 二次微幅細震 */
-                78% { transform: scale3d(1.02, 0.98, 1); }
+                0% { transform: scale3d(1.01, 1.06, 1); }
+                /* 🌟 縮小震幅微調：X軸拉寬縮減至 1.10、Y軸壓扁縮減至 0.90，去除突兀膨脹感 */
+                20% { transform: scale3d(1.10, 0.90, 1); } 
+                /* 🌟 縱向反彈優化：拉高收斂至 1.04，優雅微幅衝出邊框 */
+                45% { transform: scale3d(0.97, 1.04, 1); }    
+                70% { transform: scale3d(1.01, 0.99, 1); }
                 100% { transform: scale3d(1, 1, 1); }                  
             }
-            .liquid-bounce-jelly { animation: liquidJellyBouncePop 0.65s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+            /* 💡 絕殺機器人卡頓感：改用 linear 線性過渡，讓多階段形變絲滑融黏銜接，還原液態體感 */
+            .liquid-bounce-jelly { animation: liquidJellyBouncePop 0.58s linear forwards; }
         `;
         document.head.appendChild(style);
     }
@@ -2808,7 +2808,7 @@ function initNavTouchTracking() {
     let touchedTab = null;
     
     let transitionStart = 0;
-    let currentDuration = 600;
+    let currentDuration = 720;
 
     // 智慧型即時座標追蹤雷達：高頻捕捉水滴當前真實位置，命令沿途經過的頁籤變色
     function runLiveTabsTracking() {
@@ -2841,7 +2841,8 @@ function initNavTouchTracking() {
                 }
             });
             closestTab.classList.add('active');
-            closestTab.style.transform = 'scale3d(1.02, 1.10, 1)';
+            // 🌟 參數 2 微調：中間路過的分頁字體膨脹率同步收斂至內斂的 1.06
+            closestTab.style.transform = 'scale3d(1.01, 1.06, 1)';
             closestTab.style.transition = 'transform 0.15s ease';
         }
         
@@ -2881,17 +2882,18 @@ function initNavTouchTracking() {
         startX = touchX;
         originLeft = touchedTab.offsetLeft;
         originWidth = touchedTab.offsetWidth;
-        isTracking = false;
+        isTracking = false; // 💡 關鍵重置：初始預設為點擊狀態，直到移動超過閥值才解鎖滑動狀態
 
         indicator.classList.remove('liquid-bounce-jelly');
         
-        // 💡 調整位置一 (A)：點擊時水滴移動速度。改為 0.38s，手感敏捷吸附
-        indicator.style.transition = 'left 0.38s cubic-bezier(0.19, 1, 0.22, 1), width 0.38s cubic-bezier(0.19, 1, 0.22, 1)';
+        // 💡 調整位置一 (A)：點擊時水滴移動速度。維持 0.42s 絲滑巡航
+        indicator.style.transition = 'left 0.42s cubic-bezier(0.19, 1, 0.22, 1), width 0.42s cubic-bezier(0.19, 1, 0.22, 1)';
         indicator.style.left = originLeft + 'px';
         indicator.style.width = originWidth + 'px';
-        indicator.style.transform = 'scale3d(1.02, 1.10, 1)'; 
+        // 🌟 參數 2 微調：內部水滴按壓放大比例收斂至精緻的 1.06
+        indicator.style.transform = 'scale3d(1.01, 1.06, 1)'; 
 
-        startLiveTracking(380);
+        startLiveTracking(420);
     }, { passive: true });
 
     navBlock.addEventListener('touchmove', (e) => {
@@ -2899,11 +2901,15 @@ function initNavTouchTracking() {
         let currentX = e.touches[0].clientX;
         let deltaX = currentX - startX;
 
+        // 手指真的嚕動超過 5px，才正式解鎖並判定為「滑動拖曳狀態」
         if (!isTracking && Math.abs(deltaX) > 5) {
             isTracking = true;
+            // 🌟 參數 1 微調：外殼導覽列整體放大比例微調收斂至極其內斂精緻的 1.015
             navBlock.style.transition = 'transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
             navBlock.style.transform = 'scale(1.015)';
         }
+
+        if (!isTracking) return;
 
         indicator.style.transition = 'none';
 
@@ -2921,7 +2927,7 @@ function initNavTouchTracking() {
         indicator.style.bottom = '-6px'; 
         indicator.style.left = currentLeft + 'px';
         indicator.style.width = originWidth + 'px';
-        indicator.style.transform = 'scale3d(1.02, 1.10, 1)'; 
+        indicator.style.transform = 'scale3d(1.01, 1.06, 1)'; 
 
         indicator.style.background = 'radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.15) 50%, rgba(59, 208, 175, 0.04) 100%)';
         indicator.style.border = '1.5px solid rgba(255, 255, 255, 0.8)';
@@ -2951,7 +2957,7 @@ function initNavTouchTracking() {
         
         if (closestTab) {
             closestTab.classList.add('active');
-            closestTab.style.transform = 'scale3d(1.02, 1.10, 1)'; 
+            closestTab.style.transform = 'scale3d(1.01, 1.06, 1)'; 
         }
     }, { passive: true });
 
@@ -2967,11 +2973,9 @@ function initNavTouchTracking() {
             tab.style.transition = '';
         });
 
-        // 💡 調整位置一 (B)：點擊最遠分頁或放開大拇指時的「橫向滑行速度」。
-        // 從原本的 0.52s 放慢調校至 0.65s (650毫秒)！這時間能讓你看清完整的橫向流體軌跡，又絕對不發飄、不拖泥帶水！
-        indicator.style.transition = 'left 0.65s cubic-bezier(0.19, 1, 0.22, 1), width 0.65s cubic-bezier(0.19, 1, 0.22, 1)'; 
+        // 💡 調整位置一 (B)：放開大拇指時的「橫向滑行速度」。維持 0.72s 優雅放慢呈現完整軌跡
+        indicator.style.transition = 'left 0.72s cubic-bezier(0.19, 1, 0.22, 1), width 0.72s cubic-bezier(0.19, 1, 0.22, 1)'; 
         
-        // 🌟【核心解鎖修正】：放開手瞬間，立刻強制清空 inline 的縮放與外擴佈局，完全移交給獨立的 GPU 動畫層！
         indicator.style.top = '';    
         indicator.style.bottom = '';
         indicator.style.transform = '';
@@ -2980,18 +2984,24 @@ function initNavTouchTracking() {
         indicator.style.border = '';
         indicator.style.boxShadow = '';
         
-        const finalActiveTab = navBlock.querySelector('.nav-item.active') || touchedTab;
+        // 🌟【核心解鎖修正】：如果使用者是純點擊（isTracking 為 false），100% 繞過雷達劫持，直接精準翻到當初點選的 touchedTab！
+        const finalActiveTab = isTracking ? (navBlock.querySelector('.nav-item.active') || touchedTab) : touchedTab;
+        
         if (finalActiveTab) {
             let targetView = finalActiveTab.id.replace('tab-', '');
             indicator.style.left = finalActiveTab.offsetLeft + 'px';
             indicator.style.width = finalActiveTab.offsetWidth + 'px';
-            switchView(targetView); 
+            
+            // 強制修正最終高亮狀態
+            tabs.forEach(tab => tab.classList.remove('active'));
+            finalActiveTab.classList.add('active');
+            
+            switchView(targetView); // 正式換頁
         }
         
-        // 啟動 650 毫秒的沿途經過分頁變色追蹤
-        startLiveTracking(650);
+        startLiveTracking(720);
         
-        // 觸發完全獨立運作、拒絕與轉場相衝的硬體加速果凍特效
+        // 觸發全新經由 GPU 改裝、極致絲滑無阻力的物理果凍波紋
         indicator.classList.add('liquid-bounce-jelly');
         touchedTab = null; 
     }
