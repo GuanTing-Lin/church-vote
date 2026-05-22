@@ -2764,12 +2764,12 @@ function pushSingleNotice(noticeId, btn) {
 }
 
 // =========================================================================
-// 💬 留言深層連結雷達：全自動跨頁搜尋、遞迴展開、絲滑置中與高亮系統 (實體分頁校正版)
+// 💬 留言深層連結雷達：全自動跨頁搜尋、遞迴展開、絲滑置中 (純淨無高亮版)
 // =========================================================================
 function handleMessageDeepLink(msgId) {
     if (!msgId) return;
 
-    // 1. 🌟【精準修正】：分頁 ID 必須是 'board'，完美對齊 index.html 的 view-board！
+    // 1. 分頁 ID 必須是 'board'，完美對齊 index.html 的 view-board！
     if (typeof switchView === 'function') {
         switchView('board'); 
     }
@@ -2778,24 +2778,15 @@ function handleMessageDeepLink(msgId) {
     const maxPages = 25; // 安全防護
 
     function findAndScroll() {
-        // 🌟【精準修正】：透過前面綁定的 data-msg-id 進行絕對精準捕捉
+        // 透過 data-msg-id 進行絕對精準捕捉
         const targetCard = document.querySelector(`[data-msg-id="${msgId}"]`);
         
         if (targetCard) {
-            console.log("🎯 智慧雷達成功捕獲目標留言！執行流暢置中與高亮特效:", msgId);
+            console.log("🎯 智慧雷達成功捕獲目標留言！執行純淨平滑置中:", msgId);
             
+            // 🌟 移除橘色底色與放大過場，僅保留最高階純淨的 scrollIntoView 絲滑靠站
             setTimeout(() => {
                 targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                
-                // 注入精緻的暖橘色高亮動態閃爍
-                targetCard.style.transition = 'background-color 0.4s ease, transform 0.4s ease';
-                targetCard.style.backgroundColor = 'rgba(249, 168, 38, 0.25)'; 
-                targetCard.style.transform = 'scale(1.025)';
-                
-                setTimeout(() => {
-                    targetCard.style.backgroundColor = '';
-                    targetCard.style.transform = '';
-                }, 2500);
             }, 350);
 
             // 成功就位後清理網址參數

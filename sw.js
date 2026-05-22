@@ -76,32 +76,35 @@ self.addEventListener('notificationclick', function(event) {
             if (!targetClient && windowClients.length > 0) targetClient = windowClients[0];
 
             // =========================================================================
-            // 🌟 完美對齊 LINE 流程：熱啟動（App活在背景）絕不重新整理網頁，改用高頻 Intent 轟炸
+            // 🌟 完美對齊 LINE 流程：熱啟動（App活在背景）全防護 Intent 衝擊波防死鎖版
             // =========================================================================
             if (targetClient && 'focus' in targetClient) {
                 console.log("🎯 [熱啟動喚醒] 偵測到背景 PWA，執行 100% 零刷新直達導航...");
                 
                 // 1. 先把網頁拉回前景
                 return targetClient.focus().then(function(focusedClient) {
-                    // 2. 🚀【Intent 衝擊波迴圈】：為了對抗手機硬體解凍 JavaScript 的時間差
-                    // 我們在 1 秒內以極高頻率（每 80 毫秒）連續轟炸發射 12 次 postMessage
-                    // 網頁不論在第幾毫秒清醒，都一定會無縫咬合接到參數，原地秒轉，完全不用重新整理！
-                    var attempts = 0;
-                    var maxAttempts = 12;
-                    
-                    function blastIntentLoop() {
-                        if (attempts >= maxAttempts) return;
-                        if (focusedClient && 'postMessage' in focusedClient) {
-                            focusedClient.postMessage({
-                                action: 'urlNotificationClicked',
-                                url: baseUrl
-                            });
+                    // 2. 🚀【生命週期鎖定】：用 Promise 強制留住 Service Worker 的呼吸，確保 12 次高頻轟炸絕對不被系統中途掐死！
+                    return new Promise(function(resolve) {
+                        var attempts = 0;
+                        var maxAttempts = 12;
+                        
+                        function blastIntentLoop() {
+                            if (attempts >= maxAttempts) {
+                                resolve(); // 12次發射完畢，這時才允許 Service Worker 休息關閉
+                                return;
+                            }
+                            if (focusedClient && 'postMessage' in focusedClient) {
+                                focusedClient.postMessage({
+                                    action: 'urlNotificationClicked',
+                                    url: baseUrl
+                                });
+                            }
+                            attempts++;
+                            setTimeout(blastIntentLoop, 80); // 每 80 毫秒發射一次，完美覆蓋整段解凍期
                         }
-                        attempts++;
-                        setTimeout(blastIntentLoop, 80); // 每 80 毫秒發射一次，完美覆蓋整段解凍安全期
-                    }
-                    
-                    blastIntentLoop(); // 轟炸引爆
+                        
+                        blastIntentLoop(); // 轟炸引爆
+                    });
                 });
             }
             
