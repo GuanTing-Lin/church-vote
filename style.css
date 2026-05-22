@@ -1,4 +1,3 @@
-
 /* ==================================================
    1. 基礎設定與動畫
    ================================================== */
@@ -257,23 +256,27 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 
     pointer-events: none; 
     display: none; 
 }
-/* 🌟 完整替換原本的 .nav-indicator */
+/* 🌟 找到 style.css 中的 .nav-indicator，精準覆蓋 transition 這行，其餘完全保留 */
 .nav-indicator { 
     position: absolute; 
-    top: 5px; 
-    bottom: 5px; 
+    top: 5px;     
+    bottom: 5px;  
     left: 0; 
     width: 0; 
-    background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.9) 0%, rgba(59, 208, 175, 0.3) 100%); 
-    backdrop-filter: blur(5px) saturate(160%); 
-    -webkit-backdrop-filter: blur(5px) saturate(160%); 
+    background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.95) 0%, rgba(59, 208, 175, 0.25) 100%); 
+    backdrop-filter: blur(6px) saturate(160%); 
+    -webkit-backdrop-filter: blur(6px) saturate(160%); 
     border-radius: 30px; 
     z-index: 0; 
-    /* 🌟【核心修改】：換上高階彈簧物理曲線，左右移動時自帶極強的水滴「ㄉㄨㄞ」回彈特效 */
-    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.45, 1.4); 
+    
+    /* 🌟【收斂修正】：第四個參數下調至 1.05！完美限制大範圍跳轉時不自然的甩尾，吸附手感更自然精準 */
+    transition: all 0.42s cubic-bezier(0.175, 0.885, 0.4, 1.05); 
+    
     pointer-events: none; 
     border: 1px solid rgba(255,255,255,0.6); 
     box-shadow: inset 0 1px 2px rgba(255,255,255,1), inset 0 -2px 5px rgba(32, 160, 133, 0.1), 0 4px 15px rgba(59, 208, 175, 0.1); 
+    will-change: left, width, top, bottom, transform;
+    transform-origin: center center;
 }
 .nav-item { 
     position: relative; 
