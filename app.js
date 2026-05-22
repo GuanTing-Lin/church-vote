@@ -2774,7 +2774,7 @@ function handleWarmStartInstantNavigation(urlStr) {
 }
 
 // =========================================================================
-// 💧 終極完全體：導覽列 GPU 3D 放大鏡效果 (智慧跨頁變色 + 點擊免劫持鎖死版)
+// 💧 終極完全體：導覽列 GPU 3D 放大鏡效果 (中途路過只變色、就位才果凍Q彈版)
 // =========================================================================
 function initNavTouchTracking() {
     const navBlock = document.getElementById('bottom-nav-block');
@@ -2787,16 +2787,14 @@ function initNavTouchTracking() {
         style.id = 'liquid-jelly-style';
         style.innerHTML = `
             @keyframes liquidJellyBouncePop {
-                0% { transform: scale3d(1.01, 1.06, 1); }
-                /* 🌟 縮小震幅微調：X軸拉寬縮減至 1.10、Y軸壓扁縮減至 0.90，去除突兀膨脹感 */
-                20% { transform: scale3d(1.10, 0.90, 1); } 
-                /* 🌟 縱向反彈優化：拉高收斂至 1.04，優雅微幅衝出邊框 */
-                45% { transform: scale3d(0.97, 1.04, 1); }    
-                70% { transform: scale3d(1.01, 0.99, 1); }
+                0% { transform: scale3d(1, 1, 1); }
+                /* 🌟 完美的果凍反彈：大拇指放開就位時，才觸發一次 0.5 秒的橫壓縱彈 */
+                22% { transform: scale3d(1.10, 0.90, 1); } 
+                50% { transform: scale3d(0.96, 1.05, 1); }    
+                78% { transform: scale3d(1.01, 0.99, 1); }
                 100% { transform: scale3d(1, 1, 1); }                  
             }
-            /* 💡 絕殺機器人卡頓感：改用 linear 線性過渡，讓多階段形變絲滑融黏銜接，還原液態體感 */
-            .liquid-bounce-jelly { animation: liquidJellyBouncePop 0.58s linear forwards; }
+            .liquid-bounce-jelly { animation: liquidJellyBouncePop 0.5s linear forwards; }
         `;
         document.head.appendChild(style);
     }
@@ -2841,8 +2839,8 @@ function initNavTouchTracking() {
                 }
             });
             closestTab.classList.add('active');
-            // 🌟 參數 2 微調：中間路過的分頁字體膨脹率同步收斂至內斂的 1.06
-            closestTab.style.transform = 'scale3d(1.01, 1.06, 1)';
+            // 中途路過的頁籤只會等比微幅放大 1.04 倍（放大鏡效果），不觸發上下跳動
+            closestTab.style.transform = 'scale3d(1.01, 1.04, 1)';
             closestTab.style.transition = 'transform 0.15s ease';
         }
         
@@ -2882,16 +2880,16 @@ function initNavTouchTracking() {
         startX = touchX;
         originLeft = touchedTab.offsetLeft;
         originWidth = touchedTab.offsetWidth;
-        isTracking = false; // 💡 關鍵重置：初始預設為點擊狀態，直到移動超過閥值才解鎖滑動狀態
+        isTracking = false; 
 
+        // 🌟 核心修正一：按下去瞬間立刻拔除任何果凍動畫類別，確保滑動途中水滴絕對安穩
         indicator.classList.remove('liquid-bounce-jelly');
         
-        // 💡 調整位置一 (A)：點擊時水滴移動速度。維持 0.42s 絲滑巡航
+        // 💡 調整位置一 (A)：點擊時水滴移動速度維持 0.42s
         indicator.style.transition = 'left 0.42s cubic-bezier(0.19, 1, 0.22, 1), width 0.42s cubic-bezier(0.19, 1, 0.22, 1)';
         indicator.style.left = originLeft + 'px';
         indicator.style.width = originWidth + 'px';
-        // 🌟 參數 2 微調：內部水滴按壓放大比例收斂至精緻的 1.06
-        indicator.style.transform = 'scale3d(1.01, 1.06, 1)'; 
+        indicator.style.transform = 'scale3d(1.01, 1.06, 1)'; // 按壓滑動時的高度微幅外溢放大鏡
 
         startLiveTracking(420);
     }, { passive: true });
@@ -2901,16 +2899,15 @@ function initNavTouchTracking() {
         let currentX = e.touches[0].clientX;
         let deltaX = currentX - startX;
 
-        // 手指真的嚕動超過 5px，才正式解鎖並判定為「滑動拖曳狀態」
         if (!isTracking && Math.abs(deltaX) > 5) {
             isTracking = true;
-            // 🌟 參數 1 微調：外殼導覽列整體放大比例微調收斂至極其內斂精緻的 1.015
             navBlock.style.transition = 'transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
             navBlock.style.transform = 'scale(1.015)';
         }
 
         if (!isTracking) return;
 
+        // 手指手動盲滑中，完全拔除轉場，1:1 零延遲黏手
         indicator.style.transition = 'none';
 
         let currentLeft = originLeft + deltaX;
@@ -2973,9 +2970,10 @@ function initNavTouchTracking() {
             tab.style.transition = '';
         });
 
-        // 💡 調整位置一 (B)：放開大拇指時的「橫向滑行速度」。維持 0.72s 優雅放慢呈現完整軌跡
+        // 💡 調整位置一 (B)：放開大拇指或直接點選時的「橫向滑行速度」維持 0.72s
         indicator.style.transition = 'left 0.72s cubic-bezier(0.19, 1, 0.22, 1), width 0.72s cubic-bezier(0.19, 1, 0.22, 1)'; 
         
+        // 🌟 核心修正二：放開手滑動途中，頂底與縮放全部清空，只保留給最終就位時的果凍動畫，中途絕不跳動！
         indicator.style.top = '';    
         indicator.style.bottom = '';
         indicator.style.transform = '';
@@ -2984,7 +2982,6 @@ function initNavTouchTracking() {
         indicator.style.border = '';
         indicator.style.boxShadow = '';
         
-        // 🌟【核心解鎖修正】：如果使用者是純點擊（isTracking 為 false），100% 繞過雷達劫持，直接精準翻到當初點選的 touchedTab！
         const finalActiveTab = isTracking ? (navBlock.querySelector('.nav-item.active') || touchedTab) : touchedTab;
         
         if (finalActiveTab) {
@@ -2992,17 +2989,20 @@ function initNavTouchTracking() {
             indicator.style.left = finalActiveTab.offsetLeft + 'px';
             indicator.style.width = finalActiveTab.offsetWidth + 'px';
             
-            // 強制修正最終高亮狀態
             tabs.forEach(tab => tab.classList.remove('active'));
             finalActiveTab.classList.add('active');
             
-            switchView(targetView); // 正式換頁
+            switchView(targetView); 
         }
         
         startLiveTracking(720);
         
-        // 觸發全新經由 GPU 改裝、極致絲滑無阻力的物理果凍波紋
-        indicator.classList.add('liquid-bounce-jelly');
+        // 🌟 核心修正三：利用 setTimeout 強制在 0.72 秒橫向滑行「完全抵達終點」的剎那，才精準掛上果凍類別！
+        // 這樣水滴在半路上只會像一顆通透的水晶球平滑游過去，到了終點才會軟Q地「ㄉㄨㄞ」震動，完美解決卡頓！
+        setTimeout(() => {
+            indicator.classList.add('liquid-bounce-jelly');
+        }, 720);
+        
         touchedTab = null; 
     }
 
