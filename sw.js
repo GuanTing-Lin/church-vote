@@ -48,7 +48,6 @@ self.addEventListener('push', function(event) {
     } catch (e) {}
 });
 
-// 🌟 完整替換 sw.js 最底部的 notificationclick 監聽器
 self.addEventListener('notificationclick', function(event) {
     event.notification.close();
     
@@ -76,23 +75,20 @@ self.addEventListener('notificationclick', function(event) {
             }
             if (!targetClient && windowClients.length > 0) targetClient = windowClients[0];
 
-            if (targetClient && 'focus' in targetClient) {
-                // 🌟【絕殺修改】：先呼叫 focus() 叫醒網頁，逼 iOS 解凍 JavaScript 執行緒
-                return targetClient.focus().then(function() {
-                    return new Promise(function(resolve) {
-                        // 延遲 300 毫秒等網頁靈魂完全歸位，確保不漏接訊息
-                        setTimeout(function() {
-                            // 🌟【解鎖核心】：全面廣播！對所有控制下的視窗投遞跳轉指令
-                            // 如此一來，不論通知從哪裡發出，背景的 PWA 都絕對能即時收到訊號！
-                            windowClients.forEach(function(client) {
-                                if (client && 'postMessage' in client) {
-                                    client.postMessage({ action: 'urlNotificationClicked', url: baseUrl });
-                                }
-                            });
-                            resolve();
-                        }, 300);
-                    });
+            // 🌟 完美對齊 LINE 流程：如果 App 活在背景（熱啟動），直接將參數以 URL Intent 形式注入導航
+            if (targetClient && 'navigate' in targetClient && 'focus' in targetClient) {
+                console.log("🎯 [熱啟動喚醒] 發現背景程序，精準注入 URL Intent 導航:", baseUrl);
+                
+                // 1. 強制讓背景網頁直接跳轉至帶有新通知參數的網址（100% 絕不丟包）
+                return targetClient.navigate(baseUrl).then(function(navigatedClient) {
+                    // 2. 導航完成的瞬間，立刻將視窗拉回前景呈現給組員（直達指定頁面）
+                    return navigatedClient.focus();
                 });
+            }
+            
+            // 如果完全沒有開啟任何視窗（冷啟動），維持原樣開新視窗
+            if (clients.openWindow) {
+                return clients.openWindow(baseUrl);
             }
             
             // 如果完全沒有開啟任何視窗（冷啟動），照常開新視窗
