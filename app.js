@@ -2773,25 +2773,30 @@ function handleWarmStartInstantNavigation(urlStr) {
     } catch (e) { console.error("熱啟動秒轉定位失敗:", e); }
 }
 
-// 3. 導覽列 3D 放大鏡效果與液態水滴物理系統
+// =========================================================================
+// 💧 終極完全體：導覽列 GPU 3D 放大鏡效果 (智慧跨頁變色 + 完美收縮防死鎖版)
+// =========================================================================
 function initNavTouchTracking() {
     const navBlock = document.getElementById('bottom-nav-block');
     const indicator = document.getElementById('nav-indicator');
     if (!navBlock || !indicator) return;
 
-    // 智慧動態注入 3D 縱向超溢反彈特效樣式
-    if (!document.getElementById('liquid-spring-style')) {
+    // 💡 調整位置二：加強版果凍效應與水波漣漪震幅參數 (純 GPU 3D 矩陣形變)
+    if (!document.getElementById('liquid-jelly-style')) {
         const style = document.createElement('style');
-        style.id = 'liquid-spring-style';
+        style.id = 'liquid-jelly-style';
         style.innerHTML = `
-            @keyframes liquidMagnifyBounce {
-                0% { transform: scale(1.12); top: -6px; bottom: -6px; }
-                30% { transform: scale(1.20) scaleX(0.94); top: -4px; bottom: -4px; } 
-                55% { transform: scale(0.92) scaleX(1.04); top: 5px; bottom: 5px; }    
-                75% { transform: scale(1.02) scaleX(0.99); top: 4.8px; bottom: 4.8px; }
-                100% { transform: scale(1); top: 5px; bottom: 5px; }                  
+            @keyframes liquidJellyBouncePop {
+                0% { transform: scale3d(1.02, 1.15, 1); }
+                /* 🌟 果凍震幅加強：X 軸拉寬至 1.16、Y 軸壓扁至 0.84，大拇指放開時的Q彈震顫感會非常明顯 */
+                22% { transform: scale3d(1.16, 0.84, 1); } 
+                /* 🌟 水波漣漪加強：Y 軸反彈拉高至 1.12，創造上下強烈凸出黑框的波紋體感 */
+                50% { transform: scale3d(0.92, 1.12, 1); }    
+                /* 二次微幅細震 */
+                78% { transform: scale3d(1.02, 0.98, 1); }
+                100% { transform: scale3d(1, 1, 1); }                  
             }
-            .liquid-bounce-active { animation: liquidMagnifyBounce 0.5s cubic-bezier(0.175, 0.885, 0.45, 1.65) forwards; }
+            .liquid-bounce-jelly { animation: liquidJellyBouncePop 0.65s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
         `;
         document.head.appendChild(style);
     }
@@ -2800,39 +2805,110 @@ function initNavTouchTracking() {
     let originLeft = 0;
     let originWidth = 0;
     let isTracking = false;
-    let activeTab = null;
+    let touchedTab = null;
+    
+    let transitionStart = 0;
+    let currentDuration = 600;
+
+    // 智慧型即時座標追蹤雷達：高頻捕捉水滴當前真實位置，命令沿途經過的頁籤變色
+    function runLiveTabsTracking() {
+        if (!indicator || !navBlock) return;
+        
+        let indRect = indicator.getBoundingClientRect();
+        let indCenter = indRect.left + (indRect.width / 2);
+        
+        let navRect = navBlock.getBoundingClientRect();
+        let relativeCenter = indCenter - navRect.left;
+        
+        const tabs = Array.from(navBlock.querySelectorAll('.nav-item'));
+        let closestTab = null;
+        let minDistance = Infinity;
+        
+        tabs.forEach(tab => {
+            let tabCenter = tab.offsetLeft + (tab.offsetWidth / 2);
+            let dist = Math.abs(relativeCenter - tabCenter);
+            if (dist < minDistance) {
+                minDistance = dist;
+                closestTab = tab;
+            }
+        });
+        
+        if (closestTab) {
+            tabs.forEach(tab => {
+                if (tab !== closestTab) {
+                    tab.classList.remove('active');
+                    tab.style.transform = 'scale(1)';
+                }
+            });
+            closestTab.classList.add('active');
+            closestTab.style.transform = 'scale3d(1.02, 1.10, 1)';
+            closestTab.style.transition = 'transform 0.15s ease';
+        }
+        
+        if (Date.now() - transitionStart < currentDuration + 80) {
+            requestAnimationFrame(runLiveTabsTracking);
+        } else {
+            tabs.forEach(tab => { if(tab) tab.style.transform = ''; });
+        }
+    }
+
+    function startLiveTracking(duration) {
+        transitionStart = Date.now();
+        currentDuration = duration;
+        requestAnimationFrame(runLiveTabsTracking);
+    }
 
     navBlock.addEventListener('touchstart', (e) => {
-        activeTab = navBlock.querySelector('.nav-item.active');
-        if (!activeTab) return;
+        let touchX = e.touches[0].clientX;
+        let navRect = navBlock.getBoundingClientRect();
+        let relativeX = touchX - navRect.left;
+        
+        const tabs = Array.from(navBlock.querySelectorAll('.nav-item'));
+        touchedTab = navBlock.querySelector('.nav-item.active'); 
+        let minDistance = Infinity;
 
-        startX = e.touches[0].clientX;
-        originLeft = activeTab.offsetLeft;
-        originWidth = activeTab.offsetWidth;
+        tabs.forEach(tab => {
+            let tabCenter = tab.offsetLeft + (tab.offsetWidth / 2);
+            let dist = Math.abs(relativeX - tabCenter);
+            if (dist < minDistance) {
+                minDistance = dist;
+                touchedTab = tab;
+            }
+        });
+
+        if (!touchedTab) return;
+
+        startX = touchX;
+        originLeft = touchedTab.offsetLeft;
+        originWidth = touchedTab.offsetWidth;
         isTracking = false;
 
-        indicator.classList.remove('liquid-bounce-active');
+        indicator.classList.remove('liquid-bounce-jelly');
+        
+        // 💡 調整位置一 (A)：點擊時水滴移動速度。改為 0.38s，手感敏捷吸附
+        indicator.style.transition = 'left 0.38s cubic-bezier(0.19, 1, 0.22, 1), width 0.38s cubic-bezier(0.19, 1, 0.22, 1)';
+        indicator.style.left = originLeft + 'px';
+        indicator.style.width = originWidth + 'px';
+        indicator.style.transform = 'scale3d(1.02, 1.10, 1)'; 
+
+        startLiveTracking(380);
     }, { passive: true });
 
     navBlock.addEventListener('touchmove', (e) => {
+        if (!touchedTab) return;
         let currentX = e.touches[0].clientX;
         let deltaX = currentX - startX;
 
         if (!isTracking && Math.abs(deltaX) > 5) {
             isTracking = true;
-            
-            // 外殼導覽列外框放大比例維持 1.03 (精緻微幅果凍感)
             navBlock.style.transition = 'transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-            navBlock.style.transform = 'scale(1.03)';
-            
-            indicator.style.transition = 'none'; 
+            navBlock.style.transform = 'scale(1.015)';
         }
 
-        if (!isTracking) return;
+        indicator.style.transition = 'none';
 
         let currentLeft = originLeft + deltaX;
         
-        // 左右兩端邊界緊緻吸附限制
         let minLeft = 4;
         let maxLeft = navBlock.offsetWidth - originWidth - 4;
         if (currentLeft < minLeft) {
@@ -2841,26 +2917,21 @@ function initNavTouchTracking() {
             currentLeft = maxLeft + (currentLeft - maxLeft) * 0.12;
         }
 
-        // 按壓滑動中解鎖高通透水晶鏡面，上下強勢溢出
         indicator.style.top = '-6px';    
         indicator.style.bottom = '-6px'; 
         indicator.style.left = currentLeft + 'px';
         indicator.style.width = originWidth + 'px';
-        
-        // 🌟 參數確認：內部白色小水滴放大比例設定為你最喜歡的 1.12
-        indicator.style.transform = 'scale(1.12)'; 
+        indicator.style.transform = 'scale3d(1.02, 1.10, 1)'; 
 
-        // 保持鏡面高光折射質感
         indicator.style.background = 'radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.15) 50%, rgba(59, 208, 175, 0.04) 100%)';
         indicator.style.border = '1.5px solid rgba(255, 255, 255, 0.8)';
         indicator.style.boxShadow = '0 10px 25px rgba(0,0,0,0.1), inset 0 2px 4px rgba(255,255,255,0.95), 0 0 15px rgba(59, 208, 175, 0.35)';
 
-        // 項目等比放大鏡連動 (手指滑動時，文字圖示即時亮起變色並放大)
         let navRect = navBlock.getBoundingClientRect();
         let relativeX = currentX - navRect.left;
         const tabs = Array.from(navBlock.querySelectorAll('.nav-item'));
         
-        let closestTab = activeTab;
+        let closestTab = touchedTab;
         let minDistance = Infinity;
 
         tabs.forEach(tab => {
@@ -2875,51 +2946,54 @@ function initNavTouchTracking() {
         tabs.forEach(tab => {
             tab.classList.remove('active');
             tab.style.transform = 'scale(1)'; 
-            tab.style.transition = 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)';
+            tab.style.transition = 'transform 0.15s cubic-bezier(0.19, 1, 0.22, 1)';
         });
         
         if (closestTab) {
             closestTab.classList.add('active');
-            closestTab.style.transform = 'scale(1.12)'; 
+            closestTab.style.transform = 'scale3d(1.02, 1.10, 1)'; 
         }
     }, { passive: true });
 
     function handleTouchRelease() {
-        if (!isTracking) return;
-        isTracking = false;
+        if (!touchedTab) return;
 
-        // 還原外殼導覽列 1:1
-        navBlock.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.45, 1.5)';
+        navBlock.style.transition = 'transform 0.35s cubic-bezier(0.19, 1, 0.22, 1)';
         navBlock.style.transform = 'scale(1)';
 
-        // 釋放所有分頁按鈕的縮放狀態
         const tabs = Array.from(navBlock.querySelectorAll('.nav-item'));
         tabs.forEach(tab => {
             tab.style.transform = '';
             tab.style.transition = '';
         });
 
-        // 放開手指：掛回回彈曲線，水滴收縮，且 top/bottom 絲滑收納回框框內
-        indicator.style.transition = 'all 0.48s cubic-bezier(0.175, 0.885, 0.45, 1.65)';
-        indicator.style.transform = 'scale(1)';
-        indicator.style.top = '5px';    
-        indicator.style.bottom = '5px';
+        // 💡 調整位置一 (B)：點擊最遠分頁或放開大拇指時的「橫向滑行速度」。
+        // 從原本的 0.52s 放慢調校至 0.65s (650毫秒)！這時間能讓你看清完整的橫向流體軌跡，又絕對不發飄、不拖泥帶水！
+        indicator.style.transition = 'left 0.65s cubic-bezier(0.19, 1, 0.22, 1), width 0.65s cubic-bezier(0.19, 1, 0.22, 1)'; 
         
-        // 恢復預設 CSS 設定的清透底色
+        // 🌟【核心解鎖修正】：放開手瞬間，立刻強制清空 inline 的縮放與外擴佈局，完全移交給獨立的 GPU 動畫層！
+        indicator.style.top = '';    
+        indicator.style.bottom = '';
+        indicator.style.transform = '';
+        
         indicator.style.background = '';
         indicator.style.border = '';
         indicator.style.boxShadow = '';
         
-        indicator.classList.add('liquid-bounce-active');
-
-        // 根據最終高亮分頁執行無縫跳轉
-        const finalActiveTab = navBlock.querySelector('.nav-item.active') || activeTab;
+        const finalActiveTab = navBlock.querySelector('.nav-item.active') || touchedTab;
         if (finalActiveTab) {
             let targetView = finalActiveTab.id.replace('tab-', '');
             indicator.style.left = finalActiveTab.offsetLeft + 'px';
             indicator.style.width = finalActiveTab.offsetWidth + 'px';
-            switchView(targetView);
+            switchView(targetView); 
         }
+        
+        // 啟動 650 毫秒的沿途經過分頁變色追蹤
+        startLiveTracking(650);
+        
+        // 觸發完全獨立運作、拒絕與轉場相衝的硬體加速果凍特效
+        indicator.classList.add('liquid-bounce-jelly');
+        touchedTab = null; 
     }
 
     navBlock.addEventListener('touchend', handleTouchRelease, { passive: true });
