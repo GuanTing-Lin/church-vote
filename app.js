@@ -1,5 +1,49 @@
 // 🌟【終極優化】開機最頂端：立刻攔截並備份網址參數，防止後續被 LIFF 初始化或重導向機制抹除
 const earlyParams = new URLSearchParams(window.location.search);
+// =========================================================================
+// 🌐 PWA 全自動背景版本更新監聽系統 (防死鎖、就地自動無縫重載)
+// =========================================================================
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').then(reg => {
+            console.log('🤖 PWA Service Worker 核心防護載入成功');
+            
+            // 1. 隨時監聽是否有新寫好的 sw.js 進入安裝序列
+            reg.addEventListener('updatefound', () => {
+                const newWorker = reg.installing;
+                if (!newWorker) return;
+                newWorker.addEventListener('statechange', () => {
+                    // 當新版核心安裝完成，且當前已有舊核心在控制網頁時
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        console.log("✨ 偵測到伺服器有程式版本更新，啟動背景強制覆蓋...");
+                        // 發送指令給 sw.js 要求立刻跳過等待
+                        newWorker.postMessage({ action: 'skipWaiting' });
+                    }
+                });
+            });
+
+            // 🌟 額外加固：每次 App 從背景熱啟動解凍時，強迫 SW 向伺服器發射一次最新版號比對
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    reg.update().catch(e => console.log("靜態版號檢查暫時忙碌中"));
+                }
+            });
+
+        }).catch(err => console.error('PWA 註冊失敗:', err));
+    });
+
+    // 2. 核心換裝雷達：一旦新的 Service Worker 正式取得主導權，原地秒刷頁面吃進新程式碼
+    let isRefreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!isRefreshing) {
+            isRefreshing = true;
+            console.log("🔄 程式核心換裝完成，App 正在全自動無縫重載網頁...");
+            setTimeout(() => {
+                window.location.reload();
+            }, 300); // 給予 300 毫秒緩衝，確保檔案寫入完整
+        }
+    });
+}
 let urlParamsCache = {
     view: earlyParams.get('view'),
     msgId: earlyParams.get('msgId'),
