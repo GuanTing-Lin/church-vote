@@ -747,6 +747,10 @@ async function processLoadedData() {
         // 更新畫面
         if (activeConfigUpdates === 0) renderDynamicUI(data);
 
+        if (window.pendingMessageIntent) {
+            executePendingMessageIntent(window.pendingMessageIntent);
+        }
+
         // 完成初次載入
         if (isInitialLoad) {
             isInitialLoad = false;
@@ -2764,64 +2768,71 @@ function pushSingleNotice(noticeId, btn) {
 }
 
 // =========================================================================
-// 💬 留言深層連結雷達：全自動跨頁搜尋、遞迴展開、絲滑置中 (純淨無高亮版)
+// 💬 留言深層連結雷達：全自動意圖掛載、分頁精算、純淨置中系統 (絕殺時序衝突版)
 // =========================================================================
 function handleMessageDeepLink(msgId) {
     if (!msgId) return;
+    console.log("📋 [Intent Layer] 收到留言導流意圖，掛載至全域 Pending Intent:", msgId);
+    
+    // 1. 先將意圖登記在全域變數中
+    window.pendingMessageIntent = msgId;
+    
+    // 2. 立刻嘗試執行一次（如果網頁本來就是清醒的，此步就會秒轉成功）
+    executePendingMessageIntent(msgId);
+}
 
-    // 1. 分頁 ID 必須是 'board'，完美對齊 index.html 的 view-board！
+// 實體導航執行器：只在資料完全 Readiness 時由事件驅動，不使用 blind setTimeout
+function executePendingMessageIntent(msgId) {
+    if (!msgId || !allMessages || allMessages.length === 0) return;
+    
+    // 精準尋找該留言在目前已充水（Hydrated）陣列中的絕對索引位置
+    const idx = allMessages.findIndex(m => m.MsgID === msgId);
+    if (idx === -1) {
+        console.log("⏳ 雲端連線同步中，目前陣列尚未出現此 ID，靜態等待 Firebase 下一次值廣播...");
+        return;
+    }
+    
+    // 🌟【核心突破】：免去迴圈猜測！直接用數學公式精算它落在哪一頁
+    const targetPage = Math.ceil((idx + 1) / MSG_PER_PAGE);
+    if (currentMsgPage < targetPage) {
+        console.log(`📊 經精算該留言位於舊資料第 ${targetPage} 頁，立刻強制開展分頁面`);
+        currentMsgPage = targetPage;
+        renderMessagesPaginated(); // 瞬間為 DOM 注入正確數量的卡片結構
+    }
+    
+    // 成功捕獲並就位，立刻銷毀意圖鎖，防範高頻重複執行
+    window.pendingMessageIntent = null;
+    if (window.hasOwnProperty('lastProcessedMsgId')) {
+        window.lastProcessedMsgId = msgId;
+        setTimeout(() => { window.lastProcessedMsgId = null; }, 2000);
+    }
+    
+    // 絲滑切換分頁
     if (typeof switchView === 'function') {
-        switchView('board'); 
+        switchView('board');
     }
-
-    let checkCount = 0;
-    const maxPages = 25; // 安全防護
-
-    function findAndScroll() {
-        // 透過 data-msg-id 進行絕對精準捕捉
+    
+    // 給予 DOM 繪製的硬體微幅緩衝時間，隨後最高階純淨置中（無任何橘底與放大干擾）
+    setTimeout(() => {
         const targetCard = document.querySelector(`[data-msg-id="${msgId}"]`);
-        
         if (targetCard) {
-            console.log("🎯 智慧雷達成功捕獲目標留言！執行純淨平滑置中:", msgId);
-            
-            // 🌟 移除橘色底色與放大過場，僅保留最高階純淨的 scrollIntoView 絲滑靠站
-            setTimeout(() => {
-                targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 350);
-
-            // 成功就位後清理網址參數
-            const params = new URLSearchParams(window.location.search);
-            if (params.has('msgId')) {
-                params.delete('msgId');
-                const newSearch = params.toString() ? '?' + params.toString() : '';
-                window.history.replaceState({}, document.title, window.location.pathname + newSearch);
-            }
-            return;
+            targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-
-        // 2. 如果當前 DOM 找不到，代表在第 10 則之後，驅動分頁計數器自動往下翻頁
-        if (typeof currentMsgPage !== 'undefined' && typeof renderMessagesPaginated === 'function') {
-            if (checkCount < maxPages) {
-                console.log(`⏳ 當前頁面未見該留言，全自動往下展開第 ${currentMsgPage + 1} 頁...`);
-                checkCount++;
-                currentMsgPage++; 
-                renderMessagesPaginated(); // 觸發下一頁渲染
-                
-                // 給予瀏覽器 300 毫秒異步繪製時間，隨後再次遞迴尋找
-                setTimeout(findAndScroll, 300);
-            }
-        }
+    }, 320);
+    
+    // 清理網址列參數保持畫面乾淨
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('msgId')) {
+        params.delete('msgId');
+        const newSearch = params.toString() ? '?' + params.toString() : '';
+        window.history.replaceState({}, document.title, window.location.pathname + newSearch);
     }
-
-    // 啟動雷達
-    setTimeout(findAndScroll, 400);
 }
 
 // =========================================================================
 // 🚀 終極完全體整合：熱啟動優化、廣播監聽與 3D 全體同頻導覽列水滴系統
 // =========================================================================
 
-// 1. 監聽 App 熱啟動時的視窗清醒與歷史網址異動（冷熱啟動安全路由）
 document.addEventListener('visibilitychange', handleWarmStartNavigation);
 window.addEventListener('popstate', handleWarmStartNavigation);
 
@@ -2833,7 +2844,6 @@ function handleWarmStartNavigation() {
             const msgId = freshParams.get('msgId'); 
             
             if (noticeId) {
-                // 🌟【防重複鎖】：如果這則公告正在處理，直接攔截，2秒後解鎖
                 if (window.lastProcessedNoticeId === noticeId) return;
                 window.lastProcessedNoticeId = noticeId; 
                 setTimeout(() => { window.lastProcessedNoticeId = null; }, 2000);
@@ -2850,19 +2860,12 @@ function handleWarmStartNavigation() {
                 }, 450);
             } 
             else if (msgId) {
-                // 🌟【防重複鎖】：如果這則留言正在處理，直接攔截，2秒後解鎖
-                if (window.lastProcessedMsgId === msgId) return;
-                window.lastProcessedMsgId = msgId;
-                setTimeout(() => { window.lastProcessedMsgId = null; }, 2000);
-
-                console.log("🎯 偵測到熱啟動留言深層連結，執行定位:", msgId);
                 handleMessageDeepLink(msgId);
             }
         }, 150);
     }
 }
 
-// 2. 接收來自 Service Worker 的即時叫醒廣播訊號（免刷新秒轉定位完全體）
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('message', function(event) {
         if (event.data && event.data.action === 'urlNotificationClicked') {
@@ -2871,7 +2874,6 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// 熱啟動專屬秒轉器：100% 繞過重新整理，原地執行切頁、展開與滑動置中
 function handleWarmStartInstantNavigation(urlStr) {
     try {
         const url = new URL(urlStr);
@@ -2880,7 +2882,6 @@ function handleWarmStartInstantNavigation(urlStr) {
         const msgId = params.get('msgId'); 
 
         if (noticeId) {
-            // 🌟 絕殺高頻重複撞擊：2秒防護網
             if (window.lastProcessedNoticeId === noticeId) return;
             window.lastProcessedNoticeId = noticeId; 
             setTimeout(() => { window.lastProcessedNoticeId = null; }, 2000);
@@ -2895,13 +2896,7 @@ function handleWarmStartInstantNavigation(urlStr) {
             }, 300);
         } 
         else if (msgId) {
-            // 🌟 絕殺高頻重複撞擊：2秒防護網
-            if (window.lastProcessedMsgId === msgId) return;
-            window.lastProcessedMsgId = msgId;
-            setTimeout(() => { window.lastProcessedMsgId = null; }, 2000);
-            
-            console.log("📥 [熱啟動解凍成功] 順暢咬合 Intent 訊號，免刷新直達跳轉:", msgId);
-            handleMessageDeepLink(msgId); // 引爆分頁自動展開雷達
+            handleMessageDeepLink(msgId); 
         }
     } catch (e) { console.error("熱啟動秒轉定位失敗:", e); }
 }
