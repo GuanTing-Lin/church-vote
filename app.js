@@ -719,9 +719,6 @@ async function processLoadedData() {
     });
 }
 
-
-
-// 🌟 3. 在 processLoadedData 下方新增這個獨立的身分驗證抽離函數：
 function checkUserMemberStatus(data) {
     if (isProfileChecked) return; // 確保只執行一次
     isProfileChecked = true;
@@ -738,13 +735,27 @@ function checkUserMemberStatus(data) {
         currentUser.isVoted = true; currentUser.votedOption = 3; 
         vArray.push({ "LINEID": currentUser.id, "LINE名稱": currentUser.name, "AvatarUrl": currentUser.pictureUrl || "", "偏好行程": "無法參加(訪客查看)" });
         db.ref('members').set(vArray);
+        
+        // 🌟【重新接回你的設計】：全新訪客登入的瞬間，立刻同步將資料寫回 Google 試算表！
+        fetch(GAS_API_URL, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+            body: JSON.stringify({ 
+                action: "vote", 
+                userName: currentUser.name, 
+                userId: currentUser.id, 
+                pictureUrl: currentUser.pictureUrl || "", 
+                choice_trip: "無法參加(訪客查看)", 
+                time_opt1: "", 
+                time_opt2: "" 
+            }) 
+        }).catch(e => console.error("GAS 新訪客寫回失敗:", e));
     }
     
     // 關閉轉圈圈並解鎖
     document.getElementById('loading').style.display = 'none';
     document.getElementById('lock-screen').style.display = 'none'; 
 }
-
 
 function toggleMenu(event) { 
     event.stopPropagation(); 
@@ -958,6 +969,7 @@ function renderDynamicUI(data) {
         if (data.transport && data.transport.length > 0) {
             let carHtml = "";
             data.transport.forEach(car => {
+                if (!car) return; // 🌟 安全防護：跳過 Firebase 陣列空位
                 const driverName = car['Driver'] || '尚未指定';
                 const phone = car['Phone'] || '';
                 const passengersRaw = car['Passengers'] || '';
@@ -1021,6 +1033,7 @@ function renderDynamicUI(data) {
         if (data.bnbs && data.bnbs.length > 0) {
             let rulesHtml = ''; let roomsHtml = '';
             data.bnbs.forEach(item => {
+                if (!item) return; // 🌟 安全防護：跳過 Firebase 陣列空位
                 const type = item['類型'];
                 if (type === '注意事項') {
                     rulesHtml += `<div class="acc-rule-item"><div class="rule-icon">${item['標籤']}</div><div class="rule-text">${item['內容']}</div></div>`;
@@ -1052,23 +1065,22 @@ function renderDynamicUI(data) {
         if (data.itinerary && data.itinerary.length > 0) {
             let itinHtml = ""; let currentDay = "";
             data.itinerary.forEach(item => {
+                if (!item) return; // 🌟【關鍵安全鎖】：強勢攔截並跳過 Firebase 陣列 null 項目，絕不允許其發生中斷！
                 if (item.Day !== currentDay) { 
                     if(currentDay !== "") itinHtml += `</div></div>`; 
                     currentDay = item.Day; 
-                    // 確保前台顯示加上明確的日期
                     let displayDay = currentDay === "Day 2" ? "Day 2 - 06/28(日)" : "Day 1 - 06/27(六)";
                     itinHtml += `<div class="card"><h3 style="margin-top:0; color:var(--primary-orange); border-bottom:1px solid rgba(255,255,255,0.3); padding-bottom:12px; font-size: 16px;">${displayDay}</h3><div class="timeline">`; 
                 }
                 
-                // 🌟 核心：自動轉換 24 小時制為 12 小時制 (例如 15:00 -> 下午 3:00)
                 let timeStr = item.Time || "";
-                if (timeStr && !timeStr.includes('午')) { // 防呆：只有純數字才轉換
+                if (timeStr && !timeStr.includes('午')) { 
                     const parts = timeStr.split(':');
                     if (parts.length >= 2) {
                         let h = parseInt(parts[0], 10);
                         if (!isNaN(h)) {
                             let ampm = h >= 12 ? '下午' : '上午';
-                            h = h % 12 || 12; // 0點或12點會轉換為12
+                            h = h % 12 || 12; 
                             timeStr = `${ampm} ${h}:${parts[1]}`;
                         }
                     }
@@ -1084,15 +1096,28 @@ function renderDynamicUI(data) {
         if (data.checklist && data.checklist.length > 0) {
             checklistData = data.checklist;
             checklistData.forEach(cat => {
+                if (!cat) return; // 🌟 安全防護：跳過空物件
                 if (openCategories[cat.id] === undefined) openCategories[cat.id] = true; 
             });
         }
         
-        renderChecklist(); 
+        renderChecklist(); // 💡 成功保護：前面就算有空項目也不會卡死，這裡絕對可以順利執行繪製清單！
     }, 50);
 
     renderPeoplePage(data);
     renderFeesPage(data);
+}
+
+// 🌟 補回核心：車次滑塊控制函式（手機回歸原生極速貼邊滾動，電腦保留滑鼠拖曳，防止程式斷頭）
+function initCarGridDrag() {
+    const slider = document.querySelector('.car-grid');
+    if(!slider) return;
+    let isDown = false; let startX; let scrollLeft;
+
+    slider.addEventListener('mousedown', (e) => { isDown = true; window.isCarDragging = false; slider.style.cursor = 'grabbing'; startX = e.pageX - slider.offsetLeft; scrollLeft = slider.scrollLeft; });
+    slider.addEventListener('mouseleave', () => { isDown = false; slider.style.cursor = 'grab'; });
+    slider.addEventListener('mouseup', () => { isDown = false; slider.style.cursor = 'grab'; setTimeout(() => window.isCarDragging = false, 50); });
+    slider.addEventListener('mousemove', (e) => { if (!isDown) return; e.preventDefault(); window.isCarDragging = true; const x = e.pageX - slider.offsetLeft; const walk = (x - startX) * 1.5; slider.scrollLeft = scrollLeft - walk; });
 }
 
 function applyVisitorPermissions(cfg) {
@@ -2716,9 +2741,8 @@ function handleWarmStartNavigation() {
     }
 }
 
-
 // =========================================================================
-// 💧 終極完全體：導覽列 3D 放大鏡效果 (精緻收斂版：縮小外殼與水滴膨脹比例)
+// 💧 終極完全體：導覽列 3D 放大鏡效果 (精緻收斂版：修復比例錯位、加入防卡死監聽)
 // =========================================================================
 function initNavTouchTracking() {
     const navBlock = document.getElementById('bottom-nav-block');
@@ -2732,10 +2756,10 @@ function initNavTouchTracking() {
         style.innerHTML = `
             @keyframes liquidMagnifyBounce {
                 0% { transform: scale(1.12); top: -6px; bottom: -6px; }
-                30% { transform: scale(1.20) scaleX(0.94); top: -4px; bottom: -4px; } /* 🌟 參數調整：放開時的最高反彈從 1.35 降到 1.20 */
-                55% { transform: scale(0.92) scaleX(1.04); top: 5px; bottom: 5px; }    /* 縱向回彈擠壓微調 */
-                75% { transform: scale(1.02) scaleX(0.99); top: 4.8px; bottom: 4.8px; }/* 二次微幅反彈微調 */
-                100% { transform: scale(1); top: 5px; bottom: 5px; }                  /* 完美收回安全框內 */
+                30% { transform: scale(1.20) scaleX(0.94); top: -4px; bottom: -4px; } 
+                55% { transform: scale(0.92) scaleX(1.04); top: 5px; bottom: 5px; }    
+                75% { transform: scale(1.02) scaleX(0.99); top: 4.8px; bottom: 4.8px; }
+                100% { transform: scale(1); top: 5px; bottom: 5px; }                  
             }
             .liquid-bounce-active { animation: liquidMagnifyBounce 0.5s cubic-bezier(0.175, 0.885, 0.45, 1.65) forwards; }
         `;
@@ -2767,7 +2791,7 @@ function initNavTouchTracking() {
         if (!isTracking && Math.abs(deltaX) > 5) {
             isTracking = true;
             
-            // 🌟 參數 1 改動：整條導覽列外框放大比例從 1.06 縮小至 1.03 (微幅果凍感)
+            // 外殼導覽列外框放大比例維持 1.03 (精緻微幅果凍感)
             navBlock.style.transition = 'transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
             navBlock.style.transform = 'scale(1.03)';
             
@@ -2787,14 +2811,14 @@ function initNavTouchTracking() {
             currentLeft = maxLeft + (currentLeft - maxLeft) * 0.12;
         }
 
-        // 保持設定：按壓滑動中解鎖高通透水晶鏡面，上下強勢溢出
+        // 按壓滑動中解鎖高通透水晶鏡面，上下強勢溢出
         indicator.style.top = '-6px';    
         indicator.style.bottom = '-6px'; 
         indicator.style.left = currentLeft + 'px';
         indicator.style.width = originWidth + 'px';
         
-        // 🌟 參數 2 改動：內部白色小水滴放大比例從 1.22 縮小至 1.12
-        indicator.style.transform = 'scale(1.03)'; 
+        // 🌟【精準修正數值】：將先前誤貼成 1.03 的代碼，精確調整回你最喜歡的 1.12 水滴等比膨脹率！
+        indicator.style.transform = 'scale(1.12)'; 
 
         // 保持鏡面高光折射質感
         indicator.style.background = 'radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.15) 50%, rgba(59, 208, 175, 0.04) 100%)';
@@ -2826,11 +2850,12 @@ function initNavTouchTracking() {
         
         if (closestTab) {
             closestTab.classList.add('active');
-            closestTab.style.transform = 'scale(1.12)'; // 🌟 這裡同步調整為 1.12 配合水滴尺寸
+            closestTab.style.transform = 'scale(1.12)'; 
         }
     }, { passive: true });
 
-    navBlock.addEventListener('touchend', (e) => {
+    // 🌟【防卡死流體核心優化】：將重置邏輯獨立抽離成單一函式
+    function handleTouchRelease() {
         if (!isTracking) return;
         isTracking = false;
 
@@ -2866,5 +2891,9 @@ function initNavTouchTracking() {
             indicator.style.width = finalActiveTab.offsetWidth + 'px';
             switchView(targetView);
         }
-    }, { passive: true });
-}
+    }
+
+    navBlock.addEventListener('touchend', handleTouchRelease, { passive: true });
+    // 🌟【絕殺卡死監聽】：當手指移動觸發到網頁滾動、導致手勢被系統中斷時，強制立刻解鎖還原，水滴 100% 絕不卡死！
+    navBlock.addEventListener('touchcancel', handleTouchRelease, { passive: true });
+} // 💡 修正後：這裡乾乾淨淨地閉合，後面絕對沒有任何多餘的大括號了！
