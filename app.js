@@ -1878,8 +1878,8 @@ function initCarGridDrag() {
         if (!isDown) return;
         window.isCarDragging = true;
         const x = e.touches[0].pageX - slider.offsetLeft;
-        // 1.5 為跟手靈敏度阻尼，可以讓連續移動的阻力感更滑順
-        const walk = (x - startX) * 1.5; 
+        // 🌟【精細微調】：係數從 1.5 降到 0.9，增加精緻的划水阻尼感，不再發飄
+        const walk = (x - startX) * 0.9; 
         slider.scrollLeft = scrollLeft - walk;
     }, { passive: true });
 
@@ -2179,6 +2179,9 @@ function switchAccTab(tabId) {
             let trackWidth = accTrack.offsetWidth;
             let baseTranslate = -currentDomIndex * trackWidth;
             let currentTranslate = baseTranslate + deltaX;
+            
+            // 🌟【精細微調】：為 deltaX 乘以 0.8 的物理阻尼，讓手指按住拖曳時有很高階的絲滑厚重感
+            let currentTranslate = baseTranslate + (deltaX * 0.8);
             
             accTrack.style.transform = `translateX(${currentTranslate}px)`;
         }, { passive: true });
