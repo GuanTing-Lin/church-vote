@@ -750,18 +750,22 @@ body.no-scroll { overflow: hidden !important; }
     flex-shrink: 0;
 }
 
-
-/* ==================================================
-   🌟 新增：全域全面封鎖長按文字選取（絕殺網頁感，還原 App 盲滑手感）
-   ================================================== */
+/* =========================================================================
+   🌟 終極優化：全域全面封鎖長按文字選取 + 絕殺預設黑框灰色外殼 (App 化關鍵)
+   ========================================================================= */
 
 /* 1. 針對所有導覽、卡片與內容區塊，禁用長按選取文字與 iOS 放大鏡選單 */
-body, .container, .card, .bottom-nav, .notice-card-new, .section-title {
+body, .container, .card, .bottom-nav, .notice-card-new, .section-title, .nav-item, .nav-icon, #nav-indicator {
     -webkit-user-select: none;   /* Safari / iOS PWA 核心 */
     -moz-user-select: none;      /* Firefox */
     -ms-user-select: none;       /* IE / Edge */
     user-select: none;           /* 標準主流瀏覽器 */
     -webkit-touch-callout: none; /* 徹底禁用 iOS 長按連結或文字時跳出的原生彈窗/系統放大鏡 */
+    
+    /* 🌟【精準修正】徹底殺死行動裝置壓下去不放時，彈出的灰色陰影、黑色框框外殼與焦點光暈 */
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-focus-ring-color: transparent !important;
+    outline: none !important;
 }
 
 /* 🚨 2.【核心防護】必須強制允許所有輸入欄位與留言板進行文字反白與游標移動，否則會無法打字！ */

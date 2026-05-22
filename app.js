@@ -1329,6 +1329,7 @@ function unlockMainApp() {
         document.getElementById('bottom-blur-mask').style.display = 'none';
         document.getElementById('lock-screen').style.display = 'none';
         document.getElementById('guest-lock-screen').style.display = 'block';
+        document.getElementById('bottom-nav-block').style.display = 'flex';
         return; 
     }
     
@@ -1856,38 +1857,20 @@ async function saveChecklistBackground() {
 }
 
 // 🌟 完整替換 app.js 中的 initCarGridDrag 函數
+// 🌟 完整替換 app.js 中的 initCarGridDrag 函數：手機回歸原生貼邊滾動，電腦保留滑鼠拖曳
 function initCarGridDrag() {
     const slider = document.querySelector('.car-grid');
     if(!slider) return;
     let isDown = false; let startX; let scrollLeft;
 
-    // --- 💻 電腦滑鼠拖曳軌道 ---
+    // --- 💻 電腦滑鼠拖曳軌道 (繼續保留，方便桌面端盲滑) ---
     slider.addEventListener('mousedown', (e) => { isDown = true; window.isCarDragging = false; slider.style.cursor = 'grabbing'; startX = e.pageX - slider.offsetLeft; scrollLeft = slider.scrollLeft; });
     slider.addEventListener('mouseleave', () => { isDown = false; slider.style.cursor = 'grab'; });
     slider.addEventListener('mouseup', () => { isDown = false; slider.style.cursor = 'grab'; setTimeout(() => window.isCarDragging = false, 50); });
     slider.addEventListener('mousemove', (e) => { if (!isDown) return; e.preventDefault(); window.isCarDragging = true; const x = e.pageX - slider.offsetLeft; const walk = (x - startX) * 1.5; slider.scrollLeft = scrollLeft - walk; });
 
-    // --- 📱 新增：手機觸控即時連續跟手軌道（按住不放可無限連續推拉） ---
-    slider.addEventListener('touchstart', (e) => {
-        isDown = true;
-        window.isCarDragging = false;
-        startX = e.touches[0].pageX - slider.offsetLeft;
-        scrollLeft = slider.scrollLeft;
-    }, { passive: true });
-
-    slider.addEventListener('touchmove', (e) => {
-        if (!isDown) return;
-        window.isCarDragging = true;
-        const x = e.touches[0].pageX - slider.offsetLeft;
-        // 🌟【提高靈敏度微調】：係數提升到 1.4，讓車次推拉更加輕快流暢
-        const walk = x - startX; 
-        slider.scrollLeft = scrollLeft - walk;
-    }, { passive: true });
-
-    slider.addEventListener('touchend', () => {
-        isDown = false;
-        setTimeout(() => window.isCarDragging = false, 50);
-    }, { passive: true });
+    // 💡 修正點：徹底移除原先在手機端相衝的 touchstart / touchmove 監聽器。
+    // 這樣手持裝置就會完美走 CSS 的 -webkit-overflow-scrolling: touch 原生極速貼邊軌道，滑到底絕對不會再滑出空白！
 }
 
 async function toggleVotingLock(checkbox) {
@@ -2723,39 +2706,36 @@ function pushSingleNotice(noticeId, btn) {
     });
 }
 
+// =========================================================================
+// 🚀 核心優化：整合後的全新底欄 3D 放大鏡流體水滴系統 (去蕪存菁完全體)
+// =========================================================================
 
-// 🌟 完整覆蓋並閉合 app.js 最底部的殘缺段落
-// 熱啟動終極核心：當 App 從背景被叫醒（Visibility 轉為可見）或網址發生異動時，立刻活體解析參數跳轉
+// 1. 監聽 App 熱啟動時的視窗清醒與歷史網址異動
 document.addEventListener('visibilitychange', handleWarmStartNavigation);
 window.addEventListener('popstate', handleWarmStartNavigation);
 
 function handleWarmStartNavigation() {
     if (document.visibilityState === 'visible') {
-        // 給予 150ms 讓 iOS 系統與網頁完全解凍歸位
         setTimeout(() => {
             const freshParams = new URLSearchParams(window.location.search);
             const noticeId = freshParams.get('notice');
-
             if (noticeId) {
                 console.log("🎯 偵測到熱啟動公告通知，立刻執行滑動定位:", noticeId);
-                switchView('overview'); // 1. 瞬間切回首頁總覽
-
+                switchView('overview');
                 setTimeout(() => {
                     const card = document.getElementById('notice-card-' + noticeId);
                     if (card) {
-                        card.classList.add('expanded'); // 2. 自動展開全內文
-                        card.scrollIntoView({ behavior: 'smooth', block: 'center' }); // 3. 平滑滾動置中
-
-                        // 4. 清理網址列參數，避免重新整理時重複觸發
+                        card.classList.add('expanded');
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         window.history.replaceState({}, document.title, window.location.pathname + (freshParams.get('openExternalBrowser') ? '?openExternalBrowser=1' : ''));
                     }
-                }, 450); // 緩衝確保 Firebase 資料與 DOM 渲染就緒
+                }, 450);
             }
         }, 150);
     }
 }
 
-// 🌟 直接貼在 app.js 的最尾端（確保接在原有程式碼的大括號外面）
+// 2. 接收來自 Service Worker 的即時叫醒廣播訊號
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('message', function(event) {
         if (event.data && event.data.action === 'urlNotificationClicked') {
@@ -2765,146 +2745,44 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// 熱啟動專屬秒轉器：完全跳過 Loading 驗證畫面，原地執行切頁、展開與滑動置中
 function handleWarmStartInstantNavigation(urlStr) {
     try {
         const url = new URL(urlStr);
         const params = url.searchParams;
         const noticeId = params.get('notice');
-
         if (noticeId) {
-            window.lastProcessedNoticeId = noticeId; // 標記已處理，防止冷啟動衝突
-            switchView('overview'); // 1. 瞬間切回首頁總覽
-
+            window.lastProcessedNoticeId = noticeId;
+            switchView('overview');
             setTimeout(() => {
                 const card = document.getElementById('notice-card-' + noticeId);
                 if (card) {
-                    card.classList.add('expanded'); // 2. 自動展開全內文
-                    card.scrollIntoView({ behavior: 'smooth', block: 'center' }); // 3. 平滑滾動置中
+                    card.classList.add('expanded');
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
-            }, 300); // 給予 300 毫秒緩衝等待分頁 DOM 視圖響應切換
+            }, 300);
         }
     } catch (e) { console.error("熱啟動秒轉定位失敗:", e); }
 }
 
+// 3. 🌟 終極完全體：導覽列整體果凍放大 + 水滴 1:1 位移與即時變色高亮系統
 function initNavTouchTracking() {
     const navBlock = document.getElementById('bottom-nav-block');
     const indicator = document.getElementById('nav-indicator');
     if (!navBlock || !indicator) return;
 
-    let startX = 0;
-    let originLeft = 0;
-    let originWidth = 0;
-    let isTracking = false;
-    let activeTab = null;
-
-    navBlock.addEventListener('touchstart', (e) => {
-        activeTab = navBlock.querySelector('.nav-item.active');
-        if (!activeTab) return;
-
-        startX = e.touches[0].clientX;
-        originLeft = activeTab.offsetLeft;
-        originWidth = activeTab.offsetWidth;
-        isTracking = true;
-
-        // 瞬間拔除過渡動畫，讓果凍在拖曳時零延遲黏死手指
-        indicator.style.transition = 'none';
-    }, { passive: true });
-
-    navBlock.addEventListener('touchmove', (e) => {
-        if (!isTracking) return;
-
-        let currentX = e.touches[0].clientX;
-        let deltaX = currentX - startX;
-
-        // 💧【液態膠囊左右拉扯物理演算】
-        let newLeft = originLeft;
-        let newWidth = originWidth;
-
-        if (deltaX > 0) {
-            newWidth = originWidth + (deltaX * 0.75);
-            newLeft = originLeft + (deltaX * 0.12);
-        } else {
-            newLeft = originLeft + (deltaX * 0.88);
-            newWidth = originWidth + (Math.abs(deltaX) * 0.75);
-        }
-
-        // 安全邊界防護
-        const maxLeft = navBlock.offsetWidth - 30;
-        if (newLeft < 5) newLeft = 5;
-        if (newLeft > maxLeft) newLeft = maxLeft;
-        if (newWidth < 30) newWidth = 30;
-        if (newWidth > navBlock.offsetWidth * 0.6) newWidth = navBlock.offsetWidth * 0.6;
-
-        // 🌟【核心優化一：實時滑動變色】計算手指目前位置離哪一個項目最近，直接即時亮起字體顏色！
-        let navRect = navBlock.getBoundingClientRect();
-        let relativeX = currentX - navRect.left;
-        const tabs = Array.from(navBlock.querySelectorAll('.nav-item'));
-        let closestTab = activeTab;
-        let minDistance = Infinity;
-
-        tabs.forEach(tab => {
-            let tabCenter = tab.offsetLeft + (tab.offsetWidth / 2);
-            let dist = Math.abs(relativeX - tabCenter);
-            if (dist < minDistance) {
-                minDistance = dist;
-                closestTab = tab;
-            }
-        });
-
-        // 僅動態切換底欄文字高亮狀態，此時畫面「絕對不跳轉」，保留完美的盲滑手感
-        tabs.forEach(tab => tab.classList.remove('active'));
-        if (closestTab) closestTab.classList.add('active');
-
-        // 🌟【核心優化二：橫向變形蓄力】橫向拉得越長，高度會像水滴一樣受壓略微變扁（縮小至最高 75%）
-        let stretchRatio = Math.min(Math.abs(deltaX) / 120, 0.25);
-        let scaleY = 1 - stretchRatio;
-
-        indicator.style.left = newLeft + 'px';
-        indicator.style.width = newWidth + 'px';
-        indicator.style.transform = `scaleY(${scaleY})`;
-    }, { passive: true });
-
-    navBlock.addEventListener('touchend', (e) => {
-        if (!isTracking) return;
-        isTracking = false;
-
-        // 🌟【核心優化三：上下超溢ㄉㄨㄞ ㄉㄨㄞ回彈】
-        // 掛回極高階的超溢貝氏彈簧曲線（1.6），同時將 scaleY 從壓扁狀態瞬間釋放彈回 1
-        // 這會觸發物理慣性，讓果凍在就位時，上下高度與左右寬度同步瘋狂衝出導覽列邊界，再晃動吸附穩定！
-        indicator.style.transition = 'all 0.55s cubic-bezier(0.175, 0.885, 0.45, 1.6)';
-        indicator.style.transform = 'scaleY(1)';
-
-        // 判定最終手指放開時，停留在哪一個項目，畫面才正式切換過去
-        const finalActiveTab = navBlock.querySelector('.nav-item.active') || activeTab;
-        if (finalActiveTab) {
-            let targetView = finalActiveTab.id.replace('tab-', '');
-            switchView(targetView); // 正式翻頁切換
-        }
-    }, { passive: true });
-}
-
-// ==================================================
-// 💧 終極完全體：底欄液態水滴磁吸附與 3D 上下超溢物理系統
-// ==================================================
-function initNavTouchTracking() {
-    const navBlock = document.getElementById('bottom-nav-block');
-    const indicator = document.getElementById('nav-indicator');
-    if (!navBlock || !indicator) return;
-
-    // 🌟 動態注入 3D 上下彈跳超溢動態特效，免去手動修改 style.css 的麻煩
+    // 自動動態注入 3D 縱向上下左右超溢反彈特效樣式，確保不被外部 overflow 切平
     if (!document.getElementById('liquid-spring-style')) {
         const style = document.createElement('style');
         style.id = 'liquid-spring-style';
         style.innerHTML = `
-            @keyframes liquidVerticalBounce {
-                0% { transform: scaleY(1); }
-                30% { transform: scaleY(1.45) translateY(-5px); } /* 🌟 向上大力超溢衝出邊界 */
-                55% { transform: scaleY(0.7) translateY(4px); }   /* 🌟 向下反彈擠壓 */
-                75% { transform: scaleY(1.15) translateY(-1px); }  /* 微幅二次抖動 */
-                100% { transform: scaleY(1) translateY(0); }
+            @keyframes liquidMagnifyBounce {
+                0% { transform: scale(1); }
+                30% { transform: scale(1.35) scaleX(0.88); }  /* 上下左右大幅度膨脹衝出邊界 */
+                55% { transform: scale(0.85) scaleX(1.08); }  /* 縱向擠壓 */
+                75% { transform: scale(1.06) scaleX(0.97); }  /* 二次微幅抖動 */
+                100% { transform: scale(1); }
             }
-            .liquid-bounce-active { animation: liquidVerticalBounce 0.55s cubic-bezier(0.175, 0.885, 0.45, 1.6) forwards; }
+            .liquid-bounce-active { animation: liquidMagnifyBounce 0.52s cubic-bezier(0.175, 0.885, 0.45, 1.65) forwards; }
         `;
         document.head.appendChild(style);
     }
@@ -2922,7 +2800,7 @@ function initNavTouchTracking() {
         startX = e.touches[0].clientX;
         originLeft = activeTab.offsetLeft;
         originWidth = activeTab.offsetWidth;
-        isTracking = false; // 初始設為 false，等移動超過閥值才接管
+        isTracking = false;
 
         indicator.classList.remove('liquid-bounce-active');
     }, { passive: true });
@@ -2931,14 +2809,32 @@ function initNavTouchTracking() {
         let currentX = e.touches[0].clientX;
         let deltaX = currentX - startX;
 
-        // 閥值防護：手指滑動超過 8px，正式啟動液態磁吸附機制
-        if (!isTracking && Math.abs(deltaX) > 8) {
+        if (!isTracking && Math.abs(deltaX) > 5) {
             isTracking = true;
-            indicator.style.transition = 'none'; // 拔除動畫，進入純淨手動操控軌道
+            
+            // 🌟 規格 2-3：觸動滑動瞬間，整條導覽列有果凍感地整體稍微放大 6%
+            navBlock.style.transition = 'transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            navBlock.style.transform = 'scale(1.06)';
+            
+            indicator.style.transition = 'none'; // 拔除舊動畫，讓水滴進入 1:1 純淨手動操控軌道
         }
 
         if (!isTracking) return;
 
+        // 🌟 規格 2-2：初始點從點選處出發，維持原本精緻寬度不拉長，整顆水滴 1:1 絕對跟隨手指位移
+        let currentLeft = originLeft + deltaX;
+        
+        // 安全範圍限制，不脫離膠囊外殼
+        if (currentLeft < 4) currentLeft = 4;
+        const maxLeft = navBlock.offsetWidth - originWidth - 4;
+        if (currentLeft > maxLeft) currentLeft = maxLeft;
+
+        // 🌟 規格 2-3：內部白色小水滴等比例膨脹放大 1.22 倍做放大鏡特效，允許上下左右稍微超出導覽列
+        indicator.style.left = currentLeft + 'px';
+        indicator.style.width = originWidth + 'px';
+        indicator.style.transform = 'scale(1.22)'; 
+
+        // 🌟 規格 2-2：手指在移動尚未放開時，計算游標位置，讓對應的項目字體與圖示即時高亮變色
         let navRect = navBlock.getBoundingClientRect();
         let relativeX = currentX - navRect.left;
         const tabs = Array.from(navBlock.querySelectorAll('.nav-item'));
@@ -2946,7 +2842,6 @@ function initNavTouchTracking() {
         let closestTab = activeTab;
         let minDistance = Infinity;
 
-        // 1. 【即時亮起變色】：即時演算手指離哪一個分頁最近
         tabs.forEach(tab => {
             let tabCenter = tab.offsetLeft + (tab.offsetWidth / 2);
             let dist = Math.abs(relativeX - tabCenter);
@@ -2956,62 +2851,32 @@ function initNavTouchTracking() {
             }
         });
 
-        // 動態高亮文字與圖示，此時「不重整、不翻頁」，維持極致盲滑手感
         tabs.forEach(tab => tab.classList.remove('active'));
         if (closestTab) closestTab.classList.add('active');
-
-        // 2. 🌟【滑動中未放開：強烈液態水滴磁吸附演算】
-        // 當手指接近新分頁時，水滴底板會產生強烈的液體張力吸引，提早吸附就位，尾端拉長
-        let targetLeft = closestTab.offsetLeft;
-        let targetWidth = closestTab.offsetWidth;
-
-        // 混合權重：手指越接近新分頁，磁吸力越強（流體橋接效果）
-        let tabCenter = closestTab.offsetLeft + (closestTab.offsetWidth / 2);
-        let distToCenter = Math.abs(relativeX - tabCenter);
-        let maxDist = navBlock.offsetWidth / 4;
-        let snapFactor = Math.max(0, 1 - (distToCenter / maxDist)); // 0 到 1 的磁吸係數
-
-        let currentLeft, currentWidth;
-        if (deltaX > 0) {
-            // 向右拉扯：頭部往右探，產生水滴拉伸
-            currentLeft = originLeft + (deltaX * 0.15) * (1 - snapFactor) + (targetLeft * snapFactor * 0.15);
-            currentWidth = originWidth + (deltaX * 0.8) * (1 - snapFactor) + (targetWidth - originWidth) * snapFactor;
-        } else {
-            // 向左拉扯：尾部拉長
-            currentLeft = originLeft + (deltaX * 0.95) * (1 - snapFactor) + (targetLeft * snapFactor);
-            currentWidth = originWidth + (Math.abs(deltaX) * 0.8) * (1 - snapFactor) + (targetWidth - originWidth) * snapFactor;
-        }
-
-        // 橫向拉扯時，高度像水滴一樣受壓略微變扁（動態視覺蓄力）
-        let stretchRatio = Math.min(Math.abs(deltaX) / 150, 0.2);
-        let scaleY = 1 - stretchRatio;
-
-        // 即時渲染液體狀態
-        indicator.style.left = currentLeft + 'px';
-        indicator.style.width = currentWidth + 'px';
-        indicator.style.transform = `scaleY(${scaleY})`;
     }, { passive: true });
 
     navBlock.addEventListener('touchend', (e) => {
         if (!isTracking) return;
         isTracking = false;
 
-        // 3. 🌟【放開手指：啟動 3D 上下超溢ㄉㄨㄞ ㄉㄨㄞ反彈】
-        // 掛回高級的回彈貝氏曲線，並瞬間注入縱向超溢動畫，讓水滴上下左右同時衝出導覽列！
-        indicator.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.45, 1.65)';
-        indicator.style.transform = ''; // 清空手動 scaleY
+        // 還原外殼導覽列至原始尺寸 1:1
+        navBlock.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.45, 1.5)';
+        navBlock.style.transform = 'scale(1)';
+
+        // 🌟 規格 2-3：掛回高階彈簧曲線，內部水滴縮小回 1 的同時，觸發縱向與橫向的 3D ㄉㄨㄞㄉㄨㄞ回彈抖動
+        indicator.style.transition = 'all 0.48s cubic-bezier(0.175, 0.885, 0.45, 1.65)';
+        indicator.style.transform = 'scale(1)';
         indicator.classList.add('liquid-bounce-active');
 
-        // 判定最終停留項目，正式翻頁切換畫面
+        // 依據手指放開時當下高亮的項目，正式觸發無重整分頁內容切換
         const finalActiveTab = navBlock.querySelector('.nav-item.active') || activeTab;
         if (finalActiveTab) {
             let targetView = finalActiveTab.id.replace('tab-', '');
             
-            // 讓水滴完美就位
             indicator.style.left = finalActiveTab.offsetLeft + 'px';
             indicator.style.width = finalActiveTab.offsetWidth + 'px';
             
-            switchView(targetView); // 瞬間切換分頁內容
+            switchView(targetView);
         }
     }, { passive: true });
 }
