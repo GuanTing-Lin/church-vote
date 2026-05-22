@@ -1344,6 +1344,7 @@ function unlockMainApp() {
         }
 
         document.getElementById('bottom-nav-block').style.display = 'flex';
+        initNavTouchTracking();
         document.getElementById('bottom-blur-mask').style.display = 'block'; 
         initDaysCountdown(); markArchive(); 
         
@@ -1878,8 +1879,8 @@ function initCarGridDrag() {
         if (!isDown) return;
         window.isCarDragging = true;
         const x = e.touches[0].pageX - slider.offsetLeft;
-        // 🌟【精細微調】：係數從 1.5 降到 0.9，增加精緻的划水阻尼感，不再發飄
-        const walk = (x - startX) * 0.9; 
+        // 🌟【提高靈敏度微調】：係數提升到 1.4，讓車次推拉更加輕快流暢
+        const walk = (x - startX) * 1.4; 
         slider.scrollLeft = scrollLeft - walk;
     }, { passive: true });
 
@@ -2170,7 +2171,6 @@ function switchAccTab(tabId) {
         }, { passive: true });
 
         // 🌟 新增：手指移動中！不放開就能連續無限左右推拉
-        // 🌟 修正後：移除重複宣告，直接套用 0.8 阻尼係數的黃金版本
         accTrack.addEventListener('touchmove', (e) => {
             if (!isDragging) return;
             currentX = e.touches[0].clientX;
@@ -2179,8 +2179,7 @@ function switchAccTab(tabId) {
             let trackWidth = accTrack.offsetWidth;
             let baseTranslate = -currentDomIndex * trackWidth;
             
-            // 💡 修正點：只宣告一次，並完美融合物理阻尼
-            let currentTranslate = baseTranslate + (deltaX * 0.8);
+            let currentTranslate = baseTranslate + (deltaX * 1.25);
             
             accTrack.style.transform = `translateX(${currentTranslate}px)`;
         }, { passive: true });
@@ -2788,4 +2787,92 @@ function handleWarmStartInstantNavigation(urlStr) {
             }, 300); // 給予 300 毫秒緩衝等待分頁 DOM 視圖響應切換
         }
     } catch (e) { console.error("熱啟動秒轉定位失敗:", e); }
+}
+
+// 🌟 貼在 app.js 最底部：底欄液態水滴即時跟手追蹤系統
+function initNavTouchTracking() {
+    const navBlock = document.getElementById('bottom-nav-block');
+    const indicator = document.getElementById('nav-indicator');
+    if (!navBlock || !indicator) return;
+
+    let startX = 0;
+    let originLeft = 0;
+    let originWidth = 0;
+    let isTracking = false;
+    let activeTab = null;
+
+    navBlock.addEventListener('touchstart', (e) => {
+        activeTab = navBlock.querySelector('.nav-item.active');
+        if (!activeTab) return;
+
+        startX = e.touches[0].clientX;
+        originLeft = activeTab.offsetLeft;
+        originWidth = activeTab.offsetWidth;
+        isTracking = true;
+
+        // 瞬間拔除 CSS 動畫，讓水滴死死黏住手指，實現零延遲跟手性
+        indicator.style.transition = 'none';
+    }, { passive: true });
+
+    navBlock.addEventListener('touchmove', (e) => {
+        if (!isTracking) return;
+
+        let currentX = e.touches[0].clientX;
+        let deltaX = currentX - startX;
+
+        // 💧【液態水滴物理演算】：往右拉右邊變長、往左拉左邊變長，呈現被拉扯的膠囊水滴感
+        let newLeft = originLeft;
+        let newWidth = originWidth;
+
+        if (deltaX > 0) {
+            // 向右拉扯：寬度隨著手指延展，左邊產生微幅阻尼跟進
+            newWidth = originWidth + (deltaX * 0.7);
+            newLeft = originLeft + (deltaX * 0.15);
+        } else {
+            // 向左拉扯：左邊邊緣大幅往左探，寬度同步被向外拉長
+            newLeft = originLeft + (deltaX * 0.85);
+            newWidth = originWidth + (Math.abs(deltaX) * 0.7);
+        }
+
+        // 安全界限防護
+        const maxLeft = navBlock.offsetWidth - 30;
+        if (newLeft < 5) newLeft = 5;
+        if (newLeft > maxLeft) newLeft = maxLeft;
+        if (newWidth < 30) newWidth = 30;
+        if (newWidth > navBlock.offsetWidth * 0.55) newWidth = navBlock.offsetWidth * 0.55;
+
+        indicator.style.left = newLeft + 'px';
+        indicator.style.width = newWidth + 'px';
+    }, { passive: true });
+
+    navBlock.addEventListener('touchend', (e) => {
+        if (!isTracking) return;
+        isTracking = false;
+
+        // 放開手指瞬間，立刻掛回高級的果凍回彈貝氏曲線
+        indicator.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.45, 1.4)';
+
+        // 智慧型定位：計算放開手指時離哪一個分頁按鈕的中心點最近
+        let touchX = e.changedTouches[0].clientX;
+        let navRect = navBlock.getBoundingClientRect();
+        let relativeX = touchX - navRect.left;
+
+        const tabs = Array.from(navBlock.querySelectorAll('.nav-item'));
+        let closestTab = activeTab;
+        let minDistance = Infinity;
+
+        tabs.forEach(tab => {
+            let tabCenter = tab.offsetLeft + (tab.offsetWidth / 2);
+            let dist = Math.abs(relativeX - tabCenter);
+            if (dist < minDistance) {
+                minDistance = dist;
+                closestTab = tab;
+            }
+        });
+
+        if (closestTab) {
+            let targetView = closestTab.id.replace('tab-', '');
+            switchView(targetView); // 執行無縫跳轉
+        }
+    }, { passive: true });
 }
