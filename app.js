@@ -1854,14 +1854,39 @@ async function saveChecklistBackground() {
     }
 }
 
+// 🌟 完整替換 app.js 中的 initCarGridDrag 函數
 function initCarGridDrag() {
     const slider = document.querySelector('.car-grid');
     if(!slider) return;
     let isDown = false; let startX; let scrollLeft;
+
+    // --- 💻 電腦滑鼠拖曳軌道 ---
     slider.addEventListener('mousedown', (e) => { isDown = true; window.isCarDragging = false; slider.style.cursor = 'grabbing'; startX = e.pageX - slider.offsetLeft; scrollLeft = slider.scrollLeft; });
     slider.addEventListener('mouseleave', () => { isDown = false; slider.style.cursor = 'grab'; });
     slider.addEventListener('mouseup', () => { isDown = false; slider.style.cursor = 'grab'; setTimeout(() => window.isCarDragging = false, 50); });
-    slider.addEventListener('mousemove', (e) => { if (!isDown) return; e.preventDefault(); window.isCarDragging = true; const x = e.pageX - slider.offsetLeft; const walk = (x - startX) * 2; slider.scrollLeft = scrollLeft - walk; });
+    slider.addEventListener('mousemove', (e) => { if (!isDown) return; e.preventDefault(); window.isCarDragging = true; const x = e.pageX - slider.offsetLeft; const walk = (x - startX) * 1.5; slider.scrollLeft = scrollLeft - walk; });
+
+    // --- 📱 新增：手機觸控即時連續跟手軌道（按住不放可無限連續推拉） ---
+    slider.addEventListener('touchstart', (e) => {
+        isDown = true;
+        window.isCarDragging = false;
+        startX = e.touches[0].pageX - slider.offsetLeft;
+        scrollLeft = slider.scrollLeft;
+    }, { passive: true });
+
+    slider.addEventListener('touchmove', (e) => {
+        if (!isDown) return;
+        window.isCarDragging = true;
+        const x = e.touches[0].pageX - slider.offsetLeft;
+        // 1.5 為跟手靈敏度阻尼，可以讓連續移動的阻力感更滑順
+        const walk = (x - startX) * 1.5; 
+        slider.scrollLeft = scrollLeft - walk;
+    }, { passive: true });
+
+    slider.addEventListener('touchend', () => {
+        isDown = false;
+        setTimeout(() => window.isCarDragging = false, 50);
+    }, { passive: true });
 }
 
 async function toggleVotingLock(checkbox) {
@@ -2128,16 +2153,56 @@ function switchAccTab(tabId) {
         }, 5000);
     }
 
+    // 🌟 完整替換 app.js 中 if (accTrack) { ... } 的內部事件監聽
     if (accTrack) {
+        let startX = 0;
+        let currentX = 0;
+        let isDragging = false;
+
+        // 手指壓下：記錄起點、清除自動輪播、拔除動畫時間（立刻跟手）
         accTrack.addEventListener('touchstart', (e) => {
-            touchStartX = e.changedTouches[0].screenX;
+            if (isTransitioning) return;
             clearInterval(accAutoPlayTimer); 
+            startX = e.touches[0].clientX;
+            currentX = startX;
+            accTrack.style.transition = 'none'; // 拔除動畫，讓圖片死死跟著手指
+            isDragging = true;
         }, { passive: true });
 
+        // 🌟 新增：手指移動中！不放開就能連續無限左右推拉
+        accTrack.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            currentX = e.touches[0].clientX;
+            let deltaX = currentX - startX;
+            
+            // 計算輪播圖基礎寬度，並將手指位移即時疊加進 transform 內
+            let trackWidth = accTrack.offsetWidth;
+            let baseTranslate = -currentDomIndex * trackWidth;
+            let currentTranslate = baseTranslate + deltaX;
+            
+            accTrack.style.transform = `translateX(${currentTranslate}px)`;
+        }, { passive: true });
+
+        // 手指放開：計算滑動比例，智慧判定要彈回原位還是滑向下一張
         accTrack.addEventListener('touchend', (e) => {
-            touchEndX = e.changedTouches[0].screenX;
-            handleSwipeGesture();
-            startAccAutoPlay(); 
+            if (!isDragging) return;
+            isDragging = false;
+            
+            let deltaX = currentX - startX;
+            let trackWidth = accTrack.offsetWidth;
+            
+            // 💡 智慧判定：手指只要推超過卡片寬度的 15%，放開時就判定切換
+            if (Math.abs(deltaX) > trackWidth * 0.15) {
+                if (deltaX < 0) {
+                    currentDomIndex++; // 往左推，看下一張
+                } else {
+                    currentDomIndex--; // 往右推，看上一張
+                }
+            }
+            
+            isTransitioning = true;
+            updateCarouselView(); // 彈簧吸附就位
+            startAccAutoPlay();   // 重啟自動輪播
         }, { passive: true });
     }
 
