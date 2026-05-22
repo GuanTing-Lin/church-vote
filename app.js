@@ -2690,3 +2690,35 @@ function handleWarmStartNavigation() {
         }, 150);
     }
 }
+
+// 🌟 直接貼在 app.js 的最尾端（確保接在原有程式碼的大括號外面）
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', function(event) {
+        if (event.data && event.data.action === 'urlNotificationClicked') {
+            console.log("📥 [熱啟動解凍] 成功接收 SW 廣播訊號，執行免刷新秒轉:", event.data.url);
+            handleWarmStartInstantNavigation(event.data.url);
+        }
+    });
+}
+
+// 熱啟動專屬秒轉器：完全跳過 Loading 驗證畫面，原地執行切頁、展開與滑動置中
+function handleWarmStartInstantNavigation(urlStr) {
+    try {
+        const url = new URL(urlStr);
+        const params = url.searchParams;
+        const noticeId = params.get('notice');
+
+        if (noticeId) {
+            window.lastProcessedNoticeId = noticeId; // 標記已處理，防止冷啟動衝突
+            switchView('overview'); // 1. 瞬間切回首頁總覽
+
+            setTimeout(() => {
+                const card = document.getElementById('notice-card-' + noticeId);
+                if (card) {
+                    card.classList.add('expanded'); // 2. 自動展開全內文
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' }); // 3. 平滑滾動置中
+                }
+            }, 300); // 給予 300 毫秒緩衝等待分頁 DOM 視圖響應切換
+        }
+    } catch (e) { console.error("熱啟動秒轉定位失敗:", e); }
+}

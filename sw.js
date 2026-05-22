@@ -48,8 +48,10 @@ self.addEventListener('push', function(event) {
 self.addEventListener('notificationclick', function(event) {
     event.notification.close();
     
+    // 預設安全網址（首頁）
     let baseUrl = "https://guanting-lin.github.io/church-vote/?openExternalBrowser=1&view=overview";
     
+    // 智慧解包公告專屬動態連結（內含 &notice=4位碼）
     if (event.notification.data) {
         const nData = event.notification.data;
         if (nData.click_url) baseUrl = nData.click_url;
@@ -59,15 +61,37 @@ self.addEventListener('notificationclick', function(event) {
     
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(windowClients) {
-            // 🌟 終極解法：只要 App 在背景開著，直接用 navigate 強制變更該視窗的網址！
-            // 這會強制叫醒 iPhone 凍結的執行緒，並直接讓它走最穩定的網址路由解析軌道
+            let targetClient = null;
+            
+            // 優先挑選背景隱藏中（PWA）或網址吻合的視窗來進行 Focus 喚醒
             for (var i = 0; i < windowClients.length; i++) {
-                var client = windowClients[i];
-                if ('navigate' in client && 'focus' in client) {
-                    client.navigate(baseUrl);
-                    return client.focus();
+                if (windowClients[i].visibilityState === 'hidden' || windowClients[i].url.includes('notice=')) {
+                    targetClient = windowClients[i];
+                    break;
                 }
             }
+            if (!targetClient && windowClients.length > 0) targetClient = windowClients[0];
+
+            if (targetClient && 'focus' in targetClient) {
+                // 🌟【絕殺修改】：先呼叫 focus() 叫醒網頁，逼 iOS 解凍 JavaScript 執行緒
+                return targetClient.focus().then(function() {
+                    return new Promise(function(resolve) {
+                        // 延遲 300 毫秒等網頁靈魂完全歸位，確保不漏接訊息
+                        setTimeout(function() {
+                            // 🌟【解鎖核心】：全面廣播！對所有控制下的視窗投遞跳轉指令
+                            // 如此一來，不論通知從哪裡發出，背景的 PWA 都絕對能即時收到訊號！
+                            windowClients.forEach(function(client) {
+                                if (client && 'postMessage' in client) {
+                                    client.postMessage({ action: 'urlNotificationClicked', url: baseUrl });
+                                }
+                            });
+                            resolve();
+                        }, 300);
+                    });
+                });
+            }
+            
+            // 如果完全沒有開啟任何視窗（冷啟動），照常開新視窗
             if (clients.openWindow) return clients.openWindow(baseUrl);
         })
     );
