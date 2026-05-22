@@ -27,21 +27,36 @@
     <link rel="stylesheet" href="style.css?v=5.0">
 
     <script>
+        // 🌟 完整替換 index.html 內部的 Service Worker 註冊區塊
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
                     .then(reg => {
                         console.log('Service Worker 註冊成功:', reg.scope);
+                        
+                        // 🌟【關鍵新增】：智慧型自動換版偵測
+                        // 當組員打開 App 時，如果偵測到雲端有新 sw.js，立刻幫他抓下來
+                        reg.addEventListener('updatefound', () => {
+                            const newWorker = reg.installing;
+                            if (newWorker) {
+                                newWorker.addEventListener('statechange', () => {
+                                    // 當新版本下載並安裝完畢的瞬間，自動重整，組員完全不用手動整理！
+                                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                        console.log('✨ 偵測到全應用新版本，正在為您強制更新重載...');
+                                        window.location.reload();
+                                    }
+                                });
+                            }
+                        });
+
                         if (typeof firebase !== 'undefined' && firebase.messaging && firebase.messaging.isSupported()) {
                             firebase.messaging().useServiceWorker(reg);
                             
                             const messaging = firebase.messaging();
                             messaging.onMessage((payload) => {
                                 console.log('[index.html] 前景收到推播：', payload);
-                                
                                 const boardView = document.getElementById('view-board');
                                 const isLookingAtBoard = boardView && boardView.classList.contains('active');
-                                
                                 if (!isLookingAtBoard) {
                                     const notificationTitle = payload.notification.title;
                                     const notificationOptions = {
@@ -50,13 +65,16 @@
                                         data: payload.data 
                                     };
                                     reg.showNotification(notificationTitle, notificationOptions);
-                                } else {
-                                    console.log('使用者正在看留言板，自動隱藏多餘的推播通知');
                                 }
                             });
                         }
                     })
                     .catch(err => console.log('Service Worker 註冊失敗:', err));
+            });
+
+            // 🌟【雙重保險】：確保全域 Service Worker 控制權轉移時，前端網頁同步刷新
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                window.location.reload();
             });
         }
     </script>
@@ -107,7 +125,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             後台管理
         </div>
-        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.2.8</div>
+        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.2.9</div>
     </div>
     <div id="loading" style="display: flex; flex-direction: column; align-items: center; margin-top: 120px;">
         <div class="spinner"></div>
