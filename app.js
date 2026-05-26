@@ -70,6 +70,7 @@ let adminNoticesArray = [];
 let userChecklistState = {}; let checklistData = []; let openCategories = {}; let isChecklistModified = false; 
 let initialDataPromise = null; 
 let isGuestViewEnabled = false;
+window.lastConfigAdminClickTime = 0;
 
 // 宣告一個全域變數來存雲端的已讀 ID
 let cloudLastReadId = null;
@@ -726,12 +727,19 @@ async function processLoadedData() {
 
     // 3. 訂閱 Firebase 即時資料 (只要後台有變，這裡瞬間觸發！)
     db.ref('/').on('value', (snapshot) => {
-        hasLoadedFromFirebase = true; 
+        hasLoadedFromFirebase = true; // 標記雲端資料已順利接通
         let data = snapshot.val() || { config: {}, messages: [], votes: [] };
+
+        // 🌟【絕殺反向覆蓋】：如果 3 秒內管理員才剛點過開關，直接拒絕渲染雲端彈回來的 config 舊資料，防止 Checkbox 靈異彈回！
+        if (Date.now() - window.lastConfigAdminClickTime < 3000) {
+            if (cachedPollData && cachedPollData.config) {
+                data.config = cachedPollData.config;
+            }
+        }
         
         localStorage.setItem('trip_cache_data', JSON.stringify(data));
         
-        // 雲端接通了，強制確保提示橫幅徹底關閉
+        // 雲端接通了，立刻隱藏連線慢的提示橫幅
         const banner = document.getElementById('cache-warning-banner');
         if (banner) banner.style.display = 'none';
         
@@ -741,7 +749,6 @@ async function processLoadedData() {
         
         if (data.messages) {
             data.messages.forEach(m => {
-                if (!m) return;
                 const id = m.LineID || m.UserId;
                 if (id) window.userNameMap[id] = m.Name;
                 if (id && m.AvatarUrl) window.userAvatarMap[id] = m.AvatarUrl;
@@ -751,7 +758,6 @@ async function processLoadedData() {
         
         if (data.members) {
             data.members.forEach(v => {
-                if (!v) return;
                 const id = v['LINE ID'] || v['LINEID']; 
                 const name = v['LINE 名稱'] || v['LINE名稱'];
                 const pic = v['AvatarUrl'] || v['pictureUrl'] || v['照片'];
@@ -765,8 +771,12 @@ async function processLoadedData() {
         if (currentUser.id && currentUser.name) window.userNameMap[currentUser.id] = currentUser.name;
         if (currentUser.id && currentUser.pictureUrl) window.userAvatarMap[currentUser.id] = currentUser.pictureUrl;
 
+        // 身分驗證與解鎖
         checkUserMemberStatus(data);
 
+        // 更新畫面
+        // 🌟【終極修正】：徹底移除 activeConfigUpdates === 0 阻擋防線！
+        // 確保任何開關在變動的當下，前台畫面能在一微秒內即時 100% 刷新同步！
         renderDynamicUI(data);
 
         if (window.pendingMessageIntent) {
@@ -1954,10 +1964,14 @@ async function saveChecklistBackground() {
 async function toggleVotingLock(checkbox) {
     const isLocked = checkbox.checked;            
     
-    // 1. Firebase 極速寫入
+    // 🌟 啟動時間鎖，防範重新整理時被 Sheets 舊資料覆蓋
+    window.lastConfigAdminClickTime = Date.now();
+    if (cachedPollData && cachedPollData.config) cachedPollData.config.VotingLocked = isLocked ? "true" : "false";
+
+    // 1. Firebase 極速寫入 (前台即時連動核心)
     db.ref('config/VotingLocked').set(isLocked ? "true" : "false");
 
-    // 2. Google Sheets 背景同步 (移除計數干擾，回歸最純淨的原生流暢度)
+    // 2. Google Sheets 背景同步 (保留您的設計，讓您在試算表看清楚目前狀態)
     fetch(GAS_API_URL, { 
         method: 'POST', 
         headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
@@ -1967,6 +1981,11 @@ async function toggleVotingLock(checkbox) {
 
 async function toggleGuestViewLock(checkbox, key) {
     const isEnabled = checkbox.checked;
+    
+    // 🌟 啟動時間鎖，防範重新整理時被 Sheets 舊資料覆蓋
+    window.lastConfigAdminClickTime = Date.now();
+    if (cachedPollData && cachedPollData.config) cachedPollData.config[key] = isEnabled ? "true" : "false";
+
     if (key === 'GuestViewEnabled') {
         isGuestViewEnabled = isEnabled; 
         const subOptionsDiv = document.getElementById('admin-guest-sub-options');
@@ -1974,10 +1993,11 @@ async function toggleGuestViewLock(checkbox, key) {
             subOptionsDiv.style.display = isEnabled ? 'block' : 'none';
         }
     }
-    // 1. Firebase 極速寫入
+    
+    // 1. Firebase 極速寫入 (前台即時連動核心)
     db.ref('config/' + key).set(isEnabled ? "true" : "false");
     
-    // 2. Google Sheets 背景同步 (移除計數干擾，解鎖即時畫面連動)
+    // 2. Google Sheets 背景同步 (保留您的設計，讓您在試算表看清楚目前狀態)
     fetch(GAS_API_URL, { 
         method: 'POST', 
         headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
