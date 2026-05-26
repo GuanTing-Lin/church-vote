@@ -641,7 +641,11 @@ async function processLoadedData() {
     listenToReadReceipts();
     initMessageListeners(); // 啟動三劍客監聽
 
-    // 🌟【新增】啟動 2 秒超時弱網防護定時器
+    // 🌟 依需求強制隱藏黃色提示橫幅，永遠不出來打擾畫面
+    const banner = document.getElementById('cache-warning-banner');
+    if (banner) banner.style.display = 'none';
+
+    // 100% 回歸您最穩定的原本快取載入時序防護（2秒超時防護）
     setTimeout(() => {
         if (!hasLoadedFromFirebase && !isProfileChecked) {
             console.log("⏳ 網路連線較慢，正在嘗試載入本地快取資料...");
@@ -650,10 +654,34 @@ async function processLoadedData() {
                 try {
                     const cachedData = JSON.parse(cachedRaw);
                     
-                    // 顯示「網路連線較慢」提示橫幅
-                    const banner = document.getElementById('cache-warning-banner');
-                    if (banner) banner.style.display = 'block';
+                    // 🌟【同步加固】：讓快取路徑也確實備份全域變數，確保極端斷網下後台與統計依然有舊資料可看、絕不崩潰
+                    cachedPollData = cachedData;
                     
+                    if (cachedData.messages) {
+                        cachedData.messages.forEach(m => {
+                            if (!m) return;
+                            const id = m.LineID || m.UserId;
+                            if (id) window.userNameMap[id] = m.Name;
+                            if (id && m.AvatarUrl) window.userAvatarMap[id] = m.AvatarUrl;
+                            if (m.Name && m.AvatarUrl) window.userAvatarMap[m.Name] = m.AvatarUrl; 
+                        });
+                    }
+                    if (cachedData.members) {
+                        cachedData.members.forEach(v => {
+                            if (!v) return;
+                            const id = v['LINE ID'] || v['LINEID']; 
+                            const name = v['LINE 名稱'] || v['LINE名稱'];
+                            const pic = v['AvatarUrl'] || v['pictureUrl'] || v['照片'];
+                            if (id) {
+                                if (name) window.userNameMap[id] = name;
+                                if (pic) window.userAvatarMap[id] = pic; 
+                            }
+                            if (name && pic) window.userAvatarMap[name] = pic;
+                        });
+                    }
+                    if (currentUser.id && currentUser.name) window.userNameMap[currentUser.id] = currentUser.name;
+                    if (currentUser.id && currentUser.pictureUrl) window.userAvatarMap[currentUser.id] = currentUser.pictureUrl;
+
                     // 用快取先渲染畫面並解鎖進首頁
                     renderDynamicUI(cachedData);
                     
@@ -661,25 +689,23 @@ async function processLoadedData() {
                     checkUserMemberStatus(cachedData);
                     // 讓快取路徑渲染完後安全解鎖
                     unlockMainApp();
+
+                    if (typeof renderMessagesPaginated === 'function' && allMessages && allMessages.length > 0) {
+                        renderMessagesPaginated();
+                    }
                 } catch(e) { console.error("快取解析失敗:", e); }
             }
         }
     }, 2000);
 
-    // 👇 更新：同時監聽 Token (總開關) 與 Prefs (子開關)
+    // 👇 同時監聽 Token (總開關) 與 Prefs (子開關)
     if (currentUser && currentUser.id) {
-        // 監聽總開關
         db.ref('pushTokens/' + currentUser.id).on('value', snap => {
             const dbToken = snap.val();
-            // 抓取這台手機自己保管的 Token
             const myLocalToken = localStorage.getItem('myDeviceFCMToken');
-            
-            // 💡 關鍵防護：雲端有 Token，而且必須「等於我的 Token」才算數！
             const isMyTokenActive = dbToken && (dbToken === myLocalToken);
-            
             const masterToggle = document.getElementById('user-push-master-toggle');
             const subOptions = document.getElementById('push-sub-options');
-            
             if (masterToggle) {
                 const isOn = isMyTokenActive && Notification.permission === 'granted';
                 masterToggle.checked = isOn;
@@ -687,29 +713,25 @@ async function processLoadedData() {
             }
         });
         
-        // 監聽子偏好設定
         db.ref('pushPrefs/' + currentUser.id).on('value', snap => {
-            const prefs = snap.val() || { all: true, mentions: true, notices: true }; // 預設 notices 為 true
+            const prefs = snap.val() || { all: true, mentions: true, notices: true }; 
             const allToggle = document.getElementById('push-pref-all'); 
             const mentionsToggle = document.getElementById('push-pref-mentions');
-            const noticesToggle = document.getElementById('push-pref-notices'); // 🌟 新增
+            const noticesToggle = document.getElementById('push-pref-notices'); 
             if (allToggle) allToggle.checked = prefs.all; 
             if (mentionsToggle) mentionsToggle.checked = prefs.mentions;
-            if (noticesToggle) noticesToggle.checked = prefs.notices !== false; // 🌟 防呆
+            if (noticesToggle) noticesToggle.checked = prefs.notices !== false; 
         });
     }
 
-    
-
     // 3. 訂閱 Firebase 即時資料 (只要後台有變，這裡瞬間觸發！)
     db.ref('/').on('value', (snapshot) => {
-        hasLoadedFromFirebase = true; // 🌟 標記雲端資料已順利接通
+        hasLoadedFromFirebase = true; 
         let data = snapshot.val() || { config: {}, messages: [], votes: [] };
         
-        // 🌟【精簡修正】：移除多餘重複宣告的 cachedPollData 與 Map 欄位，直接覆蓋最新手機快取
         localStorage.setItem('trip_cache_data', JSON.stringify(data));
         
-        // 雲端接通了，立刻隱藏連線慢的提示橫幅
+        // 雲端接通了，強制確保提示橫幅徹底關閉
         const banner = document.getElementById('cache-warning-banner');
         if (banner) banner.style.display = 'none';
         
@@ -719,6 +741,7 @@ async function processLoadedData() {
         
         if (data.messages) {
             data.messages.forEach(m => {
+                if (!m) return;
                 const id = m.LineID || m.UserId;
                 if (id) window.userNameMap[id] = m.Name;
                 if (id && m.AvatarUrl) window.userAvatarMap[id] = m.AvatarUrl;
@@ -728,6 +751,7 @@ async function processLoadedData() {
         
         if (data.members) {
             data.members.forEach(v => {
+                if (!v) return;
                 const id = v['LINE ID'] || v['LINEID']; 
                 const name = v['LINE 名稱'] || v['LINE名稱'];
                 const pic = v['AvatarUrl'] || v['pictureUrl'] || v['照片'];
@@ -741,14 +765,17 @@ async function processLoadedData() {
         if (currentUser.id && currentUser.name) window.userNameMap[currentUser.id] = currentUser.name;
         if (currentUser.id && currentUser.pictureUrl) window.userAvatarMap[currentUser.id] = currentUser.pictureUrl;
 
-        // 🌟 修正：身分驗證與解鎖改用獨立旗標控制，防止快取與雲端時間差漏掉驗證
         checkUserMemberStatus(data);
 
-        // 更新畫面
-        if (activeConfigUpdates === 0) renderDynamicUI(data);
+        renderDynamicUI(data);
 
         if (window.pendingMessageIntent) {
             executePendingMessageIntent(window.pendingMessageIntent);
+        }
+
+        // 🌟【時序修正】：當雲端最新名單到齊，命令留言板刷新，確保大頭貼與名字 100% 準確亮起
+        if (typeof renderMessagesPaginated === 'function' && allMessages && allMessages.length > 0) {
+            renderMessagesPaginated();
         }
 
         // 完成初次載入
@@ -1930,15 +1957,12 @@ async function toggleVotingLock(checkbox) {
     // 1. Firebase 極速寫入
     db.ref('config/VotingLocked').set(isLocked ? "true" : "false");
 
-    // 2. Google Sheets 背景同步 + UI 鎖定防打架
-    activeConfigUpdates++;
+    // 2. Google Sheets 背景同步 (移除計數干擾，回歸最純淨的原生流暢度)
     fetch(GAS_API_URL, { 
         method: 'POST', 
         headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
         body: JSON.stringify({ action: "updateConfigSingle", key: "VotingLocked", value: isLocked ? "true" : "false" }) 
-    })
-    .catch(e => console.error(e))
-    .finally(() => { setTimeout(() => { activeConfigUpdates = Math.max(0, activeConfigUpdates - 1); }, 1500); });
+    }).catch(e => console.error("Sheets 鎖定同步失敗:", e));
 }
 
 async function toggleGuestViewLock(checkbox, key) {
@@ -1947,22 +1971,18 @@ async function toggleGuestViewLock(checkbox, key) {
         isGuestViewEnabled = isEnabled; 
         const subOptionsDiv = document.getElementById('admin-guest-sub-options');
         if (subOptionsDiv) {
-            // 🌟 改為控制 display 來徹底隱藏
             subOptionsDiv.style.display = isEnabled ? 'block' : 'none';
         }
     }
     // 1. Firebase 極速寫入
     db.ref('config/' + key).set(isEnabled ? "true" : "false");
     
-    // 2. Google Sheets 背景同步 + UI 鎖定防打架
-    activeConfigUpdates++;
+    // 2. Google Sheets 背景同步 (移除計數干擾，解鎖即時畫面連動)
     fetch(GAS_API_URL, { 
         method: 'POST', 
         headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
         body: JSON.stringify({ action: "updateConfigSingle", key: key, value: isEnabled ? "true" : "false" }) 
-    })
-    .catch(e => console.error(e))
-    .finally(() => { setTimeout(() => { activeConfigUpdates = Math.max(0, activeConfigUpdates - 1); }, 1500); });
+    }).catch(e => console.error("Sheets 權限同步失敗:", e));
 }
 
 function selectVote(o) { 
@@ -2294,22 +2314,23 @@ function renderPeoplePage(data) {
     const members = data.members || [];
     const groups = { "已報名": [], "訪客查看": [] };
     
-    members.forEach(m => {
-        let name = m['LINE 名稱'] || m['LINE名稱'] || "匿名";
+    // 🌟 改用 for...in 並加入防空鎖，徹底免疫 Firebase 陣列空索引造成的頁面崩潰 Bug
+    for (let key in members) {
+        const m = members[key];
+        if (!m) continue; 
         
-        if (name === "開發者(測試)") return;
+        let name = m['LINE 名稱'] || m['LINE名稱'] || "匿名";
+        if (name === "開發者(測試)") continue;
         
         let trip = m['偏好行程'] || "訪客查看";
-        
         if (trip.includes("方案一") || trip.includes("方案二")) {
             groups["已報名"].push(name);
         } else {
             groups["訪客查看"].push(name);
         }
-    });
+    }
 
     let html = '';
-    
     for (let groupName in groups) {
         if (groups[groupName].length === 0) continue;
         html += `
