@@ -729,13 +729,6 @@ async function processLoadedData() {
     db.ref('/').on('value', (snapshot) => {
         hasLoadedFromFirebase = true; // 標記雲端資料已順利接通
         let data = snapshot.val() || { config: {}, messages: [], votes: [] };
-
-        // 🌟【絕殺反向覆蓋】：如果 3 秒內管理員才剛點過開關，直接拒絕渲染雲端彈回來的 config 舊資料，防止 Checkbox 靈異彈回！
-        if (Date.now() - window.lastConfigAdminClickTime < 3000) {
-            if (cachedPollData && cachedPollData.config) {
-                data.config = cachedPollData.config;
-            }
-        }
         
         localStorage.setItem('trip_cache_data', JSON.stringify(data));
         
@@ -747,17 +740,23 @@ async function processLoadedData() {
         window.userAvatarMap = {};
         window.userNameMap = {};
         
+        // 🌟【安全重構 1】：改用 for...in 迴圈解包 messages，完美相容 Firebase 物件與陣列，徹底免疫 forEach 崩潰 Bug
         if (data.messages) {
-            data.messages.forEach(m => {
+            for (let key in data.messages) {
+                const m = data.messages[key];
+                if (!m) continue;
                 const id = m.LineID || m.UserId;
                 if (id) window.userNameMap[id] = m.Name;
                 if (id && m.AvatarUrl) window.userAvatarMap[id] = m.AvatarUrl;
                 if (m.Name && m.AvatarUrl) window.userAvatarMap[m.Name] = m.AvatarUrl; 
-            });
+            }
         }
         
+        // 🌟【安全重構 2】：同步改用 for...in 迴圈解包 members，確保資料流暢，絕對不發生中斷
         if (data.members) {
-            data.members.forEach(v => {
+            for (let key in data.members) {
+                const v = data.members[key];
+                if (!v) continue;
                 const id = v['LINE ID'] || v['LINEID']; 
                 const name = v['LINE 名稱'] || v['LINE名稱'];
                 const pic = v['AvatarUrl'] || v['pictureUrl'] || v['照片'];
@@ -766,7 +765,7 @@ async function processLoadedData() {
                     if (pic) window.userAvatarMap[id] = pic; 
                 }
                 if (name && pic) window.userAvatarMap[name] = pic;
-            });
+            }
         }
         if (currentUser.id && currentUser.name) window.userNameMap[currentUser.id] = currentUser.name;
         if (currentUser.id && currentUser.pictureUrl) window.userAvatarMap[currentUser.id] = currentUser.pictureUrl;
@@ -775,15 +774,14 @@ async function processLoadedData() {
         checkUserMemberStatus(data);
 
         // 更新畫面
-        // 🌟【終極修正】：徹底移除 activeConfigUpdates === 0 阻擋防線！
-        // 確保任何開關在變動的當下，前台畫面能在一微秒內即時 100% 刷新同步！
+        // 🌟【完美咬合】：由於上方迴圈不再崩潰，這裡將會 100% 確實執行，後台一變，前台立刻跟著反應！
         renderDynamicUI(data);
 
         if (window.pendingMessageIntent) {
             executePendingMessageIntent(window.pendingMessageIntent);
         }
 
-        // 🌟【時序修正】：當雲端最新名單到齊，命令留言板刷新，確保大頭貼與名字 100% 準確亮起
+        // 當雲端最新名單到齊，命令留言板刷新，確保大頭貼與名字 100% 準確亮起
         if (typeof renderMessagesPaginated === 'function' && allMessages && allMessages.length > 0) {
             renderMessagesPaginated();
         }
