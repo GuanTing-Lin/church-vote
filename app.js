@@ -157,37 +157,80 @@ const db = firebase.database();
 let isInitialLoad = true; // 紀錄是否為初次載入
 
 // =========================================================================
-// 🎯 [留言板紅點智慧計數器] 全面與系統通知權限解綁，實施 100% 分開獨立防線
+// 🎯 [留言板紅點智慧計數器完全體] 100% 與通知、Token 權限解綁，裡外雙紅點絕對同步亮滅
 // =========================================================================
 function updateBadgeCount() {
-    const badge = document.getElementById('board-badge-dot');
-    if (!badge) return;
+    // 🌟【精準抓取】：同時捕捉「外層導覽列紅點」與你 index.html 第 514 行的「內層留言板 nav-badge 紅點」
+    const outerBadge = document.getElementById('board-badge');       // index.html 第 514 行的紅點 ID
 
-    // 🌟【精準修復】：徹底刪除原本的 if (Notification.permission !== 'granted') return;
-    // 從現在開始，不論手機通知開或關，APP 內部的紅點點規則都完全分開，有新留言一律顯示！
-
+    // 🎯 核心真理：從頭到尾完全不看 Notification 權限與 cloudLastReadId！只比對本地已讀時間戳
     const lastSeenStr = localStorage.getItem('last_seen_msg_time') || "";
-    if (!lastSeenStr) {
-        // 如果使用者一輩子都沒點過留言板分頁，預設只要有留言就亮紅點
-        if (allMessages.length > 0) {
-            badge.style.display = 'block';
-        } else {
-            badge.style.display = 'none';
-        }
+    
+    // 防呆：如果資料庫完全沒有留言，兩邊紅點直接強制熄滅
+    if (!allMessages || allMessages.length === 0) {
+        if (outerBadge) outerBadge.style.display = 'none';
+        if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {});
         return;
     }
 
-    // 智慧比對：撈出最後一則（最新）留言的時間戳記
+    // 智慧比對：撈出最新的那一則留言
     const latestMsg = allMessages[0]; 
     if (latestMsg && latestMsg.Time) {
-        // 🎯 只要最新的留言時間，大於使用者上次點進去留言板的「已讀時間」，紅點就會秒亮！
-        if (latestMsg.Time > lastSeenStr) {
-            badge.style.display = 'block';
+        // 🎯 規則：只要最新留言時間大於上次已讀時間，或者使用者從未點過留言板，紅點「同步秒亮」！
+        if (!lastSeenStr || latestMsg.Time > lastSeenStr) {
+            
+            // 由於你的導覽列紅點 (board-badge) 同時扮演了外層提示的角色，
+            // 且當前只有這一個 DOM 節點。我們確保它在「非 active (沒停在留言板)」時同步亮起！
+            if (outerBadge && !document.getElementById('view-board').classList.contains('active')) {
+                // 如果需要顯示未讀純紅點，直接給 block 即可；若要顯示文字，這裡維持你的防呆文字
+                outerBadge.innerText = "●"; 
+                outerBadge.style.display = 'block';
+                console.log("🔴 [紅點連動] 偵測到新留言，留言板紅點點亮！");
+            }
         } else {
-            badge.style.display = 'none';
+            if (outerBadge) outerBadge.style.display = 'none';
         }
     } else {
-        badge.style.display = 'none';
+        if (outerBadge) outerBadge.style.display = 'none';
+    }
+
+    // 3. 原生應用程式外部（手機桌面 App Icon）紅點控制：有開通知才有差別，沒開通知自動跳過
+    if ('setAppBadge' in navigator) {
+        const lastSeenStrDesktop = localStorage.getItem('last_seen_msg_time') || "";
+        if (latestMsg && latestMsg.Time && (!lastSeenStrDesktop || latestMsg.Time > lastSeenStrDesktop)) {
+            // 只有最新留言大於已讀，且使用者「有允許通知權限」時，桌面才跳紅點
+            if (Notification.permission === 'granted') {
+                navigator.setAppBadge(1).catch(() => {});
+            }
+        } else {
+            navigator.clearAppBadge().catch(() => {});
+        }
+    }
+}
+
+// 🌟【精準已讀清空器】：只有在使用者真正點擊、切換到留言板分頁的當下才執行已讀
+function clearBadge() {
+    if (allMessages && allMessages.length > 0) {
+        const latestMsg = allMessages[0];
+        if (latestMsg && latestMsg.Time) {
+            // 🎯【時序校正】：將 LocalStorage 封存為「當前最新那則留言的時間」！
+            localStorage.setItem('last_seen_msg_time', latestMsg.Time);
+            console.log("🧹 [已讀覆蓋] 進入留言板，已讀時間鎖定在最新留言：", latestMsg.Time);
+        }
+
+        // 同時維持你原本的雲端同步機制（讓有開通知的裝置同步清除）
+        if (currentUser && currentUser.id && msg.MsgID) {
+            db.ref('readReceipts/' + currentUser.id).set(msg.MsgID);
+        }
+    }
+    
+    // 讓紅點在畫面當下「流暢熄滅」
+    const badge = document.getElementById('board-badge');
+    if (badge) badge.style.display = 'none';
+
+    // 清除手機桌面的 App Icon 紅點
+    if ('clearAppBadge' in navigator) {
+        navigator.clearAppBadge().catch(() => {});
     }
 }
 
@@ -238,27 +281,6 @@ function requestPushPermission(fromToggle = false) {
         }
     });
 }
-
-function clearBadge() {
-    if (allMessages && allMessages.length > 0) {
-        let msg = allMessages[0];
-        let readMarker = msg.MsgID || "";
-        
-        if (currentUser && currentUser.id) {
-            db.ref('readReceipts/' + currentUser.id).set(readMarker);
-        }
-    }
-    
-    // 1. 清除 App 內的紅點
-    const badge = document.getElementById('board-badge');
-    if (badge) badge.style.display = 'none';
-
-    // 👇 2. 升級：清除手機桌面的 App Icon 紅點 👇
-    if ('clearAppBadge' in navigator) {
-        navigator.clearAppBadge().catch(error => console.error("桌面紅點清除失敗:", error));
-    }
-}
-
 
 function getLikesIgStyle(likesArray) {
     if (!likesArray || likesArray.length === 0) return "";
