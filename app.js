@@ -288,6 +288,9 @@ function getLikesIgStyle(likesArray) {
     
     recentLikes.forEach((likeId, idx) => {
         let name = window.userNameMap[likeId] || likeId;
+        // 🌟 防呆：如果名字還是長 ID，截短顯示
+        if (name && name.length > 12 && name.startsWith('U')) { name = name.substring(0, 8) + '...'; }
+        
         let picUrl = window.userAvatarMap[likeId] || window.userAvatarMap[name];
         let zIndex = 3 - idx; 
         let fbText = name ? name[0] : "?";
@@ -301,6 +304,12 @@ function getLikesIgStyle(likesArray) {
     
     let lastNameOrId = likesArray[likesArray.length - 1];
     let lastDisplayName = window.userNameMap[lastNameOrId] || lastNameOrId;
+    
+    // 🌟【精準防爆鎖】：如果按讚的是幽靈帳號或未成功比對的 ID，強制截短，絕不破壞 App 畫面比例！
+    if (lastDisplayName && lastDisplayName.length > 15) {
+        lastDisplayName = lastDisplayName.substring(0, 8) + '...';
+    }
+    
     let textHtml = `<span class="like-text-style"><span class="like-name-bold">${lastDisplayName}</span> ${likesArray.length > 1 ? '和其他人都說讚' : '說讚'}</span>`;
     
     return avatarsHtml + textHtml;
@@ -751,19 +760,35 @@ async function processLoadedData() {
     // 🌐 [核心即時分流監聽器] 徹底杜絕全頁重繪、精準局部更新實時廣播大閘
     // =========================================================================
     db.ref('/').on('value', snapshot => {
-        // 🌟【關鍵修復核心】：實時資料一到，立刻翻轉旗標，終生關閉並中斷上述的舊快取計時器！
         hasLoadedFromFirebase = true; 
         
         const data = snapshot.val();
         if (data) {
             cachedPollData = data;
-            // 隨時將雲端最新正確狀態封存到本地快取中，確保下次離線數據健康
             localStorage.setItem('trip_cache_data', JSON.stringify(data));
             
-            // 1. 背景對齊身分（絕不觸發任何前台跳動）
+            // 🌟【關鍵修復核心】：每次收到雲端廣播，立刻重新建立全網大頭貼與名字字典，徹底根絕 ID 外漏！
+            window.userNameMap = {};
+            window.userAvatarMap = {};
+            let membersArray = extractMembers(data);
+            if (membersArray && membersArray.length > 0) {
+                membersArray.forEach(v => {
+                    if (!v) return;
+                    const id = v['LINE ID'] || v['LINEID']; 
+                    const name = v['LINE 名稱'] || v['LINE名稱'];
+                    const pic = v['AvatarUrl'] || v['pictureUrl'] || v['照片'];
+                    if (id) {
+                        if (name) window.userNameMap[id] = name;
+                        if (pic) window.userAvatarMap[id] = pic; 
+                    }
+                    if (name && pic) window.userAvatarMap[name] = pic;
+                });
+            }
+            
+            // 2. 判斷身分與 Checklist 狀態 (維持原本不動)
             checkUserMemberStatus(data);
             
-            // 2. 架構鎖定隔離：只有在開機初次載入，或是後台 config 開關變更時才刷新主體 UI
+            // 3. 架構鎖定隔離：只有在開機初次載入，或是後台 config 開關變更時才刷新主體 UI
             const currentConfigStr = JSON.stringify(data.config || {});
             const isFirstLoad = (lastConfigStr === "");
             
@@ -773,7 +798,7 @@ async function processLoadedData() {
                 if (typeof renderDynamicUI === 'function') renderDynamicUI(data);
             }
             
-            // 3. 默默對齊人數分頁數據 (前台 0 閃爍)
+            // 4. 默默對齊人數分頁數據 (前台 0 閃爍)
             if (typeof renderPeoplePage === 'function') {
                 renderPeoplePage(data);
             }
