@@ -66,6 +66,50 @@ const ADMIN_PASSCODE = "9999";
 let currentUser = { name: "", id: "", pictureUrl: "", initial: "?", isVoted: false, votedOption: null }; 
 let lateVoteSelection = 0; let cachedPollData = null; let countdownTargetDate = 0;
 let allMessages = []; let currentMsgPage = 1; const MSG_PER_PAGE = 10;
+
+// 🌟 1. 智慧識別：完美從根目錄撈出純數字的成員資料
+function extractMembers(data) {
+    if (!data) return [];
+    if (data.members) {
+        let raw = data.members;
+        if (Array.isArray(raw)) return raw.filter(r => r !== null && r !== undefined);
+        if (typeof raw === 'object') {
+            let arr = [];
+            for (let k in raw) { if (raw[k]) arr.push(raw[k]); }
+            return arr;
+        }
+    }
+    let arr = [];
+    for (let key in data) {
+        if (!isNaN(key) && typeof data[key] === 'object' && data[key] !== null) {
+            arr.push(data[key]);
+        }
+    }
+    return arr;
+}
+
+// 🌟 2. 安全寫入：將名單以「連續順號」重整回寫至 Firebase 根目錄 (絕不破壞 messages 等其他欄位)
+function saveMembersToRoot(vArray) {
+    return db.ref('/').once('value').then(snapshot => {
+        let rootData = snapshot.val() || {};
+        let updates = {};
+        
+        // 先將根目錄現有的純數字 key 全部標記為刪除 (null)，徹底清除手動刪除留下的空洞
+        for (let key in rootData) {
+            if (!isNaN(key)) updates[key] = null;
+        }
+        
+        // 將重新排列、連續順號的成員塞入更新物件中 (0, 1, 2, 3...)
+        vArray.forEach((member, index) => {
+            updates[index] = member;
+        });
+        
+        // 執行一次性局部更新
+        return db.ref('/').update(updates);
+    });
+}
+
+
 let adminNoticesArray = []; 
 let userChecklistState = {}; let checklistData = []; let openCategories = {}; let isChecklistModified = false; 
 let initialDataPromise = null; 
@@ -655,21 +699,22 @@ async function processLoadedData() {
                 try {
                     const cachedData = JSON.parse(cachedRaw);
                     
-                    // 🌟【同步加固】：讓快取路徑也確實備份全域變數，確保極端斷網下後台與統計依然有舊資料可看、絕不崩潰
                     cachedPollData = cachedData;
                     
                     if (cachedData.messages) {
-                        cachedData.messages.forEach(m => {
-                            if (!m) return;
+                        for (let key in cachedData.messages) {
+                            const m = cachedData.messages[key];
+                            if (!m) continue;
                             const id = m.LineID || m.UserId;
                             if (id) window.userNameMap[id] = m.Name;
                             if (id && m.AvatarUrl) window.userAvatarMap[id] = m.AvatarUrl;
                             if (m.Name && m.AvatarUrl) window.userAvatarMap[m.Name] = m.AvatarUrl; 
-                        });
+                        }
                     }
                     if (cachedData.members) {
-                        cachedData.members.forEach(v => {
-                            if (!v) return;
+                        for (let key in cachedData.members) {
+                            const v = cachedData.members[key];
+                            if (!v) continue;
                             const id = v['LINE ID'] || v['LINEID']; 
                             const name = v['LINE 名稱'] || v['LINE名稱'];
                             const pic = v['AvatarUrl'] || v['pictureUrl'] || v['照片'];
@@ -678,17 +723,13 @@ async function processLoadedData() {
                                 if (pic) window.userAvatarMap[id] = pic; 
                             }
                             if (name && pic) window.userAvatarMap[name] = pic;
-                        });
+                        }
                     }
                     if (currentUser.id && currentUser.name) window.userNameMap[currentUser.id] = currentUser.name;
                     if (currentUser.id && currentUser.pictureUrl) window.userAvatarMap[currentUser.id] = currentUser.pictureUrl;
 
-                    // 用快取先渲染畫面並解鎖進首頁
                     renderDynamicUI(cachedData);
-                    
-                    // 執行身分驗證邏輯
                     checkUserMemberStatus(cachedData);
-                    // 讓快取路徑渲染完後安全解鎖
                     unlockMainApp();
 
                     if (typeof renderMessagesPaginated === 'function' && allMessages && allMessages.length > 0) {
@@ -727,12 +768,18 @@ async function processLoadedData() {
 
     // 3. 訂閱 Firebase 即時資料 (只要後台有變，這裡瞬間觸發！)
     db.ref('/').on('value', (snapshot) => {
-        hasLoadedFromFirebase = true; // 標記雲端資料已順利接通
+        hasLoadedFromFirebase = true; 
         let data = snapshot.val() || { config: {}, messages: [], votes: [] };
         
+        // 🌟【絕殺反向覆蓋核心】：如果管理員剛點過開關未滿 3 秒，直接拒絕試算表異步重繪彈回，死死鎖定按鈕狀態！
+        if (Date.now() - window.lastConfigAdminClickTime < 3000) {
+            if (cachedPollData && cachedPollData.config) {
+                data.config = cachedPollData.config;
+            }
+        }
+
         localStorage.setItem('trip_cache_data', JSON.stringify(data));
         
-        // 雲端接通了，立刻隱藏連線慢的提示橫幅
         const banner = document.getElementById('cache-warning-banner');
         if (banner) banner.style.display = 'none';
         
@@ -740,7 +787,6 @@ async function processLoadedData() {
         window.userAvatarMap = {};
         window.userNameMap = {};
         
-        // 🌟【安全重構 1】：改用 for...in 迴圈解包 messages，完美相容 Firebase 物件與陣列，徹底免疫 forEach 崩潰 Bug
         if (data.messages) {
             for (let key in data.messages) {
                 const m = data.messages[key];
@@ -752,7 +798,6 @@ async function processLoadedData() {
             }
         }
         
-        // 🌟【安全重構 2】：同步改用 for...in 迴圈解包 members，確保資料流暢，絕對不發生中斷
         if (data.members) {
             for (let key in data.members) {
                 const v = data.members[key];
@@ -774,14 +819,12 @@ async function processLoadedData() {
         checkUserMemberStatus(data);
 
         // 更新畫面
-        // 🌟【完美咬合】：由於上方迴圈不再崩潰，這裡將會 100% 確實執行，後台一變，前台立刻跟著反應！
         renderDynamicUI(data);
 
         if (window.pendingMessageIntent) {
             executePendingMessageIntent(window.pendingMessageIntent);
         }
 
-        // 當雲端最新名單到齊，命令留言板刷新，確保大頭貼與名字 100% 準確亮起
         if (typeof renderMessagesPaginated === 'function' && allMessages && allMessages.length > 0) {
             renderMessagesPaginated();
         }
@@ -803,23 +846,39 @@ async function processLoadedData() {
 }
 
 function checkUserMemberStatus(data) {
-    if (isProfileChecked) return; // 確保只執行一次
+    if (isProfileChecked) return; 
     isProfileChecked = true;
 
-    let vArray = data.members || [];
-    let userIdx = vArray.findIndex(row => row['LINE ID'] === currentUser.id || row['LINEID'] === currentUser.id);
+    // 🌟 使用智慧工具撈出成員
+    let vArray = extractMembers(data);
+
+    let userIdx = vArray.findIndex(row => row && (row['LINE ID'] === currentUser.id || row['LINEID'] === currentUser.id));
+    
     if (userIdx > -1) {
-        let userVote = vArray[userIdx]; currentUser.isVoted = true; const s = userVote['偏好行程'];
+        let userVote = vArray[userIdx]; 
+        currentUser.isVoted = true; 
+        const s = userVote['偏好行程'];
         if (s && s.includes("方案一")) currentUser.votedOption = 1;
         else if (s && s.includes("方案二")) currentUser.votedOption = 2;
         else currentUser.votedOption = 3;
         try { if(userVote['Checklist']) { userChecklistState = JSON.parse(userVote['Checklist']); } } catch(e) {}
     } else {
-        currentUser.isVoted = true; currentUser.votedOption = 3; 
-        vArray.push({ "LINEID": currentUser.id, "LINE名稱": currentUser.name, "AvatarUrl": currentUser.pictureUrl || "", "偏好行程": "無法參加(訪客查看)" });
-        db.ref('members').set(vArray);
+        // 發現新客/訪客，自動補入名單
+        currentUser.isVoted = true; 
+        currentUser.votedOption = 3; 
         
-        // 🌟【重新接回你的設計】：全新訪客登入的瞬間，立刻同步將資料寫回 Google 試算表！
+        const newVisitor = { 
+            "LINEID": currentUser.id, 
+            "LINE名稱": currentUser.name, 
+            "AvatarUrl": currentUser.pictureUrl || "", 
+            "偏好行程": "無法參加(訪客查看)" 
+        };
+        vArray.push(newVisitor);
+        
+        // 🌟 改呼叫根目錄安全寫入器，確保長在根目錄並自動對齊順號
+        saveMembersToRoot(vArray);
+        
+        // 同步寫回 Google 試算表
         fetch(GAS_API_URL, { 
             method: 'POST', 
             headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
@@ -835,9 +894,9 @@ function checkUserMemberStatus(data) {
         }).catch(e => console.error("GAS 新訪客寫回失敗:", e));
     }
     
-    // 關閉轉圈圈並解鎖
     document.getElementById('loading').style.display = 'none';
     document.getElementById('lock-screen').style.display = 'none'; 
+    unlockMainApp();
 }
 
 function toggleMenu(event) { 
@@ -989,38 +1048,20 @@ async function shareNotice(title, id) {
 }
 
 function renderDynamicUI(data) {
-    if (!data.config) return;
-    const cfg = data.config;
+    if (!data) return;
+    const cfg = data.config || {};
 
-    if(cfg.TripTitle) { document.getElementById('ui-trip-title').innerText = cfg.TripTitle; document.getElementById('vote-ui-title').innerText = cfg.TripTitle; }
-    if(cfg.TripDate) { document.getElementById('ui-trip-date').innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> <span>${cfg.TripDate}</span>`; }
-    if(cfg.InfoAcc) document.getElementById('ui-info-acc').innerText = cfg.InfoAcc;
-    if(cfg.InfoPpl) document.getElementById('ui-info-ppl').innerText = cfg.InfoPpl;
-    if(cfg.InfoPrice) document.getElementById('ui-info-price').innerText = cfg.InfoPrice;
-    if(cfg.DepartureDate) countdownTargetDate = new Date(cfg.DepartureDate).getTime();
-    initDaysCountdown();
-
-    // 🌟 處理補報名系統「確認提交」按鈕的鎖定狀態
-    const voteBtn = document.getElementById('btn-submit-vote');
+    // =========================================================================
+    // 🌟 1. 前後台開關狀態實時同步校正（使用安全解析器 getConfigBool，絕不重複）
+    // =========================================================================
+    
+    // 1. 同步鎖定補投票系統開關
     const adminLockToggle = document.getElementById('admin-lock-toggle');
-
-    // 判斷是否已經報名 (方案一或方案二代表已報名，方案三代表訪客/無法參加)
-    const isAlreadyRegistered = currentUser.isVoted && (currentUser.votedOption === 1 || currentUser.votedOption === 2);
-
-    if (String(cfg.VotingLocked).toLowerCase() === 'true') {
-        // 狀況 1：系統全域鎖定
-        if (voteBtn) { voteBtn.disabled = true; voteBtn.innerText = "系統已鎖定，停止報名"; }
-        if (adminLockToggle) adminLockToggle.checked = true;
-    } else if (isAlreadyRegistered) {
-        // 狀況 2：系統未鎖定，但該使用者已經報名過
-        if (voteBtn) { voteBtn.disabled = true; voteBtn.innerText = "您已報名"; }
-        if (adminLockToggle) adminLockToggle.checked = false;
-    } else {
-        // 狀況 3：系統未鎖定，且使用者為訪客/無法參加狀態，可以補報名
-        if (voteBtn) { voteBtn.disabled = false; voteBtn.innerText = "確認提交"; }
-        if (adminLockToggle) adminLockToggle.checked = false;
+    if (adminLockToggle) {
+        adminLockToggle.checked = getConfigBool(cfg, 'VotingLocked', false);
     }
 
+    // 2. 同步開放訪客查看（總開關）
     const guestToggle = document.getElementById('admin-guest-toggle');
     if (guestToggle) {
         let isGuestOn = getConfigBool(cfg, 'GuestViewEnabled', false);
@@ -1029,6 +1070,7 @@ function renderDynamicUI(data) {
         if (subOptionsDiv) subOptionsDiv.style.display = isGuestOn ? 'block' : 'none';
     }
     
+    // 3. 同步訪客查看權限的各個子開關
     const subOverview = document.getElementById('admin-guest-overview');
     const subAcc = document.getElementById('admin-guest-acc');
     const subPpl = document.getElementById('admin-guest-ppl');
@@ -1045,14 +1087,41 @@ function renderDynamicUI(data) {
     if(subPrep) subPrep.checked = getConfigBool(cfg, 'Guest_View_Prep', true);
     if(subBoard) subBoard.checked = getConfigBool(cfg, 'Guest_View_Board', true);
 
+    // 🌟【訪客權限與公告渲染】：精準呼叫一次，絕不浪費硬體效能
     applyVisitorPermissions(cfg);
     renderNoticesWithMagic(cfg); 
-    
+
+    // =========================================================================
+    // 🌟 2. 旅遊基本資訊、天數倒數渲染
+    // =========================================================================
+    if(cfg.TripTitle) { document.getElementById('ui-trip-title').innerText = cfg.TripTitle; document.getElementById('vote-ui-title').innerText = cfg.TripTitle; }
+    if(cfg.TripDate) { document.getElementById('ui-trip-date').innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> <span>${cfg.TripDate}</span>`; }
+    if(cfg.InfoAcc) document.getElementById('ui-info-acc').innerText = cfg.InfoAcc;
+    if(cfg.InfoPpl) document.getElementById('ui-info-ppl').innerText = cfg.InfoPpl;
+    if(cfg.InfoPrice) document.getElementById('ui-info-price').innerText = cfg.InfoPrice;
+    if(cfg.DepartureDate) countdownTargetDate = new Date(cfg.DepartureDate).getTime();
+    initDaysCountdown();
+
+    // 🌟 3. 處理補報名系統「確認提交」按鈕的鎖定狀態
+    const voteBtn = document.getElementById('btn-submit-vote');
+    const isAlreadyRegistered = currentUser.isVoted && (currentUser.votedOption === 1 || currentUser.votedOption === 2);
+
+    if (getConfigBool(cfg, 'VotingLocked', false)) {
+        if (voteBtn) { voteBtn.disabled = true; voteBtn.innerText = "系統已鎖定，停止報名"; }
+    } else if (isAlreadyRegistered) {
+        if (voteBtn) { voteBtn.disabled = true; voteBtn.innerText = "您已報名"; }
+    } else {
+        if (voteBtn) { voteBtn.disabled = false; voteBtn.innerText = "確認提交"; }
+    }
+
+    // =========================================================================
+    // 🌟 4. 延遲列表數據非同步渲染（車次、房型床位、詳細行程、清單）
+    // =========================================================================
     setTimeout(() => {
         if (data.transport && data.transport.length > 0) {
             let carHtml = "";
             data.transport.forEach(car => {
-                if (!car) return; // 🌟 安全防護：跳過 Firebase 陣列空位
+                if (!car) return; 
                 const driverName = car['Driver'] || '尚未指定';
                 const phone = car['Phone'] || '';
                 const passengersRaw = car['Passengers'] || '';
@@ -1116,7 +1185,7 @@ function renderDynamicUI(data) {
         if (data.bnbs && data.bnbs.length > 0) {
             let rulesHtml = ''; let roomsHtml = '';
             data.bnbs.forEach(item => {
-                if (!item) return; // 🌟 安全防護：跳過 Firebase 陣列空位
+                if (!item) return; 
                 const type = item['類型'];
                 if (type === '注意事項') {
                     rulesHtml += `<div class="acc-rule-item"><div class="rule-icon">${item['標籤']}</div><div class="rule-text">${item['內容']}</div></div>`;
@@ -1148,7 +1217,7 @@ function renderDynamicUI(data) {
         if (data.itinerary && data.itinerary.length > 0) {
             let itinHtml = ""; let currentDay = "";
             data.itinerary.forEach(item => {
-                if (!item) return; // 🌟【關鍵安全鎖】：強勢攔截並跳過 Firebase 陣列 null 項目，絕不允許其發生中斷！
+                if (!item) return; 
                 if (item.Day !== currentDay) { 
                     if(currentDay !== "") itinHtml += `</div></div>`; 
                     currentDay = item.Day; 
@@ -1179,12 +1248,12 @@ function renderDynamicUI(data) {
         if (data.checklist && data.checklist.length > 0) {
             checklistData = data.checklist;
             checklistData.forEach(cat => {
-                if (!cat) return; // 🌟 安全防護：跳過空物件
+                if (!cat) return; 
                 if (openCategories[cat.id] === undefined) openCategories[cat.id] = true; 
             });
         }
         
-        renderChecklist(); // 💡 成功保護：前面就算有空項目也不會卡死，這裡絕對可以順利執行繪製清單！
+        renderChecklist(); 
     }, 50);
 
     renderPeoplePage(data);
@@ -1943,13 +2012,15 @@ async function saveChecklistBackground() {
     if (!isChecklistModified) return; 
     isChecklistModified = false; 
     
-    let currentMembers = cachedPollData.members || [];
-    let userIdx = currentMembers.findIndex(v => v['LINE ID'] === currentUser.id || v['LINEID'] === currentUser.id);
+    // 🌟【同步防護】：過濾 null 確保不崩潰
+    let currentMembers = (cachedPollData.members || []).filter(v => v !== null && v !== undefined);
+    let userIdx = currentMembers.findIndex(v => v && (v['LINE ID'] === currentUser.id || v['LINEID'] === currentUser.id));
     
     if (userIdx > -1) {
         currentMembers[userIdx].Checklist = JSON.stringify(userChecklistState);
         
-        db.ref('members').set(currentMembers).catch(e => isChecklistModified = true);
+        // 寫回 Firebase 進行順號重整
+        saveMembersToRoot(currentMembers).catch(e => isChecklistModified = true);
 
         fetch(GAS_API_URL, { 
             method: 'POST', 
@@ -2013,24 +2084,33 @@ function selectVote(o) {
 async function submitLateVote() {
     if (!lateVoteSelection) return showCustomAlert("提示", "請點選我要參加");
     if (cachedPollData?.config?.VotingLocked === 'true') return showCustomAlert("系統已鎖定", "主辦人已關閉報名系統。");
-    // 👇 新增這行：防止已經報名的人重複觸發 API
-        if (currentUser.isVoted && (currentUser.votedOption === 1 || currentUser.votedOption === 2)) return showCustomAlert("提示", "您已經完成報名囉！");
+    if (currentUser.isVoted && (currentUser.votedOption === 1 || currentUser.votedOption === 2)) return showCustomAlert("提示", "您已經完成報名囉！");
 
     showCustomAlert("資料傳送中", "請稍候...", false);
                 
-    let currentMembers = cachedPollData.members || [];
-    let userIdx = currentMembers.findIndex(v => v['LINE ID'] === currentUser.id || v['LINEID'] === currentUser.id);
+    // 🌟【自我修復核心】：自動過濾掉手動刪除留下的 null 坑洞，強制重新排成順號陣列
+    let currentMembers = (cachedPollData.members || []).filter(v => v !== null && v !== undefined);
+    
+    // 🌟 加上安全防護，避免 v 為 null 時引發崩潰
+    let userIdx = currentMembers.findIndex(v => v && (v['LINE ID'] === currentUser.id || v['LINEID'] === currentUser.id));
     
     const voteData = { 
-        "LINEID": currentUser.id, "LINE名稱": currentUser.name, "AvatarUrl": currentUser.pictureUrl || "", 
-        "偏好行程": "方案一：宜蘭深度放鬆 (二天一夜)", "time_opt1": "", "time_opt2": "V" 
+        "LINEID": currentUser.id, 
+        "LINE名稱": currentUser.name, 
+        "AvatarUrl": currentUser.pictureUrl || "", 
+        "偏好行程": "方案一：宜蘭深度放鬆 (二天一夜)", 
+        "time_opt1": "", 
+        "time_opt2": "V" 
     };
 
-    if (userIdx > -1) currentMembers[userIdx] = { ...currentMembers[userIdx], ...voteData, Checklist: currentMembers[userIdx].Checklist || "" };
-    else currentMembers.push(voteData);
+    if (userIdx > -1) {
+        currentMembers[userIdx] = { ...currentMembers[userIdx], ...voteData, Checklist: currentMembers[userIdx].Checklist || "" };
+    } else {
+        currentMembers.push(voteData);
+    }
 
-    // 🌟 修改：改寫入 members 節點
-    db.ref('members').set(currentMembers).then(() => {
+    // 寫回 Firebase，此時後台的序號會自動被校正為連續的 0, 1, 2, 3... 順號
+    saveMembersToRoot(currentMembers).then(() => {
         fetch(GAS_API_URL, { 
             method: 'POST', 
             headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
@@ -2039,11 +2119,9 @@ async function submitLateVote() {
 
         showCustomAlert("報名成功", "");
         
-        // 更新使用者狀態為正式成員
         currentUser.isVoted = true; 
         currentUser.votedOption = 1;
 
-        // 👇 呼叫畫面重繪：這步會確實拔除鎖頭、同時把提交按鈕變成「您已報名」
         if (cachedPollData) {
             renderDynamicUI(cachedPollData);
         }
@@ -2057,14 +2135,16 @@ async function fetchResults() {
     resultContainer.innerHTML = `<div style="text-align: center; margin-top: 60px;"><div class="spinner" style="margin: 0 auto 15px;"></div><h2 style="color: #4a5568;">統計中...</h2></div>`;
     try {
         // 🌟 修改：撈取資料從 cachedPollData.votes 改成 cachedPollData.members
-        let data = cachedPollData ? cachedPollData.members : [];
-        if (!cachedPollData) { 
-            const response = await fetch(GAS_API_URL, { cache: 'no-store', redirect: 'follow' }); 
-            cachedPollData = await response.json(); 
-            data = cachedPollData.members || []; 
+        let data = cachedPollData ? extractMembers(cachedPollData) : [];
+            if (!cachedPollData) { 
+                const response = await fetch(GAS_API_URL, { cache: 'no-store', redirect: 'follow' }); 
+                cachedPollData = await response.json(); 
+                data = cachedPollData ? extractMembers(cachedPollData) : []; // 🌟 同步修正這裡
         }
         let totalVotes = 0; let votersHtml = ""; let t1_d1 = 0; let t1_d2 = 0; let t2_d1 = 0; let t2_d2 = 0; let unableCount = 0; let unableHtml = "";
         data.forEach(row => {
+            // 🌟【核心防護鎖】：如果該筆資料是被刪除的 null，直接跳過不處理，防止統計畫面死鎖！
+            if (!row) return;
             // 🌟 同時支援舊版與新版的 ID 寫法
             const id = row['LINE ID'] || row['LINEID'];
             if (id === "test_user_001") return;
@@ -2329,7 +2409,7 @@ function renderPeoplePage(data) {
     const container = document.getElementById('ui-people-container');
     if (!container) return;
     
-    const members = data.members || [];
+    const members = extractMembers(data);
     const groups = { "已報名": [], "訪客查看": [] };
     
     // 🌟 改用 for...in 並加入防空鎖，徹底免疫 Firebase 陣列空索引造成的頁面崩潰 Bug

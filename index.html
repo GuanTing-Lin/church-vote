@@ -26,58 +26,6 @@
     </style>
     <link rel="stylesheet" href="style.css?v=5.0">
 
-    <script>
-        // 🌟 完整替換 index.html 內部的 Service Worker 註冊區塊
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => {
-                        console.log('Service Worker 註冊成功:', reg.scope);
-                        
-                        // 🌟【關鍵新增】：智慧型自動換版偵測
-                        // 當組員打開 App 時，如果偵測到雲端有新 sw.js，立刻幫他抓下來
-                        reg.addEventListener('updatefound', () => {
-                            const newWorker = reg.installing;
-                            if (newWorker) {
-                                newWorker.addEventListener('statechange', () => {
-                                    // 當新版本下載並安裝完畢的瞬間，自動重整，組員完全不用手動整理！
-                                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                        console.log('✨ 偵測到全應用新版本，正在為您強制更新重載...');
-                                        window.location.reload();
-                                    }
-                                });
-                            }
-                        });
-
-                        if (typeof firebase !== 'undefined' && firebase.messaging && firebase.messaging.isSupported()) {
-                            firebase.messaging().useServiceWorker(reg);
-                            
-                            const messaging = firebase.messaging();
-                            messaging.onMessage((payload) => {
-                                console.log('[index.html] 前景收到推播：', payload);
-                                const boardView = document.getElementById('view-board');
-                                const isLookingAtBoard = boardView && boardView.classList.contains('active');
-                                if (!isLookingAtBoard) {
-                                    const notificationTitle = payload.notification.title;
-                                    const notificationOptions = {
-                                        body: payload.notification.body,
-                                        icon: payload.notification.icon || 'https://raw.githubusercontent.com/GuanTing-Lin/church-vote/main/yilan.png',
-                                        data: payload.data 
-                                    };
-                                    reg.showNotification(notificationTitle, notificationOptions);
-                                }
-                            });
-                        }
-                    })
-                    .catch(err => console.log('Service Worker 註冊失敗:', err));
-            });
-
-            // 🌟【雙重保險】：確保全域 Service Worker 控制權轉移時，前端網頁同步刷新
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-                window.location.reload();
-            });
-        }
-    </script>
 </head>
 <body>
     <div class="bg-blobs">
