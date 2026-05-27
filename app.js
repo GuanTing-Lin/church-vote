@@ -64,6 +64,11 @@ const LATE_VOTE_PASSCODE = "062728";
 const ADMIN_PASSCODE = "9999";
 
 let currentUser = { name: "", id: "", pictureUrl: "", initial: "?", isVoted: false, votedOption: null }; 
+let myFirebaseIndex = -1; // 🌟 鎖定本人在 Firebase 陣列中的絕對位置
+let lastConfigStr = "";
+let lastMembersCount = 0;
+let lastMessagesCount = 0; // 用來精準追蹤是否有「全新留言」
+let isFirstLoadComplete = false; // 🌟 全域防護鎖：防止即時更新時畫面彈回首頁
 let lateVoteSelection = 0; let cachedPollData = null; let countdownTargetDate = 0;
 let allMessages = []; let currentMsgPage = 1; const MSG_PER_PAGE = 10;
 
@@ -88,24 +93,28 @@ function extractMembers(data) {
     return arr;
 }
 
-// 🌟 2. 安全寫入：將名單以「連續順號」重整回寫至 Firebase 根目錄 (絕不破壞 messages 等其他欄位)
 function saveMembersToRoot(vArray) {
-    return db.ref('/').once('value').then(snapshot => {
-        let rootData = snapshot.val() || {};
-        let updates = {};
-        
-        // 先將根目錄現有的純數字 key 全部標記為刪除 (null)，徹底清除手動刪除留下的空洞
-        for (let key in rootData) {
-            if (!isNaN(key)) updates[key] = null;
-        }
-        
-        // 將重新排列、連續順號的成員塞入更新物件中 (0, 1, 2, 3...)
+    // 🌟【路徑修正】：本地環境改對齊 /members.json 繞過限制
+    if (isLocalEnv) {
+        let patchData = {};
         vArray.forEach((member, index) => {
-            updates[index] = member;
+            patchData[index] = member;
         });
         
-        // 執行一次性局部更新
-        return db.ref('/').update(updates);
+        return fetch(firebaseConfig.databaseURL + "/members.json", {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(patchData)
+        }).then(res => res.json());
+    }
+
+    // 🌟【路徑修正】：線上環境精準更新 /members 節點，不再污染根目錄
+    return db.ref('/members').once('value').then(snapshot => {
+        let nodeData = snapshot.val() || {};
+        let updates = {};
+        for (let key in nodeData) { updates[key] = null; }
+        vArray.forEach((member, index) => { updates[index] = member; });
+        return db.ref('/members').update(updates);
     });
 }
 
@@ -678,33 +687,30 @@ window.onload = async function() {
     }, 100);
 };
 
-// 🌟 1. 在 app.js 的全域變數區（例如 cloudLastReadId 下方）補上這兩個旗標
+// 🌟【時序導正】：宣告初次快取阻斷旗標與身分防護鎖
 let hasLoadedFromFirebase = false;
 let isProfileChecked = false;
 
 async function processLoadedData() {
     listenToReadReceipts();
-    initMessageListeners(); // 啟動三劍客監聽
+    initMessageListeners(); 
 
-    // 🌟 依需求強制隱藏黃色提示橫幅，永遠不出來打擾畫面
     const banner = document.getElementById('cache-warning-banner');
     if (banner) banner.style.display = 'none';
 
-    // 100% 回歸您最穩定的原本快取載入時序防護（2秒超時防護）
+    // 🌟【極端備援計時器】：延長至 4 秒，只有當完全斷網、Firebase 毫無回應時，才允許本地舊快取頂替
     setTimeout(() => {
         if (!hasLoadedFromFirebase && !isProfileChecked) {
-            console.log("⏳ 網路連線較慢，正在嘗試載入本地快取資料...");
+            console.log("⏳ 本地網路完全中斷，啟動離線快取備援機制...");
             const cachedRaw = localStorage.getItem('trip_cache_data');
             if (cachedRaw) {
                 try {
                     const cachedData = JSON.parse(cachedRaw);
-                    
                     cachedPollData = cachedData;
                     
                     if (cachedData.messages) {
                         for (let key in cachedData.messages) {
-                            const m = cachedData.messages[key];
-                            if (!m) continue;
+                            const m = cachedData.messages[key]; if (!m) continue;
                             const id = m.LineID || m.UserId;
                             if (id) window.userNameMap[id] = m.Name;
                             if (id && m.AvatarUrl) window.userAvatarMap[id] = m.AvatarUrl;
@@ -713,148 +719,77 @@ async function processLoadedData() {
                     }
                     if (cachedData.members) {
                         for (let key in cachedData.members) {
-                            const v = cachedData.members[key];
-                            if (!v) continue;
-                            const id = v['LINE ID'] || v['LINEID']; 
-                            const name = v['LINE 名稱'] || v['LINE名稱'];
-                            const pic = v['AvatarUrl'] || v['pictureUrl'] || v['照片'];
-                            if (id) {
-                                if (name) window.userNameMap[id] = name;
-                                if (pic) window.userAvatarMap[id] = pic; 
-                            }
+                            const v = cachedData.members[key]; if (!v) continue;
+                            const id = v['LINE ID'] || v['LINEID']; const name = v['LINE 名稱'] || v['LINE名稱']; const pic = v['AvatarUrl'] || v['pictureUrl'] || v['照片'];
+                            if (id) { if (name) window.userNameMap[id] = name; if (pic) window.userAvatarMap[id] = pic; }
                             if (name && pic) window.userAvatarMap[name] = pic;
                         }
                     }
-                    if (currentUser.id && currentUser.name) window.userNameMap[currentUser.id] = currentUser.name;
-                    if (currentUser.id && currentUser.pictureUrl) window.userAvatarMap[currentUser.id] = currentUser.pictureUrl;
-
                     renderDynamicUI(cachedData);
                     checkUserMemberStatus(cachedData);
                     unlockMainApp();
-
-                    if (typeof renderMessagesPaginated === 'function' && allMessages && allMessages.length > 0) {
-                        renderMessagesPaginated();
-                    }
                 } catch(e) { console.error("快取解析失敗:", e); }
             }
         }
-    }, 2000);
+    }, 4000);
 
     // 👇 同時監聽 Token (總開關) 與 Prefs (子開關)
     if (currentUser && currentUser.id) {
         db.ref('pushTokens/' + currentUser.id).on('value', snap => {
-            const dbToken = snap.val();
-            const myLocalToken = localStorage.getItem('myDeviceFCMToken');
+            const dbToken = snap.val(); const myLocalToken = localStorage.getItem('myDeviceFCMToken');
             const isMyTokenActive = dbToken && (dbToken === myLocalToken);
-            const masterToggle = document.getElementById('user-push-master-toggle');
-            const subOptions = document.getElementById('push-sub-options');
-            if (masterToggle) {
-                const isOn = isMyTokenActive && Notification.permission === 'granted';
-                masterToggle.checked = isOn;
-                if (subOptions) subOptions.style.display = isOn ? 'block' : 'none';
-            }
+            const masterToggle = document.getElementById('user-push-master-toggle'); const subOptions = document.getElementById('push-sub-options');
+            if (masterToggle) { const isOn = isMyTokenActive && Notification.permission === 'granted'; masterToggle.checked = isOn; if (subOptions) subOptions.style.display = isOn ? 'block' : 'none'; }
         });
-        
         db.ref('pushPrefs/' + currentUser.id).on('value', snap => {
-            const prefs = snap.val() || { all: true, mentions: true, notices: true }; 
-            const allToggle = document.getElementById('push-pref-all'); 
-            const mentionsToggle = document.getElementById('push-pref-mentions');
-            const noticesToggle = document.getElementById('push-pref-notices'); 
-            if (allToggle) allToggle.checked = prefs.all; 
-            if (mentionsToggle) mentionsToggle.checked = prefs.mentions;
-            if (noticesToggle) noticesToggle.checked = prefs.notices !== false; 
+            const prefs = snap.val() || { all: true, mentions: true, notices: true }; const allToggle = document.getElementById('push-pref-all'); const mentionsToggle = document.getElementById('push-pref-mentions'); const noticesToggle = document.getElementById('push-pref-notices');
+            if (allToggle) allToggle.checked = prefs.all; if (mentionsToggle) mentionsToggle.checked = prefs.mentions; if (noticesToggle) noticesToggle.checked = prefs.notices !== false; 
         });
     }
 
-    // 3. 訂閱 Firebase 即時資料 (只要後台有變，這裡瞬間觸發！)
-    db.ref('/').on('value', (snapshot) => {
+    // =========================================================================
+    // 🌐 [核心即時分流監聽器] 徹底杜絕全頁重繪、精準局部更新實時廣播大閘
+    // =========================================================================
+    db.ref('/').on('value', snapshot => {
+        // 🌟【關鍵修復核心】：實時資料一到，立刻翻轉旗標，終生關閉並中斷上述的舊快取計時器！
         hasLoadedFromFirebase = true; 
-        let data = snapshot.val() || { config: {}, messages: [], votes: [] };
         
-        // 🌟【絕殺反向覆蓋核心】：如果管理員剛點過開關未滿 3 秒，直接拒絕試算表異步重繪彈回，死死鎖定按鈕狀態！
-        if (Date.now() - window.lastConfigAdminClickTime < 3000) {
-            if (cachedPollData && cachedPollData.config) {
-                data.config = cachedPollData.config;
-            }
-        }
-
-        localStorage.setItem('trip_cache_data', JSON.stringify(data));
-        
-        const banner = document.getElementById('cache-warning-banner');
-        if (banner) banner.style.display = 'none';
-        
-        cachedPollData = data;
-        window.userAvatarMap = {};
-        window.userNameMap = {};
-        
-        if (data.messages) {
-            for (let key in data.messages) {
-                const m = data.messages[key];
-                if (!m) continue;
-                const id = m.LineID || m.UserId;
-                if (id) window.userNameMap[id] = m.Name;
-                if (id && m.AvatarUrl) window.userAvatarMap[id] = m.AvatarUrl;
-                if (m.Name && m.AvatarUrl) window.userAvatarMap[m.Name] = m.AvatarUrl; 
-            }
-        }
-        
-        if (data.members) {
-            for (let key in data.members) {
-                const v = data.members[key];
-                if (!v) continue;
-                const id = v['LINE ID'] || v['LINEID']; 
-                const name = v['LINE 名稱'] || v['LINE名稱'];
-                const pic = v['AvatarUrl'] || v['pictureUrl'] || v['照片'];
-                if (id) {
-                    if (name) window.userNameMap[id] = name;
-                    if (pic) window.userAvatarMap[id] = pic; 
-                }
-                if (name && pic) window.userAvatarMap[name] = pic;
-            }
-        }
-        if (currentUser.id && currentUser.name) window.userNameMap[currentUser.id] = currentUser.name;
-        if (currentUser.id && currentUser.pictureUrl) window.userAvatarMap[currentUser.id] = currentUser.pictureUrl;
-
-        // 身分驗證與解鎖
-        checkUserMemberStatus(data);
-
-        // 更新畫面
-        renderDynamicUI(data);
-
-        if (window.pendingMessageIntent) {
-            executePendingMessageIntent(window.pendingMessageIntent);
-        }
-
-        if (typeof renderMessagesPaginated === 'function' && allMessages && allMessages.length > 0) {
-            renderMessagesPaginated();
-        }
-
-        // 完成初次載入
-        if (isInitialLoad) {
-            isInitialLoad = false;
-            document.getElementById('loading').style.display = 'none';
-            const welcomeNameEl = document.getElementById('welcome-name');
-            welcomeNameEl.innerHTML = `<span>${currentUser.name}</span>`;
+        const data = snapshot.val();
+        if (data) {
+            cachedPollData = data;
+            // 隨時將雲端最新正確狀態封存到本地快取中，確保下次離線數據健康
+            localStorage.setItem('trip_cache_data', JSON.stringify(data));
             
-            if (currentUser.votedOption === 3) document.getElementById('visitor-badge').style.display = 'inline-flex';
-            else document.getElementById('visitor-badge').style.display = 'none';
-
-            document.getElementById('lock-screen').style.display = 'none';
-            unlockMainApp();
+            // 1. 背景對齊身分（絕不觸發任何前台跳動）
+            checkUserMemberStatus(data);
+            
+            // 2. 架構鎖定隔離：只有在開機初次載入，或是後台 config 開關變更時才刷新主體 UI
+            const currentConfigStr = JSON.stringify(data.config || {});
+            const isFirstLoad = (lastConfigStr === "");
+            
+            if (isFirstLoad || currentConfigStr !== lastConfigStr) {
+                lastConfigStr = currentConfigStr;
+                console.log("🌐 [主架構渲染] 執行開機初次載入或後台變更 UI 鋪設");
+                if (typeof renderDynamicUI === 'function') renderDynamicUI(data);
+            }
+            
+            // 3. 默默對齊人數分頁數據 (前台 0 閃爍)
+            if (typeof renderPeoplePage === 'function') {
+                renderPeoplePage(data);
+            }
         }
     });
 }
 
+let hasUpdatedMetadata = false; // 🌟 全域防護旗標，確保每趟連線只更新一次時間，不造成監聽無窮迴圈
+
 function checkUserMemberStatus(data) {
-    if (isProfileChecked) return; 
-    isProfileChecked = true;
-
-    // 🌟 使用智慧工具撈出成員
     let vArray = extractMembers(data);
-
     let userIdx = vArray.findIndex(row => row && (row['LINE ID'] === currentUser.id || row['LINEID'] === currentUser.id));
-    
+
     if (userIdx > -1) {
+        myFirebaseIndex = userIdx; // 🌟 精準鎖定本人在 Firebase 中的數字索引
+
         let userVote = vArray[userIdx]; 
         currentUser.isVoted = true; 
         const s = userVote['偏好行程'];
@@ -862,41 +797,67 @@ function checkUserMemberStatus(data) {
         else if (s && s.includes("方案二")) currentUser.votedOption = 2;
         else currentUser.votedOption = 3;
         try { if(userVote['Checklist']) { userChecklistState = JSON.parse(userVote['Checklist']); } } catch(e) {}
+
+        // 🌟【精準修正】定義變數，且限制只在初次登入時回寫一次時間與頭貼，完全不轉手 Sheets，快狠準！
+        if (!hasUpdatedMetadata) {
+            hasUpdatedMetadata = true;
+            const loginTime = getFormattedTime();
+            const avatarUrl = currentUser.pictureUrl || "";
+            
+            // 直接呼叫原生 SDK 更新本人的節點欄位
+            db.ref(`/members/${userIdx}`).update({ "Last Login": loginTime, "AvatarUrl": avatarUrl });
+
+            // 同時非同步送給 GAS 去刷 Excel 影子報表備份
+            fetch(GAS_API_URL, { 
+                method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: "updateAvatar", userId: currentUser.id, pictureUrl: avatarUrl, loginTime: loginTime })
+            }).catch(e => console.log("GAS 影子同步完成"));
+        }
+
     } else {
-        // 發現新客/訪客，自動補入名單
+        // B 路徑：全新訪客 ── 補入名單尾端
         currentUser.isVoted = true; 
         currentUser.votedOption = 3; 
-        
-        const newVisitor = { 
-            "LINEID": currentUser.id, 
-            "LINE名稱": currentUser.name, 
-            "AvatarUrl": currentUser.pictureUrl || "", 
-            "偏好行程": "無法參加(訪客查看)" 
-        };
-        vArray.push(newVisitor);
-        
-        // 🌟 改呼叫根目錄安全寫入器，確保長在根目錄並自動對齊順號
-        saveMembersToRoot(vArray);
-        
-        // 同步寫回 Google 試算表
-        fetch(GAS_API_URL, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-            body: JSON.stringify({ 
-                action: "vote", 
-                userName: currentUser.name, 
-                userId: currentUser.id, 
-                pictureUrl: currentUser.pictureUrl || "", 
-                choice_trip: "無法參加(訪客查看)", 
-                time_opt1: "", 
-                time_opt2: "" 
-            }) 
-        }).catch(e => console.error("GAS 新訪客寫回失敗:", e));
+
+        if (!hasUpdatedMetadata) {
+            hasUpdatedMetadata = true;
+            const loginTime = getFormattedTime();
+            const avatarUrl = currentUser.pictureUrl || "";
+            
+            const newVisitor = { 
+                "LINEID": currentUser.id, 
+                "LINE名稱": currentUser.name, 
+                "AvatarUrl": avatarUrl, 
+                "偏好行程": "無法參加(訪客查看)",
+                "Last Login": loginTime
+            };
+            vArray.push(newVisitor);
+            myFirebaseIndex = vArray.length - 1;
+
+            // 連續順號回寫資料庫根目錄
+            saveMembersToRoot(vArray);
+
+            // 同步發送給 GAS
+            fetch(GAS_API_URL, { 
+                method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                body: JSON.stringify({ action: "vote", userName: currentUser.name, userId: currentUser.id, pictureUrl: avatarUrl, choice_trip: "無法參加(訪客查看)", time_opt1: "", time_opt2: "" }) 
+            }).catch(e => console.error("GAS 新訪客寫回失敗:", e));
+        }
     }
-    
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('lock-screen').style.display = 'none'; 
-    unlockMainApp();
+
+    if (!isFirstLoadComplete) {
+        isFirstLoadComplete = true; // 鎖上防護鎖，後續資料變更時不再跑進來跳轉頁面
+        
+        const loadingEl = document.getElementById('loading');
+        const lockScreenEl = document.getElementById('lock-screen');
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (lockScreenEl) lockScreenEl.style.display = 'none'; 
+        
+        console.log("🚀 [首次載入] 身分比對成功，執行開機畫面解鎖");
+        unlockMainApp();
+    } else {
+        console.log("⚡ [實時同步] 背景數據更新，鎖定當前頁面不跳轉");
+    }
 }
 
 function toggleMenu(event) { 
@@ -1504,7 +1465,6 @@ function unlockMainApp() {
         document.getElementById('bottom-blur-mask').style.display = 'none';
         document.getElementById('lock-screen').style.display = 'none';
         document.getElementById('guest-lock-screen').style.display = 'block';
-        document.getElementById('bottom-nav-block').style.display = 'flex';
         return; 
     }
     
@@ -1963,8 +1923,9 @@ function renderChecklist() {
             totalItems++;
             const isChecked = userChecklistState[item.id] === true;
             if (isChecked) { catChecked++; totalChecked++; }
+            // 🌟 補上 data-item-id 並且將 onclick 改成傳入 this
             itemsHtml += `
-                <div class="prep-item ${isChecked ? 'checked' : ''}" onclick="toggleChecklistItem('${item.id}')">
+                <div class="prep-item ${isChecked ? 'checked' : ''}" data-item-id="${item.id}" onclick="toggleChecklistItem('${item.id}', this)">
                     <div class="prep-checkbox"></div>
                     <div class="prep-item-text">
                         <div class="prep-item-label">${item.label}</div>
@@ -1974,13 +1935,14 @@ function renderChecklist() {
             `;
         });
         const isOpen = openCategories[cat.id] ? 'open' : ''; 
+        // 🌟 為小分類的已準備項目數目補上 data-cat-sub-id 標記方便局部抓取
         html += `
             <div class="prep-cat-card">
                 <div class="prep-cat-header" onclick="togglePrepCategory('${cat.id}')">
                     <div class="prep-cat-icon">${cat.icon}</div>
                     <div class="prep-cat-title-area">
                         <div class="prep-cat-title">${cat.title}</div>
-                        <div class="prep-cat-subtitle" style="color:var(--primary-green)">${catChecked}/${catTotal} 項已準備</div>
+                        <div class="prep-cat-subtitle" data-cat-sub-id="${cat.id}">${catChecked}/${catTotal} 項已準備</div>
                     </div>
                     <div class="prep-cat-toggle ${isOpen}" id="toggle-${cat.id}">▼</div>
                 </div>
@@ -1992,8 +1954,50 @@ function renderChecklist() {
     });
     container.innerHTML = html;
     const pct = totalItems === 0 ? 0 : Math.round((totalChecked / totalItems) * 100);
-    document.getElementById('prep-progress-text').innerText = `${totalChecked}/${totalItems} (${pct}%)`;
-    document.getElementById('prep-progress-bar').style.width = `${pct}%`;
+    const progressText = document.getElementById('prep-progress-text');
+    const progressBar = document.getElementById('prep-progress-bar');
+    if (progressText) progressText.innerText = `${totalChecked}/${totalItems} (${pct}%)`;
+    if (progressBar) progressBar.style.width = `${pct}%`;
+}
+
+function togglePrepCategory(catId) {
+    openCategories[catId] = !openCategories[catId];
+    renderChecklist();
+}
+
+// 🌟【精準更新核心】：改為直接操控單一 DOM 元素的 class，徹底移除 innerHTML 跳動
+function toggleChecklistItem(itemId, element) {
+    userChecklistState[itemId] = !userChecklistState[itemId];
+    isChecklistModified = true; 
+    
+    // 指哪打哪：直接微調當前點擊項目的樣式
+    if (element) {
+        if (userChecklistState[itemId]) element.classList.add('checked');
+        else element.classList.remove('checked');
+    }
+    
+    // 呼叫增量統計刷新器，只修改數字和進度條，滾動條完全不跳移
+    updateChecklistProgressTotals();
+    saveChecklistBackground();
+}
+
+// 🌟【新增獨立增量刷新功能】：專職局部刷數據
+function updateChecklistProgressTotals() {
+    let totalItems = 0; let totalChecked = 0;
+    checklistData.forEach(cat => {
+        let catTotal = cat.items.length; let catChecked = 0;
+        cat.items.forEach(item => {
+            totalItems++;
+            if (userChecklistState[item.id] === true) { catChecked++; totalChecked++; }
+        });
+        const subEl = document.querySelector(`[data-cat-sub-id="${cat.id}"]`);
+        if (subEl) subEl.innerText = `${catChecked}/${catTotal} 項已準備`;
+    });
+    const pct = totalItems === 0 ? 0 : Math.round((totalChecked / totalItems) * 100);
+    const progressText = document.getElementById('prep-progress-text');
+    const progressBar = document.getElementById('prep-progress-bar');
+    if (progressText) progressText.innerText = `${totalChecked}/${totalItems} (${pct}%)`;
+    if (progressBar) progressBar.style.width = `${pct}%`;
 }
 
 function togglePrepCategory(catId) {
@@ -2008,39 +2012,41 @@ function toggleChecklistItem(itemId) {
     saveChecklistBackground();
 }
 
+// =========================================================================
+// 🌟 徹底理順回歸：純淨原生 SDK 實時控制核心 (絕無拼字與語法錯誤防禦版)
+// =========================================================================
+
 async function saveChecklistBackground() {
-    if (!isChecklistModified) return; 
+    // 防護鎖：如果沒更動，或者還沒比對出本人的 Firebase 絕對索引，直接攔截不執行
+    if (!isChecklistModified || myFirebaseIndex === -1) return; 
     isChecklistModified = false; 
     
-    // 🌟【同步防護】：過濾 null 確保不崩潰
-    let currentMembers = (cachedPollData.members || []).filter(v => v !== null && v !== undefined);
-    let userIdx = currentMembers.findIndex(v => v && (v['LINE ID'] === currentUser.id || v['LINEID'] === currentUser.id));
+    const checklistStr = JSON.stringify(userChecklistState);
     
-    if (userIdx > -1) {
-        currentMembers[userIdx].Checklist = JSON.stringify(userChecklistState);
-        
-        // 寫回 Firebase 進行順號重整
-        saveMembersToRoot(currentMembers).catch(e => isChecklistModified = true);
+    // 🎯【指哪打哪】：勾選行李的瞬間，100% 直接以原生 SDK 單點 PATCH 更新雲端本人的 Checklist 欄位，體感 0 延遲！
+    db.ref(`/members/${myFirebaseIndex}`).update({ Checklist: checklistStr })
+        .then(() => console.log("⚡ [Firebase] 本人行李清單實時同步成功！"))
+        .catch(e => {
+            console.error("Firebase 同步失敗:", e);
+            isChecklistModified = true;
+        });
 
-        fetch(GAS_API_URL, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: "updateChecklist", userId: currentUser.id, data: JSON.stringify(userChecklistState) }) 
-        }).catch(e => console.error("Sheets 同步失敗:", e));
-    }
+    // 後線影子非同步丟給 Sheets 做歷史報表備份，不影響前台執行緒速度
+    fetch(GAS_API_URL, { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: "updateChecklist", userId: currentUser.id, data: checklistStr }) 
+    }).catch(e => console.error("Sheets 備份失敗:", e));
 }
 
 async function toggleVotingLock(checkbox) {
     const isLocked = checkbox.checked;            
-    
-    // 🌟 啟動時間鎖，防範重新整理時被 Sheets 舊資料覆蓋
     window.lastConfigAdminClickTime = Date.now();
     if (cachedPollData && cachedPollData.config) cachedPollData.config.VotingLocked = isLocked ? "true" : "false";
 
-    // 1. Firebase 極速寫入 (前台即時連動核心)
+    // 🎯 100% 回歸原生的高速 SDK 實時廣播控制
     db.ref('config/VotingLocked').set(isLocked ? "true" : "false");
 
-    // 2. Google Sheets 背景同步 (保留您的設計，讓您在試算表看清楚目前狀態)
     fetch(GAS_API_URL, { 
         method: 'POST', 
         headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
@@ -2050,23 +2056,18 @@ async function toggleVotingLock(checkbox) {
 
 async function toggleGuestViewLock(checkbox, key) {
     const isEnabled = checkbox.checked;
-    
-    // 🌟 啟動時間鎖，防範重新整理時被 Sheets 舊資料覆蓋
     window.lastConfigAdminClickTime = Date.now();
     if (cachedPollData && cachedPollData.config) cachedPollData.config[key] = isEnabled ? "true" : "false";
 
     if (key === 'GuestViewEnabled') {
         isGuestViewEnabled = isEnabled; 
         const subOptionsDiv = document.getElementById('admin-guest-sub-options');
-        if (subOptionsDiv) {
-            subOptionsDiv.style.display = isEnabled ? 'block' : 'none';
-        }
+        if (subOptionsDiv) { subOptionsDiv.style.display = isEnabled ? 'block' : 'none'; }
     }
     
-    // 1. Firebase 極速寫入 (前台即時連動核心)
+    // 🎯 100% 回歸原生的高速 SDK 實時廣播控制，剔除一切重複宣告與錯誤的 REST 網址
     db.ref('config/' + key).set(isEnabled ? "true" : "false");
     
-    // 2. Google Sheets 背景同步 (保留您的設計，讓您在試算表看清楚目前狀態)
     fetch(GAS_API_URL, { 
         method: 'POST', 
         headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
@@ -2078,7 +2079,10 @@ function selectVote(o) {
     lateVoteSelection = o; 
     document.querySelectorAll('.trip-card-vote').forEach(el => { el.classList.remove('selected'); el.querySelector('.vote-check').style.display = 'none'; }); 
     const selectedOpt = document.getElementById('vote-opt-' + o);
-    selectedOpt.classList.add('selected'); selectedOpt.querySelector('.vote-check').style.display = 'block'; 
+    if (selectedOpt) {
+        selectedOpt.classList.add('selected'); 
+        selectedOpt.querySelector('.vote-check').style.display = 'block'; 
+    }
 }
 
 async function submitLateVote() {
@@ -2088,10 +2092,8 @@ async function submitLateVote() {
 
     showCustomAlert("資料傳送中", "請稍候...", false);
                 
-    // 🌟【自我修復核心】：自動過濾掉手動刪除留下的 null 坑洞，強制重新排成順號陣列
-    let currentMembers = (cachedPollData.members || []).filter(v => v !== null && v !== undefined);
-    
-    // 🌟 加上安全防護，避免 v 為 null 時引發崩潰
+    // 【自動縮排修復】：自動過濾掉手動刪除留下的 null 坑洞
+    let currentMembers = extractMembers(cachedPollData);
     let userIdx = currentMembers.findIndex(v => v && (v['LINE ID'] === currentUser.id || v['LINEID'] === currentUser.id));
     
     const voteData = { 
@@ -2100,7 +2102,8 @@ async function submitLateVote() {
         "AvatarUrl": currentUser.pictureUrl || "", 
         "偏好行程": "方案一：宜蘭深度放鬆 (二天一夜)", 
         "time_opt1": "", 
-        "time_opt2": "V" 
+        "time_opt2": "V",
+        "LastLogin": getFormattedTime()
     };
 
     if (userIdx > -1) {
@@ -2109,7 +2112,7 @@ async function submitLateVote() {
         currentMembers.push(voteData);
     }
 
-    // 寫回 Firebase，此時後台的序號會自動被校正為連續的 0, 1, 2, 3... 順號
+    // 重新排列後回寫
     saveMembersToRoot(currentMembers).then(() => {
         fetch(GAS_API_URL, { 
             method: 'POST', 
@@ -2125,33 +2128,31 @@ async function submitLateVote() {
         if (cachedPollData) {
             renderDynamicUI(cachedPollData);
         }
-
         unlockMainApp();
     }).catch(e => showCustomAlert("錯誤", "網路異常，請稍後再試。"));
 }
 
 async function fetchResults() {
     const resultContainer = document.getElementById('result-chart-area');
+    if (!resultContainer) return;
     resultContainer.innerHTML = `<div style="text-align: center; margin-top: 60px;"><div class="spinner" style="margin: 0 auto 15px;"></div><h2 style="color: #4a5568;">統計中...</h2></div>`;
+    
     try {
-        // 🌟 修改：撈取資料從 cachedPollData.votes 改成 cachedPollData.members
         let data = cachedPollData ? extractMembers(cachedPollData) : [];
-            if (!cachedPollData) { 
-                const response = await fetch(GAS_API_URL, { cache: 'no-store', redirect: 'follow' }); 
-                cachedPollData = await response.json(); 
-                data = cachedPollData ? extractMembers(cachedPollData) : []; // 🌟 同步修正這裡
+        if (!cachedPollData) { 
+            const response = await fetch(GAS_API_URL, { cache: 'no-store', redirect: 'follow' }); 
+            cachedPollData = await response.json(); 
+            data = cachedPollData ? extractMembers(cachedPollData) : []; 
         }
         let totalVotes = 0; let votersHtml = ""; let t1_d1 = 0; let t1_d2 = 0; let t2_d1 = 0; let t2_d2 = 0; let unableCount = 0; let unableHtml = "";
+        
         data.forEach(row => {
-            // 🌟【核心防護鎖】：如果該筆資料是被刪除的 null，直接跳過不處理，防止統計畫面死鎖！
             if (!row) return;
-            // 🌟 同時支援舊版與新版的 ID 寫法
             const id = row['LINE ID'] || row['LINEID'];
             if (id === "test_user_001") return;
 
             totalVotes++; 
             const trip = row['偏好行程']; 
-            // 🌟 同時支援舊版與新版的名字寫法
             const name = row['LINE 名稱'] || row['LINE名稱']; 
             
             if (trip && trip.includes("無法參加")) { 
@@ -2162,7 +2163,6 @@ async function fetchResults() {
             const isTrip1 = trip && trip.includes("方案一"); 
             const isTrip2 = trip && trip.includes("方案二");
 
-            // 🌟 日期也加上相容防護
             const opt1 = row['time_opt1'] || row['6/13-6/14'];
             const opt2 = row['time_opt2'] || row['6/27-6/28'];
 
@@ -2183,8 +2183,11 @@ async function fetchResults() {
         const t1_d2_c = (t1_d2 === t1_max && t1_max > 0) ? 'var(--primary-orange)' : 'var(--text-main)';
         const t2_d1_c = (t2_d1 === t2_max && t2_max > 0) ? 'var(--primary-blue)' : 'var(--text-main)';
         const t2_d2_c = (t2_d2 === t2_max && t2_max > 0) ? 'var(--primary-blue)' : 'var(--text-main)';
+        
         resultContainer.innerHTML = `<div class="fade-in"><h2 style="text-align: center; color: var(--text-main); margin-top: 0; margin-bottom: 20px; text-shadow: 0 1px 2px rgba(255,255,255,0.6); display: flex; align-items: center; justify-content: center; gap: 8px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg> 投票結果統計</h2><div class="card" style="padding: 20px; background: rgba(255,255,255,0.45);"><div style="text-align: center; margin-bottom: 12px; font-weight: 700; font-size: 15px; color: var(--primary-orange);">方案一：宜蘭深度放鬆 (二天一夜)</div><div style="font-size: 14px; color: var(--text-main); background: rgba(255,255,255,0.4); padding: 15px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.7); box-shadow: inset 0 1px 1px rgba(255,255,255,0.6);"><div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 8px;"><span style="color: var(--text-muted); display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> 6/13-6/14</span><span style="font-weight: 700; font-size: 15px; color: ${t1_d1_c};">${t1_d1} 票</span></div><div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted); display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> 6/27-6/28</span><span style="font-weight: 700; font-size: 15px; color: ${t1_d2_c};">${t1_d2} 票</span></div></div></div><div class="card" style="padding: 20px; background: rgba(255,255,255,0.45);"><div style="text-align: center; margin-bottom: 12px; font-weight: 700; font-size: 15px; color: var(--primary-blue);">方案二：基隆海派清涼 (一日遊)</div><div style="font-size: 14px; color: var(--text-main); background: rgba(255,255,255,0.4); padding: 15px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.7); box-shadow: inset 0 1px 1px rgba(255,255,255,0.6);"><div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 8px;"><span style="color: var(--text-muted); display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> 6/13-6/14</span><span style="font-weight: 700; font-size: 15px; color: ${t2_d1_c};">${t2_d1} 票</span></div><div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted); display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> 6/27-6/28</span><span style="font-weight: 700; font-size: 15px; color: ${t2_d2_c};">${t2_d2} 票</span></div></div></div><div style="margin-top: 30px; text-align: center;"><div style="font-weight: 700; color: var(--text-muted); font-size: 13px; margin-bottom: 12px;">已完成投票名單(${totalVotes} 人已投)：</div><div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 20px;">${votersHtml || "<span style='color: #a0aec0; font-size: 12px;'>尚無人投票</span>"}</div></div>${unableCount > 0 ? `<div style="background: rgba(255,255,255,0.3); padding: 16px; border-radius: 14px; border: 1px dashed rgba(255,255,255,0.6); text-align: left; margin-top: 10px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);"><div style="font-weight: 700; color: #ff4d4f; font-size: 13px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg> 無法參加(訪客查看) (${unableCount} 人)</div><div style="display: flex; flex-wrap: wrap;">${unableHtml}</div></div>` : ''}</div>`;
-    } catch (error) { resultContainer.innerHTML = `<h3 style="color: #ff4d4f; text-align: center; margin-top: 50px;">連線超時，請重試。</h3>`; }
+    } catch (error) { 
+        resultContainer.innerHTML = `<h3 style="color: #ff4d4f; text-align: center; margin-top: 50px;">連線超時，請重試。</h3>`; 
+    }
 }
 
 window.addEventListener('click', function(event) {
@@ -2200,9 +2203,11 @@ function openImageViewer(url, event) {
     if (event) event.stopPropagation();
     const viewer = document.getElementById('image-viewer');
     const img = document.getElementById('viewer-img');
-    img.src = url;
-    viewer.style.display = 'flex';
-    setTimeout(() => viewer.classList.add('show'), 10);
+    if (img) img.src = url;
+    if (viewer) {
+        viewer.style.display = 'flex';
+        setTimeout(() => viewer.classList.add('show'), 10);
+    }
     
     const metaViewport = document.querySelector('meta[name=viewport]');
     if (metaViewport) {
@@ -2212,11 +2217,14 @@ function openImageViewer(url, event) {
 
 function closeImageViewer() {
     const viewer = document.getElementById('image-viewer');
-    viewer.classList.remove('show');
-    setTimeout(() => {
-        viewer.style.display = 'none';
-        document.getElementById('viewer-img').src = ''; 
-    }, 300);
+    if (viewer) {
+        viewer.classList.remove('show');
+        setTimeout(() => {
+            viewer.style.display = 'none';
+            const img = document.getElementById('viewer-img');
+            if (img) img.src = ''; 
+        }, 300);
+    }
     
     const metaViewport = document.querySelector('meta[name=viewport]');
     if (metaViewport) {
@@ -2234,176 +2242,164 @@ window.addEventListener('resize', function() {
 });
 
 function switchAccTab(tabId) {
-        document.getElementById('tab-acc-info').classList.remove('active');
-        document.getElementById('tab-acc-rooms').classList.remove('active');
-        document.getElementById('acc-content-info').classList.remove('active');
-        document.getElementById('acc-content-rooms').classList.remove('active');
-        
-        document.getElementById('tab-acc-' + tabId).classList.add('active');
-        document.getElementById('acc-content-' + tabId).classList.add('active');
+    document.getElementById('tab-acc-info').classList.remove('active');
+    document.getElementById('tab-acc-rooms').classList.remove('active');
+    document.getElementById('acc-content-info').classList.remove('active');
+    document.getElementById('acc-content-rooms').classList.remove('active');
+    
+    document.getElementById('tab-acc-' + tabId).classList.add('active');
+    document.getElementById('acc-content-' + tabId).classList.add('active');
+}
+
+const accTrack = document.getElementById('acc-carousel-track');
+let totalAccSlides = 5;
+let currentDomIndex = 1; 
+let accAutoPlayTimer;
+let touchStartX = 0;
+let touchEndX = 0;
+let isTransitioning = false; 
+
+if (accTrack) {
+    const slides = Array.from(accTrack.children);
+    const firstClone = slides[0].cloneNode(true);
+    const lastClone = slides[slides.length - 1].cloneNode(true);
+    
+    accTrack.appendChild(firstClone);
+    accTrack.insertBefore(lastClone, slides[0]);
+    
+    accTrack.style.transition = 'none';
+    accTrack.style.transform = `translateX(-100%)`;
+    accTrack.offsetHeight; 
+}
+
+function updateCarouselView() {
+    if (!accTrack) return;
+    const dots = document.querySelectorAll('.acc-dot');
+    
+    accTrack.style.transition = 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)';
+    accTrack.style.transform = `translateX(-${currentDomIndex * 100}%)`;
+
+    if (dots.length > 0) {
+        dots.forEach(d => d.classList.remove('active'));
+        let realIndex = currentDomIndex - 1;
+        if (realIndex === totalAccSlides) realIndex = 0; 
+        if (realIndex === -1) realIndex = totalAccSlides - 1; 
+        if (dots[realIndex]) dots[realIndex].classList.add('active');
     }
 
-    const accTrack = document.getElementById('acc-carousel-track');
-    let totalAccSlides = 5;
-    let currentDomIndex = 1; 
-    let accAutoPlayTimer;
-    let touchStartX = 0;
-    let touchEndX = 0;
-    let isTransitioning = false; 
-
-    if (accTrack) {
-        const slides = Array.from(accTrack.children);
-        const firstClone = slides[0].cloneNode(true);
-        const lastClone = slides[slides.length - 1].cloneNode(true);
-        
-        accTrack.appendChild(firstClone);
-        accTrack.insertBefore(lastClone, slides[0]);
-        
-        accTrack.style.transition = 'none';
-        accTrack.style.transform = `translateX(-100%)`;
-        accTrack.offsetHeight; 
-    }
-
-    function updateCarouselView() {
-        if (!accTrack) return;
-        const dots = document.querySelectorAll('.acc-dot');
-        
-        accTrack.style.transition = 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)';
-        accTrack.style.transform = `translateX(-${currentDomIndex * 100}%)`;
-
-        if (dots.length > 0) {
-            dots.forEach(d => d.classList.remove('active'));
-            let realIndex = currentDomIndex - 1;
-            if (realIndex === totalAccSlides) realIndex = 0; 
-            if (realIndex === -1) realIndex = totalAccSlides - 1; 
-            if (dots[realIndex]) dots[realIndex].classList.add('active');
+    setTimeout(() => {
+        isTransitioning = false;
+        if (currentDomIndex === totalAccSlides + 1) {
+            accTrack.style.transition = 'none';
+            currentDomIndex = 1;
+            accTrack.style.transform = `translateX(-${currentDomIndex * 100}%)`;
+            accTrack.offsetHeight; 
+        } else if (currentDomIndex === 0) {
+            accTrack.style.transition = 'none';
+            currentDomIndex = totalAccSlides;
+            accTrack.style.transform = `translateX(-${currentDomIndex * 100}%)`;
+            accTrack.offsetHeight; 
         }
+    }, 650); 
+}
 
-        setTimeout(() => {
-            isTransitioning = false;
-            if (currentDomIndex === totalAccSlides + 1) {
-                accTrack.style.transition = 'none';
-                currentDomIndex = 1;
-                accTrack.style.transform = `translateX(-${currentDomIndex * 100}%)`;
-                accTrack.offsetHeight; 
-            } else if (currentDomIndex === 0) {
-                accTrack.style.transition = 'none';
-                currentDomIndex = totalAccSlides;
-                accTrack.style.transform = `translateX(-${currentDomIndex * 100}%)`;
-                accTrack.offsetHeight; 
-            }
-        }, 650); 
-    }
-
-    function startAccAutoPlay() {
-        clearInterval(accAutoPlayTimer);
-        accAutoPlayTimer = setInterval(() => {
-            if(document.getElementById('view-accommodation').classList.contains('active') && !isTransitioning) {
-                currentDomIndex++;
-                isTransitioning = true;
-                updateCarouselView();
-            }
-        }, 5000);
-    }
-
-    // 🌟 完整替換 app.js 中 if (accTrack) { ... } 的內部事件監聽
-    if (accTrack) {
-        let startX = 0;
-        let currentX = 0;
-        let isDragging = false;
-
-        // 手指壓下：記錄起點、清除自動輪播、拔除動畫時間（立刻跟手）
-        accTrack.addEventListener('touchstart', (e) => {
-            if (isTransitioning) return;
-            clearInterval(accAutoPlayTimer); 
-            startX = e.touches[0].clientX;
-            currentX = startX;
-            accTrack.style.transition = 'none'; // 拔除動畫，讓圖片死死跟著手指
-            isDragging = true;
-        }, { passive: true });
-
-        // 🌟 新增：手指移動中！不放開就能連續無限左右推拉
-        accTrack.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-            currentX = e.touches[0].clientX;
-            let deltaX = currentX - startX;
-            
-            let trackWidth = accTrack.offsetWidth;
-            let baseTranslate = -currentDomIndex * trackWidth;
-            let currentTranslate = baseTranslate + deltaX;
-            accTrack.style.transform = `translateX(${currentTranslate}px)`;
-        }, { passive: true });
-
-        // 手指放開：計算滑動比例，智慧判定要彈回原位還是滑向下一張
-        accTrack.addEventListener('touchend', (e) => {
-            if (!isDragging) return;
-            isDragging = false;
-            
-            let deltaX = currentX - startX;
-            let trackWidth = accTrack.offsetWidth;
-            
-            // 💡 智慧判定：手指只要推超過卡片寬度的 15%，放開時就判定切換
-            if (Math.abs(deltaX) > trackWidth * 0.15) {
-                if (deltaX < 0) {
-                    currentDomIndex++; // 往左推，看下一張
-                } else {
-                    currentDomIndex--; // 往右推，看上一張
-                }
-            }
-            
-            isTransitioning = true;
-            updateCarouselView(); // 彈簧吸附就位
-            startAccAutoPlay();   // 重啟自動輪播
-        }, { passive: true });
-    }
-
-    function handleSwipeGesture() {
-        if (isTransitioning) return; 
-        const swipeThreshold = 40;
-        if (touchEndX < touchStartX - swipeThreshold) {
+function startAccAutoPlay() {
+    clearInterval(accAutoPlayTimer);
+    accAutoPlayTimer = setInterval(() => {
+        const viewAcc = document.getElementById('view-accommodation');
+        if(viewAcc && viewAcc.classList.contains('active') && !isTransitioning) {
             currentDomIndex++;
             isTransitioning = true;
             updateCarouselView();
-        } else if (touchEndX > touchStartX + swipeThreshold) {
-            currentDomIndex--;
-            isTransitioning = true;
-            updateCarouselView();
         }
+    }, 5000);
+}
+
+if (accTrack) {
+    let startX = 0;
+    let currentX = 0;
+    let isDragging = false;
+
+    accTrack.addEventListener('touchstart', (e) => {
+        if (isTransitioning) return;
+        clearInterval(accAutoPlayTimer); 
+        startX = e.touches[0].clientX;
+        currentX = startX;
+        accTrack.style.transition = 'none'; 
+        isDragging = true;
+    }, { passive: true });
+
+    accTrack.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        currentX = e.touches[0].clientX;
+        let deltaX = currentX - startX;
+        let trackWidth = accTrack.offsetWidth;
+        let baseTranslate = -currentDomIndex * trackWidth;
+        let currentTranslate = baseTranslate + deltaX;
+        accTrack.style.transform = `translateX(${currentTranslate}px)`;
+    }, { passive: true });
+
+    accTrack.addEventListener('touchend', (e) => {
+        if (!isDragging) return;
+        isDragging = false;
+        let deltaX = currentX - startX;
+        let trackWidth = accTrack.offsetWidth;
+        if (Math.abs(deltaX) > trackWidth * 0.15) {
+            if (deltaX < 0) currentDomIndex++; 
+            else currentDomIndex--; 
+        }
+        isTransitioning = true;
+        updateCarouselView(); 
+        startAccAutoPlay();   
+    }, { passive: true });
+}
+
+function handleSwipeGesture() {
+    if (isTransitioning) return; 
+    const swipeThreshold = 40;
+    if (touchEndX < touchStartX - swipeThreshold) {
+        currentDomIndex++;
+        isTransitioning = true;
+        updateCarouselView();
+    } else if (touchEndX > touchStartX + swipeThreshold) {
+        currentDomIndex--;
+        isTransitioning = true;
+        updateCarouselView();
+    }
+}
+
+startAccAutoPlay();
+
+let lastScrollTop = 0;
+const topNavRef = document.querySelector('.top-nav');
+const avatarMenuScroll = document.getElementById('avatar-menu'); 
+const hamburgerIconScroll = document.getElementById('hamburger-icon');
+const prepCard = document.querySelector('.prep-progress-card'); 
+
+window.addEventListener('scroll', function() {
+    let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    if (!topNavRef) return;
+    
+    if (scrollTop <= 0) {
+        topNavRef.classList.remove('nav-hidden');
+        if (prepCard) prepCard.classList.remove('shift-up'); 
+        lastScrollTop = scrollTop;
+        return;
     }
 
-    startAccAutoPlay();
-
-    let lastScrollTop = 0;
-    const topNav = document.querySelector('.top-nav');
-    const avatarMenuScroll = document.getElementById('avatar-menu'); 
-    const hamburgerIconScroll = document.getElementById('hamburger-icon');
-    const prepCard = document.querySelector('.prep-progress-card'); 
-
-    window.addEventListener('scroll', function() {
-        let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        
-        if (scrollTop <= 0) {
-            topNav.classList.remove('nav-hidden');
-            if (prepCard) prepCard.classList.remove('shift-up'); 
-            lastScrollTop = scrollTop;
-            return;
+    if (scrollTop > lastScrollTop && scrollTop > 60) { 
+        topNavRef.classList.add('nav-hidden');
+        if (prepCard) prepCard.classList.add('shift-up'); 
+        if (avatarMenuScroll && avatarMenuScroll.style.display === 'flex') {
+            avatarMenuScroll.style.display = 'none';
+            if (hamburgerIconScroll) hamburgerIconScroll.classList.remove('open');
         }
-
-        if (scrollTop > lastScrollTop && scrollTop > 60) { 
-            topNav.classList.add('nav-hidden');
-            if (prepCard) prepCard.classList.add('shift-up'); 
-            
-            if (avatarMenuScroll && avatarMenuScroll.style.display === 'flex') {
-                avatarMenuScroll.style.display = 'none';
-                if (hamburgerIconScroll) hamburgerIconScroll.classList.remove('open');
-            }
-        } else if (scrollTop < lastScrollTop) { 
-            topNav.classList.remove('nav-hidden');
-            if (prepCard) prepCard.classList.remove('shift-up'); 
-        }
-        
-        lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; 
-    }, { passive: true });
+    } else if (scrollTop < lastScrollTop) { 
+        topNavRef.classList.remove('nav-hidden');
+        if (prepCard) prepCard.classList.remove('shift-up'); 
+    }
+    lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; 
+}, { passive: true });
 
 function renderPeoplePage(data) {
     const container = document.getElementById('ui-people-container');
@@ -2412,11 +2408,9 @@ function renderPeoplePage(data) {
     const members = extractMembers(data);
     const groups = { "已報名": [], "訪客查看": [] };
     
-    // 🌟 改用 for...in 並加入防空鎖，徹底免疫 Firebase 陣列空索引造成的頁面崩潰 Bug
     for (let key in members) {
         const m = members[key];
         if (!m) continue; 
-        
         let name = m['LINE 名稱'] || m['LINE名稱'] || "匿名";
         if (name === "開發者(測試)") continue;
         
@@ -2447,7 +2441,6 @@ function renderPeoplePage(data) {
 function renderFeesPage(data) {
     const container = document.getElementById('ui-fees-container');
     if (!container) return;
-    
     container.innerHTML = `
         <div style="text-align: center; padding: 40px 0; color: var(--text-muted);">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 16px; opacity: 0.5;">
@@ -2460,178 +2453,122 @@ function renderFeesPage(data) {
     `;
 }
 
-// ==========================================
-// 🚀 留言板核心系統：分頁 + 三劍客局部更新
-// ==========================================
 let isMessageListenerAttached = false;
 
 function initMessageListeners() {
     if (isMessageListenerAttached) return;
     isMessageListenerAttached = true;
-
     const msgRef = db.ref('messages');
 
-    // 1. 初次載入：抓取全部資料，負責陣列反轉與「分頁渲染」
     msgRef.once('value').then(snap => {
         const data = snap.val() || [];
         let tempMsgs = [];
-        
-        // Firebase 陣列轉換防呆處理
         for (let key in data) {
             if (data[key] && data[key].Content) {
                 tempMsgs.push({ ...data[key], _firebaseKey: key });
             }
         }
-        
-        allMessages = tempMsgs.reverse(); // 最新留言在最上面
-        renderMessagesPaginated(); // 渲染第一頁 (10筆)
-        // ❄️ 補在 Firebase 留言區塊開機載入、跑完第一次 renderMessagesPaginated() 的正下方：
+        allMessages = tempMsgs.reverse(); 
+        renderMessagesPaginated(); 
         if (urlParamsCache && urlParamsCache.msgId) {
             console.log("❄️ 偵測到冷啟動留言深層連結，目標 ID:", urlParamsCache.msgId);
-            // 稍微延遲給予畫面緩衝，隨後引爆分頁展開雷達
-            setTimeout(() => {
-                handleMessageDeepLink(urlParamsCache.msgId);
-            }, 500);
+            setTimeout(() => { handleMessageDeepLink(urlParamsCache.msgId); }, 500);
         }
-
-
-        // 🌟 關鍵修正：當 messages 陣列確實載入完畢後，立刻強制觸發一次紅點計算！
         updateBadgeCount();
 
-        // =====================================
-        // 2. 啟動三劍客：接管後續的即時變更 (不重繪整頁)
-        // =====================================
-        
-        // 🗡️ 劍客一：監聽新增
         msgRef.on('child_added', (snapshot) => {
             const key = snapshot.key;
             const msg = snapshot.val();
             if (!msg || !msg.Content) return;
             msg._firebaseKey = key;
-
-            // 檢查這筆留言是否已經在 allMessages 中
             const exists = allMessages.find(m => m._firebaseKey === key);
             if (!exists) {
-                allMessages.unshift(msg); // 放入陣列最前方
+                allMessages.unshift(msg); 
                 const container = document.getElementById('msg-list-container');
                 if (container) {
                     const emptyText = container.querySelector('.empty-msg');
                     if (emptyText) emptyText.remove();
-                    
-                    // 瞬間插入在最上方
                     container.insertAdjacentHTML('afterbegin', generateSingleMessageHTML(msg));
                 }
                 updateBadgeCount();
-                
-                // 🌟【關鍵修正】如果使用者目前正停留在留言板畫面上，代表他已經即時看到了這則新留言！
-                // 必須立刻呼叫 clearBadge()，把最新這則留言的 ID 寫入 Firebase 的 readReceipts 節點！
-                if (document.getElementById('view-board') && document.getElementById('view-board').classList.contains('active')) {
+                const viewBoard = document.getElementById('view-board');
+                if (viewBoard && viewBoard.classList.contains('active')) {
                     clearBadge();
                 }
             }
         });
 
-        // 🗡️ 劍客二：監聽修改 (按讚、編輯瞬間觸發)
         msgRef.on('child_changed', (snapshot) => {
             const key = snapshot.key;
             const msg = snapshot.val();
             if (!msg) return;
             msg._firebaseKey = key;
-
-            // 更新背景陣列
             const idx = allMessages.findIndex(m => m._firebaseKey === key);
             if (idx > -1) allMessages[idx] = msg;
-            
-            // 🎯 局部抽換畫面元素 (絕對不會閃爍)
             updateSingleMessageUI(msg);
         });
 
-        // 🗡️ 劍客三：監聽刪除
         msgRef.on('child_removed', (snapshot) => {
             const key = snapshot.key;
             allMessages = allMessages.filter(m => m._firebaseKey !== key);
             const dom = document.getElementById(`msg-item-node-${key}`);
             if (dom) dom.remove();
-            
-            // 🌟 修正：留言被刪除時，立刻重新計算未讀紅點！
             updateBadgeCount();
-            
-            // 🌟 修正：如果使用者正開著留言板，當最後一則被刪除時，立刻自動把已讀標記「即時向前滾動」到新的最後一則！
-            if (document.getElementById('view-board') && document.getElementById('view-board').classList.contains('active')) {
+            const viewBoard = document.getElementById('view-board');
+            if (viewBoard && viewBoard.classList.contains('active')) {
                 clearBadge();
             }
         });
     });
 }
 
-// 🎯 分頁渲染器 (取代原本的 renderMessages)
 function renderMessagesPaginated() {
     const container = document.getElementById('msg-list-container');
     if (!container) return;
-    
     let htmlStr = "";
     const msgsToShow = allMessages.slice(0, currentMsgPage * MSG_PER_PAGE);
-    
     if (msgsToShow.length === 0) { 
         container.innerHTML = `<p class="empty-msg" style="text-align:center; color:#718096; font-size:14px; margin: 20px 0;">目前沒有留言，來搶頭香吧！</p>`; 
         return; 
     }
-    
-    msgsToShow.forEach(msg => {
-        htmlStr += generateSingleMessageHTML(msg);
-    });
-    
-    // 如果還有舊留言，就在最下方加上載入按鈕
+    msgsToShow.forEach(msg => { htmlStr += generateSingleMessageHTML(msg); });
     if (allMessages.length > msgsToShow.length) { 
         htmlStr += `<button id="load-more-btn" class="btn-primary" style="background: rgba(255,255,255,0.3); color: var(--text-main); margin-top: 15px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.5), 0 4px 15px rgba(0,0,0,0.02); border: 1px solid rgba(255,255,255,0.5);" onclick="loadMoreMessages()">載入較舊留言</button>`; 
     }
-    
     container.innerHTML = htmlStr;
 }
 
-
 function loadMoreMessages() {
     currentMsgPage++;
-    renderMessagesPaginated(); // 按下載入時，重新依照新頁數渲染
+    renderMessagesPaginated();
 }
 
-// 🎯 單一留言 HTML 產生器
 function generateSingleMessageHTML(msg) {
     const key = msg._firebaseKey;
     let timeStr = msg.Time || "剛剛"; 
     const id = msg.LineID || msg.UserId;
-    
     let picUrl = window.userAvatarMap[id] || window.userAvatarMap[msg.Name] || msg.AvatarUrl;
     let fallbackText = msg.AvatarText || (msg.Name ? msg.Name[0] : "?");
-    
     let avatarHtml = picUrl 
         ? `<div style="position:relative; width:100%; height:100%; display:flex; justify-content:center; align-items:center;">
                 <span style="position:absolute; font-size:14px; font-weight:700;">${fallbackText}</span>
                 <img src="${picUrl}" style="position:absolute; width:100%; height:100%; object-fit:cover; border-radius:50%; z-index:1;" onerror="this.style.display='none'">
             </div>` 
         : `<div style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;">${fallbackText}</div>`;
-    
     let isMyMessage = (id && id === currentUser.id) || (msg.Name === currentUser.name);
-    
     let likesArray = [];
     try {
         if (typeof msg.Likes === 'string') likesArray = JSON.parse(msg.Likes || "[]");
         else if (Array.isArray(msg.Likes)) likesArray = msg.Likes;
     } catch(e) {}
-    
     let isLiked = likesArray.includes(currentUser.id) || likesArray.includes(currentUser.name);
-
     let editBtnHtml = isMyMessage ? `<span class="msg-edit-link" onclick="openEditMessage('${key}')">編輯</span>` : "";
     let isEditedHtml = (msg.IsEdited === "V" || msg.IsEdited === true || msg.IsEdited === "true") 
         ? `<span id="msg-edited-${key}" style="font-size:11px; color:#a0aec0; margin-left:6px; font-weight: 500;">(已編輯)</span>` 
         : `<span id="msg-edited-${key}" style="display:none; font-size:11px; color:#a0aec0; margin-left:6px; font-weight: 500;">(已編輯)</span>`;                
-    
     let likesTextInner = getLikesIgStyle(likesArray);
     let likesText = `<div id="like-text-${key}" ${likesArray.length > 0 ? `onclick="showLikesDrawer('${key}')"` : ''} style="flex-grow: 1; display: flex; align-items: center; cursor: ${likesArray.length > 0 ? 'pointer' : 'default'}; text-align: left;">${likesTextInner}</div>`;
-
-    let heartIconHtml = `<div id="like-btn-${key}" class="like-btn ${isLiked ? 'liked' : 'unliked'}" onclick="toggleLike('${key}')">
-        ${svgHeart}
-    </div>`;
+    let heartIconHtml = `<div id="like-btn-${key}" class="like-btn ${isLiked ? 'liked' : 'unliked'}" onclick="toggleLike('${key}')">${svgHeart}</div>`;
 
     return `
         <div class="msg-item fade-in" id="msg-item-node-${key}" data-msg-id="${msg.MsgID || ''}">
@@ -2654,7 +2591,6 @@ function generateSingleMessageHTML(msg) {
         </div>`;
 }
 
-// 🎯 局部更新 UI 邏輯
 function updateSingleMessageUI(msg) {
     const key = msg._firebaseKey;
     let likesArray = [];
@@ -2662,9 +2598,7 @@ function updateSingleMessageUI(msg) {
         if (typeof msg.Likes === 'string') likesArray = JSON.parse(msg.Likes || "[]");
         else if (Array.isArray(msg.Likes)) likesArray = msg.Likes;
     } catch(e) {}
-    
     const isLiked = likesArray.includes(currentUser.id) || likesArray.includes(currentUser.name);
-    
     const btnEl = document.getElementById(`like-btn-${key}`);
     const textEl = document.getElementById(`like-text-${key}`);
     const contentEl = document.getElementById(`msg-content-${key}`);
@@ -2673,22 +2607,14 @@ function updateSingleMessageUI(msg) {
     if (btnEl) {
         if (isLiked) { btnEl.classList.remove('unliked'); btnEl.classList.add('liked'); } 
         else { btnEl.classList.remove('liked'); btnEl.classList.add('unliked'); }
-        // 按讚時加入彈跳小動畫
         btnEl.style.transform = 'scale(1.2)';
         setTimeout(() => btnEl.style.transform = 'scale(1)', 200);
     }
-    
     if (textEl) {
         textEl.innerHTML = getLikesIgStyle(likesArray);
-        if (likesArray.length > 0) {
-            textEl.style.cursor = 'pointer';
-            textEl.onclick = () => showLikesDrawer(key);
-        } else {
-            textEl.style.cursor = 'default';
-            textEl.onclick = null;
-        }
+        if (likesArray.length > 0) { textEl.style.cursor = 'pointer'; textEl.onclick = () => showLikesDrawer(key); } 
+        else { textEl.style.cursor = 'default'; textEl.onclick = null; }
     }
-    
     if (contentEl) {
         const currentRaw = decodeURIComponent(contentEl.getAttribute('data-raw') || '');
         if (currentRaw !== msg.Content) {
@@ -2696,35 +2622,26 @@ function updateSingleMessageUI(msg) {
             contentEl.setAttribute('data-raw', encodeURIComponent(msg.Content));
         }
     }
-    
     if (editedEl) {
         editedEl.style.display = (msg.IsEdited === "V" || msg.IsEdited === true || msg.IsEdited === "true") ? 'inline' : 'none';
     }
 }
 
-// 🎯 按讚極速版
 async function toggleLike(key) {
     if (navigator.vibrate) navigator.vibrate(50);
-    
-    // 只鎖定那一筆留言去抓取與寫入
     const msgRef = db.ref(`messages/${key}`);
     msgRef.once('value').then(snap => {
         const msgObj = snap.val();
         if (!msgObj) return;
-
         let likesArray = [];
         try {
             if (typeof msgObj.Likes === 'string') likesArray = JSON.parse(msgObj.Likes || "[]");
             else if (Array.isArray(msgObj.Likes)) likesArray = msgObj.Likes;
         } catch(e) {}
-
         let idIdx = likesArray.findIndex(id => String(id).trim() === String(currentUser.id).trim() || String(id).trim() === String(currentUser.name).trim());
         const isAdding = idIdx === -1;
-        
         if (isAdding) likesArray.push(currentUser.id); 
         else likesArray.splice(idIdx, 1); 
-
-        // 🚀 極速寫入：只覆蓋 Likes 欄位
         msgRef.child('Likes').set(JSON.stringify(likesArray));
 
         fetch(GAS_API_URL, { 
@@ -2739,32 +2656,26 @@ function openEditMessage(key) {
     document.body.classList.add('no-scroll');
     const msg = allMessages.find(m => m._firebaseKey === String(key));
     if (!msg) return;
-
     document.getElementById('modal-title').innerText = "編輯留言";
     document.getElementById('modal-desc').style.display = 'none';
     document.getElementById('modal-input-wrapper').style.display = 'none'; 
     document.getElementById('modal-spinner').style.display = 'none'; 
     document.getElementById('modal-btn-group').style.display = 'flex'; 
-    
     const textarea = document.getElementById('modal-textarea');
-    textarea.style.display = 'block'; textarea.value = msg.Content; 
+    if (textarea) { textarea.style.display = 'block'; textarea.value = msg.Content; }
     document.getElementById('modal-btn-cancel').style.display = 'block';
-    
     const confirmBtn = document.getElementById('modal-btn-confirm');
-    confirmBtn.style.display = 'block'; confirmBtn.innerText = "儲存變更";
-    confirmBtn.onclick = function() {
-        const newContent = textarea.value.trim();
-        if (!newContent) return showCustomAlert("提示", "留言不能為空！");
-        if (newContent === msg.Content) { closeModal(); return; }
-        
-        // 🚀 極速寫入：只更新 Content 跟 IsEdited
-        db.ref(`messages/${key}`).update({
-            Content: newContent,
-            IsEdited: "V"
-        }).then(() => closeModal());
-    };
+    if (confirmBtn) {
+        confirmBtn.style.display = 'block'; confirmBtn.innerText = "儲存變更";
+        confirmBtn.onclick = function() {
+            const newContent = textarea.value.trim();
+            if (!newContent) return showCustomAlert("提示", "留言不能為空！");
+            if (newContent === msg.Content) { closeModal(); return; }
+            db.ref(`messages/${key}`).update({ Content: newContent, IsEdited: "V" }).then(() => closeModal());
+        };
+    }
     document.getElementById('custom-modal').style.display = 'flex';
-    setTimeout(() => textarea.focus(), 100);
+    if (textarea) setTimeout(() => textarea.focus(), 100);
 }
 
 function showLikesDrawer(key) {
@@ -2776,10 +2687,8 @@ function showLikesDrawer(key) {
         else if (Array.isArray(msgObj.Likes)) likesArray = msgObj.Likes;
     } catch(e) {}
     if (likesArray.length === 0) return;
-
     let sortedLikes = likesArray.slice().reverse();
     let html = `<div style="display:flex; flex-direction:column; gap:12px; padding: 0 10px;">`;
-    
     sortedLikes.forEach(likeId => {
         let name = window.userNameMap[likeId] || likeId;
         let picUrl = window.userAvatarMap[likeId] || window.userAvatarMap[name];
@@ -2790,7 +2699,6 @@ function showLikesDrawer(key) {
                     <img src="${picUrl}" style="position:absolute; width:100%; height:100%; object-fit:cover; border-radius:50%; z-index:1;" onerror="this.style.display='none'">
                 </div>` 
             : `<div style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;">${fallbackText}</div>`;
-        
         html += `<div style="display:flex; align-items:center; gap:12px; padding-bottom:12px; border-bottom:1px solid rgba(0,0,0,0.05);">
             <div style="width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg, var(--primary-orange), #ff8c00); color:white; display:flex; justify-content:center; align-items:center; font-size:14px; font-weight:700; overflow:hidden; box-shadow: none !important;">${avHtml}</div>
             <span style="font-size:15px; font-weight:600; color:var(--text-main);">${name}</span>
@@ -2800,146 +2708,69 @@ function showLikesDrawer(key) {
     openCarDrawer('<div style="text-align:center; width:100%; font-weight:700;">說這則留言讚的人</div>', html);
 }
 
-// 🎯 發佈留言
 async function postMessage() {
-    const t = document.getElementById('new-msg-text'); const val = t.value.trim(); if (!val) return;
+    const t = document.getElementById('new-msg-text'); if (!t) return;
+    const val = t.value.trim(); if (!val) return;
     const time = getFormattedTime();
     const msgId = "MSG_" + new Date().getTime();
-    
-    const newMsg = { 
-        MsgID: msgId, LineID: currentUser.id, Name: currentUser.name, 
-        AvatarText: currentUser.initial, AvatarUrl: currentUser.pictureUrl, 
-        Time: time, Content: val, Likes: "[]" 
-    };
-    
+    const newMsg = { MsgID: msgId, LineID: currentUser.id, Name: currentUser.name, AvatarText: currentUser.initial, AvatarUrl: currentUser.pictureUrl, Time: time, Content: val, Likes: "[]" };
     t.value = ''; 
-    
-    // 取得陣列長度做為 index，以符合你 Firebase 原本的儲存格式
     db.ref('messages').once('value').then(snap => {
         const currentMsgs = snap.val() || [];
         const newIndex = currentMsgs.length;
         db.ref(`messages/${newIndex}`).set(newMsg);
     });
-
-    fetch(GAS_API_URL, { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-        body: JSON.stringify({ action: "addMessage", msgId: msgId, userName: currentUser.name, userId: currentUser.id, avatarText: currentUser.initial, timeStr: time, content: val }) 
-    }).catch(e => console.error("Sheets 留言同步失敗:", e));
+    fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "addMessage", msgId: msgId, userName: currentUser.name, userId: currentUser.id, avatarText: currentUser.initial, timeStr: time, content: val }) }).catch(e => console.error("Sheets 留言同步失敗:", e));
 }
 
 function pushSingleNotice(noticeId, btn) {
     const blocks = document.querySelectorAll('.admin-notice-block');
     let isDirty = false;
-    
-    // 智慧比對：拿當前畫面的輸入文字，去比對資料庫原本下載的 adminNoticesArray
     for (let block of blocks) {
         if (block.getAttribute('data-id') === noticeId) {
-            // 🌟 修正：拔除錯誤的 || 語法，改為標準精確選取器，徹底解決無反應崩潰
             const titleEl = block.querySelector('.admin-n-title');
             const descEl = block.querySelector('.admin-n-desc');
-            
             const currentTitle = titleEl ? titleEl.value.trim() : "";
             const currentDesc = descEl ? descEl.value.trim() : "";
-            
             const original = adminNoticesArray.find(n => n.id === noticeId);
-            // 如果在原陣列找不到（代表是全新按新增的），或者文字被改過
-            if (!original || original.title !== currentTitle || original.desc !== currentDesc) {
-                isDirty = true;
-            }
+            if (!original || original.title !== currentTitle || original.desc !== currentDesc) isDirty = true;
             break;
         }
     }
-    
-    // ❌ 攔截：如果發現有修改但沒按大儲存
-    if (isDirty) {
-        showCustomAlert("提示", "您修改了公告內容！\n請先「儲存所有變更」，才能發送最新通知。");
-        return;
-    }
-    
-    // ✅ 通過：內容一致，開始發送
+    if (isDirty) { showCustomAlert("提示", "您修改了公告內容！\n請先「儲存所有變更」，才能發送最新通知。"); return; }
     const targetNotice = adminNoticesArray.find(n => n.id === noticeId);
     if (!targetNotice) return;
-    
     btn.innerText = "發送中..."; btn.disabled = true;
-    
-    fetch(GAS_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-            action: "pushNoticeBroadcast",
-            title: targetNotice.title,
-            content: targetNotice.desc,
-            noticeId: noticeId
-        })
-    })
-    .then(res => res.text())
-    .then(resText => {
-        showCustomAlert("發送成功", "公告已順利推播！");
-    })
-    .catch(err => {
-        showCustomAlert("錯誤", "發送失敗：" + err.message);
-    })
-    .finally(() => {
-        btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform: translateY(-0.5px);"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg> 推播公告`;
-        btn.disabled = false;
-    });
+    fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "pushNoticeBroadcast", title: targetNotice.title, content: targetNotice.desc, noticeId: noticeId }) }).then(res => res.text()).then(resText => { showCustomAlert("發送成功", "公告已順利推播！"); }).catch(err => { showCustomAlert("錯誤", "發送失敗：" + err.message); }).finally(() => { btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform: translateY(-0.5px);"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg> 推播公告`; btn.disabled = false; });
 }
 
-// =========================================================================
-// 💬 留言深層連結雷達：全自動意圖掛載、分頁精算、純淨置中系統 (絕殺時序衝突版)
-// =========================================================================
 function handleMessageDeepLink(msgId) {
     if (!msgId) return;
     console.log("📋 [Intent Layer] 收到留言導流意圖，掛載至全域 Pending Intent:", msgId);
-    
-    // 1. 先將意圖登記在全域變數中
     window.pendingMessageIntent = msgId;
-    
-    // 2. 立刻嘗試執行一次（如果網頁本來就是清醒的，此步就會秒轉成功）
     executePendingMessageIntent(msgId);
 }
 
-// 實體導航執行器：只在資料完全 Readiness 時由事件驅動，不使用 blind setTimeout
 function executePendingMessageIntent(msgId) {
     if (!msgId || !allMessages || allMessages.length === 0) return;
-    
-    // 精準尋找該留言在目前已充水（Hydrated）陣列中的絕對索引位置
     const idx = allMessages.findIndex(m => m.MsgID === msgId);
-    if (idx === -1) {
-        console.log("⏳ 雲端連線同步中，目前陣列尚未出現此 ID，靜態等待 Firebase 下一次值廣播...");
-        return;
-    }
-    
-    // 🌟【核心突破】：免去迴圈猜測！直接用數學公式精算它落在哪一頁
+    if (idx === -1) { console.log("⏳ 雲端連線同步中，目前陣列尚未出現此 ID，靜態等待 Firebase 下一次值廣播..."); return; }
     const targetPage = Math.ceil((idx + 1) / MSG_PER_PAGE);
     if (currentMsgPage < targetPage) {
         console.log(`📊 經精算該留言位於舊資料第 ${targetPage} 頁，立刻強制開展分頁面`);
         currentMsgPage = targetPage;
-        renderMessagesPaginated(); // 瞬間為 DOM 注入正確數量的卡片結構
+        renderMessagesPaginated(); 
     }
-    
-    // 成功捕獲並就位，立刻銷毀意圖鎖，防範高頻重複執行
     window.pendingMessageIntent = null;
     if (window.hasOwnProperty('lastProcessedMsgId')) {
         window.lastProcessedMsgId = msgId;
         setTimeout(() => { window.lastProcessedMsgId = null; }, 2000);
     }
-    
-    // 絲滑切換分頁
-    if (typeof switchView === 'function') {
-        switchView('board');
-    }
-    
-    // 給予 DOM 繪製的硬體微幅緩衝時間，隨後最高階純淨置中（無任何橘底與放大干擾）
+    if (typeof switchView === 'function') switchView('board');
     setTimeout(() => {
         const targetCard = document.querySelector(`[data-msg-id="${msgId}"]`);
-        if (targetCard) {
-            targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+        if (targetCard) targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 320);
-    
-    // 清理網址列參數保持畫面乾淨
     const params = new URLSearchParams(window.location.search);
     if (params.has('msgId')) {
         params.delete('msgId');
@@ -2948,26 +2779,16 @@ function executePendingMessageIntent(msgId) {
     }
 }
 
-// =========================================================================
-// 🚀 終極完全體整合：熱啟動優化、廣播監聽與 3D 全體同頻導覽列水滴系統
-// =========================================================================
-
-document.addEventListener('visibilitychange', handleWarmStartNavigation);
-window.addEventListener('popstate', handleWarmStartNavigation);
-
 function handleWarmStartNavigation() {
     if (document.visibilityState === 'visible') {
         setTimeout(() => {
             const freshParams = new URLSearchParams(window.location.search);
             const noticeId = freshParams.get('notice');
             const msgId = freshParams.get('msgId'); 
-            
             if (noticeId) {
                 if (window.lastProcessedNoticeId === noticeId) return;
                 window.lastProcessedNoticeId = noticeId; 
                 setTimeout(() => { window.lastProcessedNoticeId = null; }, 2000);
-
-                console.log("🎯 偵測到熱啟動公告通知，立刻執行滑動定位:", noticeId);
                 switchView('overview');
                 setTimeout(() => {
                     const card = document.getElementById('notice-card-' + noticeId);
@@ -2977,8 +2798,7 @@ function handleWarmStartNavigation() {
                         window.history.replaceState({}, document.title, window.location.pathname + (freshParams.get('openExternalBrowser') ? '?openExternalBrowser=1' : ''));
                     }
                 }, 450);
-            } 
-            else if (msgId) {
+            } else if (msgId) {
                 handleMessageDeepLink(msgId);
             }
         }, 150);
@@ -2999,12 +2819,10 @@ function handleWarmStartInstantNavigation(urlStr) {
         const params = url.searchParams;
         const noticeId = params.get('notice');
         const msgId = params.get('msgId'); 
-
         if (noticeId) {
             if (window.lastProcessedNoticeId === noticeId) return;
             window.lastProcessedNoticeId = noticeId; 
             setTimeout(() => { window.lastProcessedNoticeId = null; }, 2000);
-
             switchView('overview'); 
             setTimeout(() => {
                 const card = document.getElementById('notice-card-' + noticeId);
@@ -3013,8 +2831,7 @@ function handleWarmStartInstantNavigation(urlStr) {
                     card.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
                 }
             }, 300);
-        } 
-        else if (msgId) {
+        } else if (msgId) {
             handleMessageDeepLink(msgId); 
         }
     } catch (e) { console.error("熱啟動秒轉定位失敗:", e); }
@@ -3029,195 +2846,105 @@ function initNavTouchTracking() {
         const style = document.createElement('style');
         style.id = 'liquid-clean-style';
         style.innerHTML = `
-            #bottom-nav-block .nav-item,
-            #bottom-nav-block .nav-item.active,
-            #bottom-nav-block .nav-item .nav-icon,
-            #bottom-nav-block .nav-item.active .nav-icon,
-            #bottom-nav-block .nav-item span,
-            #bottom-nav-block .nav-item.active span {
-                transform: scale(1) !important;
-                transform: scale3d(1, 1, 1) !important;
+            #bottom-nav-block .nav-item, #bottom-nav-block .nav-item.active,
+            #bottom-nav-block .nav-item .nav-icon, #bottom-nav-block .nav-item.active .nav-icon,
+            #bottom-nav-block .nav-item span, #bottom-nav-block .nav-item.active span {
+                transform: scale(1) !important; transform: scale3d(1, 1, 1) !important;
                 transition: color 0.25s ease, opacity 0.25s ease !important;
             }
         `;
         document.head.appendChild(style);
     }
 
-    let startX = 0;
-    let originLeft = 0;
-    let originWidth = 0;
-    let isTracking = false;
-    let touchedTab = null;
-    
-    let transitionStart = 0;
-    let currentDuration = 820; 
+    let startX = 0; let originLeft = 0; let originWidth = 0; let isTracking = false; let touchedTab = null;
+    let transitionStart = 0; let currentDuration = 820; 
 
     function runLiveTabsTracking() {
         if (!indicator || !navBlock) return;
-        
         let indRect = indicator.getBoundingClientRect();
         let indCenter = indRect.left + (indRect.width / 2);
-        
         let navRect = navBlock.getBoundingClientRect();
         let relativeCenter = indCenter - navRect.left;
-        
         const tabs = Array.from(navBlock.querySelectorAll('.nav-item'));
-        let closestTab = null;
-        let minDistance = Infinity;
-        
+        let closestTab = null; let minDistance = Infinity;
         tabs.forEach(tab => {
             let tabCenter = tab.offsetLeft + (tab.offsetWidth / 2);
             let dist = Math.abs(relativeCenter - tabCenter);
-            if (dist < minDistance) {
-                minDistance = dist;
-                closestTab = tab;
-            }
+            if (dist < minDistance) { minDistance = dist; closestTab = tab; }
         });
-        
         if (closestTab) {
-            tabs.forEach(tab => {
-                if (tab !== closestTab) tab.classList.remove('active');
-            });
+            tabs.forEach(tab => { if (tab !== closestTab) tab.classList.remove('active'); });
             closestTab.classList.add('active'); 
         }
-        
-        if (Date.now() - transitionStart < currentDuration + 80) {
-            requestAnimationFrame(runLiveTabsTracking);
-        }
+        if (Date.now() - transitionStart < currentDuration + 80) { requestAnimationFrame(runLiveTabsTracking); }
     }
 
     function startLiveTracking(duration) {
-        transitionStart = Date.now();
-        currentDuration = duration;
-        requestAnimationFrame(runLiveTabsTracking);
+        transitionStart = Date.now(); currentDuration = duration; requestAnimationFrame(runLiveTabsTracking);
     }
 
     navBlock.addEventListener('touchstart', (e) => {
-        let touchX = e.touches[0].clientX;
-        let navRect = navBlock.getBoundingClientRect();
-        let relativeX = touchX - navRect.left;
-        
+        let touchX = e.touches[0].clientX; let navRect = navBlock.getBoundingClientRect(); let relativeX = touchX - navRect.left;
         const tabs = Array.from(navBlock.querySelectorAll('.nav-item'));
-        touchedTab = navBlock.querySelector('.nav-item.active'); 
-        let minDistance = Infinity;
-
+        touchedTab = navBlock.querySelector('.nav-item.active'); let minDistance = Infinity;
         tabs.forEach(tab => {
             let tabCenter = tab.offsetLeft + (tab.offsetWidth / 2);
             let dist = Math.abs(relativeX - tabCenter);
-            if (dist < minDistance) {
-                minDistance = dist;
-                touchedTab = tab;
-            }
+            if (dist < minDistance) { minDistance = dist; touchedTab = tab; }
         });
-
         if (!touchedTab) return;
-
-        startX = touchX;
-        originLeft = touchedTab.offsetLeft;
-        originWidth = touchedTab.offsetWidth;
-        isTracking = false; 
-
+        startX = touchX; originLeft = touchedTab.offsetLeft; originWidth = touchedTab.offsetWidth; isTracking = false; 
         navBlock.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
         indicator.style.transition = 'left 0.45s cubic-bezier(0.19, 1, 0.22, 1), width 0.45s cubic-bezier(0.19, 1, 0.22, 1), transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), top 0.3s cubic-bezier(0.25, 1, 0.5, 1), bottom 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
-        
-        navBlock.style.transform = 'scale(1.025)';
-        indicator.style.top = '-5px';    
-        indicator.style.bottom = '-5px'; 
-        indicator.style.left = originLeft + 'px';
-        indicator.style.width = originWidth + 'px';
-        indicator.style.transform = 'scale3d(1.01, 1.06, 1)'; 
-
-        tabs.forEach(tab => tab.classList.remove('active'));
-        touchedTab.classList.add('active');
-
+        navBlock.style.transform = 'scale(1.025)'; indicator.style.top = '-5px'; indicator.style.bottom = '-5px'; 
+        indicator.style.left = originLeft + 'px'; indicator.style.width = originWidth + 'px'; indicator.style.transform = 'scale3d(1.01, 1.06, 1)'; 
+        tabs.forEach(tab => tab.classList.remove('active')); touchedTab.classList.add('active');
         startLiveTracking(450);
     }, { passive: true });
 
     navBlock.addEventListener('touchmove', (e) => {
         if (!touchedTab) return;
-        let currentX = e.touches[0].clientX;
-        let deltaX = currentX - startX;
-
-        if (!isTracking && Math.abs(deltaX) > 5) {
-            isTracking = true;
-        }
-
+        let currentX = e.touches[0].clientX; let deltaX = currentX - startX;
+        if (!isTracking && Math.abs(deltaX) > 5) isTracking = true;
         if (!isTracking) return;
-
         indicator.style.transition = 'none';
         let currentLeft = originLeft + deltaX;
-        
-        let minLeft = 4;
-        let maxLeft = navBlock.offsetWidth - originWidth - 4;
-        if (currentLeft < minLeft) {
-            currentLeft = minLeft + (currentLeft - minLeft) * 0.12;
-        } else if (currentLeft > maxLeft) {
-            currentLeft = maxLeft + (currentLeft - maxLeft) * 0.12;
-        }
-
-        indicator.style.top = '-5px';    
-        indicator.style.bottom = '-5px'; 
-        indicator.style.left = currentLeft + 'px';
-        indicator.style.width = originWidth + 'px';
-        indicator.style.transform = 'scale3d(1.01, 1.06, 1)'; 
-
+        let minLeft = 4; let maxLeft = navBlock.offsetWidth - originWidth - 4;
+        if (currentLeft < minLeft) currentLeft = minLeft + (currentLeft - minLeft) * 0.12;
+        else if (currentLeft > maxLeft) currentLeft = maxLeft + (currentLeft - maxLeft) * 0.12;
+        indicator.style.top = '-5px'; indicator.style.bottom = '-5px'; 
+        indicator.style.left = currentLeft + 'px'; indicator.style.width = originWidth + 'px'; indicator.style.transform = 'scale3d(1.01, 1.06, 1)'; 
         indicator.style.background = 'radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.15) 50%, rgba(59, 208, 175, 0.04) 100%)';
         indicator.style.border = '1.5px solid rgba(255, 255, 255, 0.8)';
         indicator.style.boxShadow = '0 10px 25px rgba(0,0,0,0.1), inset 0 2px 4px rgba(255,255,255,0.95), 0 0 15px rgba(59, 208, 175, 0.35)';
-
-        let navRect = navBlock.getBoundingClientRect();
-        let relativeX = currentX - navRect.left;
+        let navRect = navBlock.getBoundingClientRect(); let relativeX = currentX - navRect.left;
         const tabs = Array.from(navBlock.querySelectorAll('.nav-item'));
-        
-        let closestTab = touchedTab;
-        let minDistance = Infinity;
-
+        let closestTab = touchedTab; let minDistance = Infinity;
         tabs.forEach(tab => {
             let tabCenter = tab.offsetLeft + (tab.offsetWidth / 2);
             let dist = Math.abs(relativeX - tabCenter);
-            if (dist < minDistance) {
-                minDistance = dist;
-                closestTab = tab;
-            }
+            if (dist < minDistance) { minDistance = dist; closestTab = tab; }
         });
-
         tabs.forEach(tab => tab.classList.remove('active'));
         if (closestTab) closestTab.classList.add('active');
     }, { passive: true });
 
     function handleTouchRelease() {
         if (!touchedTab) return;
-
         navBlock.style.transition = 'transform 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
         indicator.style.transition = 'left 0.82s cubic-bezier(0.19, 1, 0.22, 1), width 0.82s cubic-bezier(0.19, 1, 0.22, 1), transform 0.6s cubic-bezier(0.19, 1, 0.22, 1), top 0.6s cubic-bezier(0.19, 1, 0.22, 1), bottom 0.6s cubic-bezier(0.19, 1, 0.22, 1)'; 
-        
-        navBlock.style.transform = 'scale(1)';
-        indicator.style.top = '5px';    
-        indicator.style.bottom = '5px';
-        indicator.style.transform = 'scale3d(1, 1, 1)';
-        
-        indicator.style.background = '';
-        indicator.style.border = '';
-        indicator.style.boxShadow = '';
-        
+        navBlock.style.transform = 'scale(1)'; indicator.style.top = '5px'; indicator.style.bottom = '5px'; indicator.style.transform = 'scale3d(1, 1, 1)';
+        indicator.style.background = ''; indicator.style.border = ''; indicator.style.boxShadow = '';
         const finalActiveTab = isTracking ? (navBlock.querySelector('.nav-item.active') || touchedTab) : touchedTab;
-        
         if (finalActiveTab) {
             let targetView = finalActiveTab.id.replace('tab-', '');
-            indicator.style.left = finalActiveTab.offsetLeft + 'px';
-            indicator.style.width = finalActiveTab.offsetWidth + 'px';
-            
+            indicator.style.left = finalActiveTab.offsetLeft + 'px'; indicator.style.width = finalActiveTab.offsetWidth + 'px';
             const tabs = Array.from(navBlock.querySelectorAll('.nav-item'));
-            tabs.forEach(tab => tab.classList.remove('active'));
-            finalActiveTab.classList.add('active');
-            
+            tabs.forEach(tab => tab.classList.remove('active')); finalActiveTab.classList.add('active');
             switchView(targetView); 
         }
-        
-        startLiveTracking(820);
-        touchedTab = null; 
+        startLiveTracking(820); touchedTab = null; 
     }
-
     navBlock.addEventListener('touchend', handleTouchRelease, { passive: true });
     navBlock.addEventListener('touchcancel', handleTouchRelease, { passive: true });
 }
