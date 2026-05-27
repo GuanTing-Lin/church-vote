@@ -160,13 +160,13 @@ let isInitialLoad = true; // 紀錄是否為初次載入
 // 🎯 [留言板紅點智慧計數器完全體] 100% 與通知、Token 權限解綁，裡外雙紅點絕對同步亮滅
 // =========================================================================
 function updateBadgeCount() {
-    // 🌟【精準抓取】：同時捕捉「外層導覽列紅點」與你 index.html 第 514 行的「內層留言板 nav-badge 紅點」
-    const outerBadge = document.getElementById('board-badge');       // index.html 第 514 行的紅點 ID
+    // 🌟【精準修復 ID】：對齊 index.html 第 514 行，移除錯誤的 -dot 殘留！
+    const outerBadge = document.getElementById('board-badge');
 
     // 🎯 核心真理：從頭到尾完全不看 Notification 權限與 cloudLastReadId！只比對本地已讀時間戳
     const lastSeenStr = localStorage.getItem('last_seen_msg_time') || "";
     
-    // 防呆：如果資料庫完全沒有留言，兩邊紅點直接強制熄滅
+    // 防呆：如果資料庫完全沒有留言，紅點直接強制熄滅
     if (!allMessages || allMessages.length === 0) {
         if (outerBadge) outerBadge.style.display = 'none';
         if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {});
@@ -176,16 +176,15 @@ function updateBadgeCount() {
     // 智慧比對：撈出最新的那一則留言
     const latestMsg = allMessages[0]; 
     if (latestMsg && latestMsg.Time) {
-        // 🎯 規則：只要最新留言時間大於上次已讀時間，或者使用者從未點過留言板，紅點「同步秒亮」！
+        // 🎯 規則：最新留言時間大於上次已讀時間，或者使用者從未點過留言板
         if (!lastSeenStr || latestMsg.Time > lastSeenStr) {
             
-            // 由於你的導覽列紅點 (board-badge) 同時扮演了外層提示的角色，
-            // 且當前只有這一個 DOM 節點。我們確保它在「非 active (沒停在留言板)」時同步亮起！
+            // 🌟【精準修復破版】：只有在「沒停在留言板頁面」時才亮起。
+            // 徹底移除 outerBadge.innerText = "●"，維持空字串，100% 沿用你精緻的 CSS 原生紅點樣式！
             if (outerBadge && !document.getElementById('view-board').classList.contains('active')) {
-                // 如果需要顯示未讀純紅點，直接給 block 即可；若要顯示文字，這裡維持你的防呆文字
-                outerBadge.innerText = "●"; 
+                outerBadge.innerHTML = ''; // 確保內部清空，不被文字撐破
                 outerBadge.style.display = 'block';
-                console.log("🔴 [紅點連動] 偵測到新留言，留言板紅點點亮！");
+                console.log("🔴 [紅點連動] 偵測到新留言，留言板紅點完美點亮！");
             }
         } else {
             if (outerBadge) outerBadge.style.display = 'none';
@@ -194,7 +193,7 @@ function updateBadgeCount() {
         if (outerBadge) outerBadge.style.display = 'none';
     }
 
-    // 3. 原生應用程式外部（手機桌面 App Icon）紅點控制：有開通知才有差別，沒開通知自動跳過
+    // 3. 手機桌面 App Icon 紅點控制：有開通知才有差別，沒開通知自動跳過
     if ('setAppBadge' in navigator) {
         const lastSeenStrDesktop = localStorage.getItem('last_seen_msg_time') || "";
         if (latestMsg && latestMsg.Time && (!lastSeenStrDesktop || latestMsg.Time > lastSeenStrDesktop)) {
@@ -218,13 +217,13 @@ function clearBadge() {
             console.log("🧹 [已讀覆蓋] 進入留言板，已讀時間鎖定在最新留言：", latestMsg.Time);
         }
 
-        // 同時維持你原本的雲端同步機制（讓有開通知的裝置同步清除）
-        if (currentUser && currentUser.id && msg.MsgID) {
-            db.ref('readReceipts/' + currentUser.id).set(msg.MsgID);
+        // 同時維護你原本設計的雲端回寫防線（讓有開通知的裝置同步清除）
+        if (currentUser && currentUser.id) {
+            db.ref('readReceipts/' + currentUser.id).set(latestMsg.MsgID);
         }
     }
     
-    // 讓紅點在畫面當下「流暢熄滅」
+    // 讓紅點在畫面當下「同步流暢熄滅」
     const badge = document.getElementById('board-badge');
     if (badge) badge.style.display = 'none';
 
