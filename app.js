@@ -725,7 +725,7 @@ window.onload = async function() {
         const welcomeNameEl = document.getElementById('welcome-name');
         welcomeNameEl.innerHTML = `<span>${currentUser.name}</span>`;
         if(document.getElementById('user-avatar')) document.getElementById('user-avatar').innerText = currentUser.initial;
-        
+                
         fetch(GAS_API_URL, {
             method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({ 
@@ -940,10 +940,11 @@ function checkUserMemberStatus(data) {
             vArray.push(newVisitor);
             myFirebaseIndex = vArray.length - 1;
 
-            // 連續順號回寫資料庫根目錄
+            // 🎯【精準修復】：刪除原本誤寫的 db.ref(`/${myFirebaseIndex}`).set(newVisitor);
+            // 100% 統一走我們修好的安全大閘，把資料乖乖關在 /members 資料夾裡！
             saveMembersToRoot(vArray);
 
-            // 同步發送給 GAS
+            // 同步發送給 GAS 影子報表
             fetch(GAS_API_URL, { 
                 method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
                 body: JSON.stringify({ action: "vote", userName: currentUser.name, userId: currentUser.id, pictureUrl: avatarUrl, choice_trip: "無法參加(訪客查看)", time_opt1: "", time_opt2: "" }) 
