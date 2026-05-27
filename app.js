@@ -157,49 +157,53 @@ const db = firebase.database();
 let isInitialLoad = true; // 紀錄是否為初次載入
 
 // =========================================================================
-// 🎯 [留言板紅點智慧計數器完全體] 100% 與通知、Token 權限解綁，裡外雙紅點絕對同步亮滅
+// 🎯 [留言板未讀數字計數器完全體] 100% 與通知解綁，裡外精準同步顯示未讀則數
 // =========================================================================
 function updateBadgeCount() {
-    // 🌟【精準修復 ID】：對齊 index.html 第 514 行，移除錯誤的 -dot 殘留！
+    // 🌟 正確抓取 index.html 第 514 行的導覽列未讀數字標籤
     const outerBadge = document.getElementById('board-badge');
 
-    // 🎯 核心真理：從頭到尾完全不看 Notification 權限與 cloudLastReadId！只比對本地已讀時間戳
-    const lastSeenStr = localStorage.getItem('last_seen_msg_time') || "";
-    
-    // 防呆：如果資料庫完全沒有留言，紅點直接強制熄滅
+    // 如果資料庫根本沒有任何留言，未讀數直接歸零並熄滅
     if (!allMessages || allMessages.length === 0) {
-        if (outerBadge) outerBadge.style.display = 'none';
+        if (outerBadge) { outerBadge.innerText = ''; outerBadge.style.display = 'none'; }
         if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {});
         return;
     }
 
-    // 智慧比對：撈出最新的那一則留言
-    const latestMsg = allMessages[0]; 
-    if (latestMsg && latestMsg.Time) {
-        // 🎯 規則：最新留言時間大於上次已讀時間，或者使用者從未點過留言板
-        if (!lastSeenStr || latestMsg.Time > lastSeenStr) {
-            
-            // 🌟【精準修復破版】：只有在「沒停在留言板頁面」時才亮起。
-            // 徹底移除 outerBadge.innerText = "●"，維持空字串，100% 沿用你精緻的 CSS 原生紅點樣式！
-            if (outerBadge && !document.getElementById('view-board').classList.contains('active')) {
-                outerBadge.innerHTML = ''; // 確保內部清空，不被文字撐破
-                outerBadge.style.display = 'block';
-                console.log("🔴 [紅點連動] 偵測到新留言，留言板紅點完美點亮！");
-            }
-        } else {
-            if (outerBadge) outerBadge.style.display = 'none';
-        }
+    // 🎯 核心邏輯：計算到底有「幾則新留言」的時間大於上一次已讀時間戳記
+    const lastSeenStr = localStorage.getItem('last_seen_msg_time') || "";
+    let unreadCount = 0;
+
+    if (!lastSeenStr) {
+        // 如果使用者這輩子從來沒點過留言板，未讀數就是當前大表的總留言則數
+        unreadCount = allMessages.length;
     } else {
-        if (outerBadge) outerBadge.style.display = 'none';
+        // 智慧計算：逐一比對每則留言的時間
+        allMessages.forEach(msg => {
+            if (msg && msg.Time && msg.Time > lastSeenStr) {
+                unreadCount++;
+            }
+        });
     }
 
-    // 3. 手機桌面 App Icon 紅點控制：有開通知才有差別，沒開通知自動跳過
+    // 🌟【精準數字渲染】：當未讀數大於 0 且使用者「目前沒有停在留言板頁面」時才亮起
+    if (unreadCount > 0 && !document.getElementById('view-board').classList.contains('active')) {
+        if (outerBadge) {
+            // 如果未讀數超過 99 則，標準 App 體驗會截短顯示為 99+
+            outerBadge.innerText = unreadCount > 99 ? "99+" : unreadCount;
+            outerBadge.style.display = 'block'; // 讓它漂亮地長出來
+            console.log(`🔴 [未讀計數] 偵測到 ${unreadCount} 則新留言，同步顯示未讀數字！`);
+        }
+    } else {
+        if (outerBadge) { outerBadge.innerText = ''; outerBadge.style.display = 'none'; }
+    }
+
+    // 3. 手機桌面 App Icon 紅點數字控制：有開通知才有差別，沒開通知自動跳過
     if ('setAppBadge' in navigator) {
-        const lastSeenStrDesktop = localStorage.getItem('last_seen_msg_time') || "";
-        if (latestMsg && latestMsg.Time && (!lastSeenStrDesktop || latestMsg.Time > lastSeenStrDesktop)) {
-            // 只有最新留言大於已讀，且使用者「有允許通知權限」時，桌面才跳紅點
+        if (unreadCount > 0) {
+            // 只有最新留言大於已讀，且使用者「有允許通知權限」時，手機桌面圖示才會跳數字
             if (Notification.permission === 'granted') {
-                navigator.setAppBadge(1).catch(() => {});
+                navigator.setAppBadge(unreadCount).catch(() => {});
             }
         } else {
             navigator.clearAppBadge().catch(() => {});
@@ -217,17 +221,20 @@ function clearBadge() {
             console.log("🧹 [已讀覆蓋] 進入留言板，已讀時間鎖定在最新留言：", latestMsg.Time);
         }
 
-        // 同時維護你原本設計的雲端回寫防線（讓有開通知的裝置同步清除）
+        // 同時維護你原本設計的雲端回寫防線（讓有開通知的裝置在後台同步清除）
         if (currentUser && currentUser.id) {
             db.ref('readReceipts/' + currentUser.id).set(latestMsg.MsgID);
         }
     }
     
-    // 讓紅點在畫面當下「同步流暢熄滅」
+    // 讓紅點數字在畫面當下「流暢熄滅並清空文字」
     const badge = document.getElementById('board-badge');
-    if (badge) badge.style.display = 'none';
+    if (badge) {
+        badge.innerText = '';
+        badge.style.display = 'none';
+    }
 
-    // 清除手機桌面的 App Icon 紅點
+    // 清除手機桌面的 App Icon 紅點數字
     if ('clearAppBadge' in navigator) {
         navigator.clearAppBadge().catch(() => {});
     }
