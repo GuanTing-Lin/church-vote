@@ -509,6 +509,9 @@ let mentionFilter = "";
 let mentionList = [];
 let mentionSelectedIndex = 0;
 
+// =========================================================================
+// 🎯 [@提及選單核心邏輯] 徹底修正欄位錯位、精準對齊真實人名與大頭貼完全體
+// =========================================================================
 function initMentionLogic() {
     const textarea = document.getElementById('new-msg-text');
     if (!textarea) return;
@@ -529,35 +532,113 @@ function initMentionLogic() {
             if (isStartOrSpaced) {
                 mentionActive = true;
                 mentionStartIndex = lastAtIndex;
-                mentionFilter = textBeforeCursor.substring(lastAtIndex + 1); // 抓出 @ 後面的字
-                updateMentionMenu();
+                mentionFilter = textBeforeCursor.substring(lastAtIndex + 1); // 抓出 @ 後面的關鍵字
+                
+                // 🌟【終極導正】：每次打字時，才動態從當前最新的 cachedPollData 撈名單
+                if (!cachedPollData) return;
+                const liveMembers = extractMembers(cachedPollData);
+                if (!liveMembers || liveMembers.length === 0) { closeMentionMenu(); return; }
+
+                // 依據動態輸入的文字過濾名單
+                mentionList = liveMembers.filter(m => {
+                    if (!m) return false;
+                    const name = m['LINE 名稱'] || m['LINE名稱'] || '';
+                    return name.toLowerCase().includes(mentionFilter.toLowerCase()) && name !== currentUser.name;
+                });
+
+                if (mentionList.length === 0) { closeMentionMenu(); return; }
+
+                // 鋪設選單 DOM 節點
+                const menu = document.getElementById('mention-menu');
+                if (!menu) return;
+                menu.innerHTML = '';
+                
+                mentionList.forEach((member, idx) => {
+                    if (!member) return;
+                    
+                    // 🌟 確保在迴圈內部動態讀取時，精準撈出各團員屬性
+                    const memberId = member['LINE ID'] || member['LINEID'] || '';
+                    const memberName = member['LINE 名稱'] || member['LINE名稱'] || '匿名';
+                    
+                    // 🎯【核心突破】：直接動態查詢 window.userAvatarMap，這時字典早就被 Firebase SDK 注滿大頭貼了！
+                    let userPic = "";
+                    if (window.userAvatarMap) {
+                        userPic = window.userAvatarMap[memberId] || window.userAvatarMap[memberName] || "";
+                    }
+                    
+                    const div = document.createElement('div');
+                    div.className = 'mention-item' + (idx === mentionSelectedIndex ? ' selected' : '');
+                    
+                    let avatarHtml = '';
+                    if (userPic) {
+                        avatarHtml = `<img src="${userPic}" class="mention-avatar" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">`;
+                    }
+                    
+                    // 橘底白字的防呆縮寫文字
+                    const firstChar = memberName ? memberName.charAt(0) : "?";
+                    const fallbackAvatarHtml = `<div class="mention-avatar-fallback" style="width:100%; height:100%; border-radius:50%; background:linear-gradient(135deg, var(--primary-orange), #ff8c00); color:white; display:${userPic ? 'none' : 'flex'}; justify-content:center; align-items:center; font-size:12px; font-weight:700;">${firstChar}</div>`;
+                    
+                    div.innerHTML = `
+                        <div style="position:relative; width:28px; height:28px; margin-right:10px; flex-shrink:0; display:flex; justify-content:center; align-items:center;">
+                            ${avatarHtml}
+                            ${fallbackAvatarHtml}
+                        </div>
+                        <span class="mention-name" style="font-size:14px; font-weight:600; color:var(--text-main);">${memberName}</span>
+                    `;
+                    
+                    div.onmousedown = (e) => {
+                        e.preventDefault(); 
+                        selectMention(memberName); 
+                    };
+                    menu.appendChild(div);
+                });
+                
+                menu.style.display = 'block';
                 return;
             }
         }
         closeMentionMenu();
     });
 
-    // 2. 監聽鍵盤方向鍵與 Enter 事件
+    // 2. 監聽鍵盤方向鍵與 Enter 事件 (維持不變)
     textarea.addEventListener('keydown', (e) => {
         if (!mentionActive) return;
 
         if (e.key === 'ArrowDown') {
-            e.preventDefault(); // 阻止游標亂跑
+            e.preventDefault();
             mentionSelectedIndex = (mentionSelectedIndex + 1) % mentionList.length;
-            renderMentionMenu();
+            const menu = document.getElementById('mention-menu');
+            if (menu) {
+                const items = menu.querySelectorAll('.mention-item');
+                items.forEach((item, idx) => {
+                    if (idx === mentionSelectedIndex) item.classList.add('selected');
+                    else item.classList.remove('selected');
+                });
+            }
         } else if (e.key === 'ArrowUp') {
             e.preventDefault();
             mentionSelectedIndex = (mentionSelectedIndex - 1 + mentionList.length) % mentionList.length;
-            renderMentionMenu();
+            const menu = document.getElementById('mention-menu');
+            if (menu) {
+                const items = menu.querySelectorAll('.mention-item');
+                items.forEach((item, idx) => {
+                    if (idx === mentionSelectedIndex) item.classList.add('selected');
+                    else item.classList.remove('selected');
+                });
+            }
         } else if (e.key === 'Enter') {
             e.preventDefault();
-            selectMention(mentionList[mentionSelectedIndex]);
+            const currentMember = mentionList[mentionSelectedIndex];
+            if (currentMember) {
+                const memberName = currentMember['LINE 名稱'] || currentMember['LINE名稱'] || '';
+                selectMention(memberName);
+            }
         } else if (e.key === 'Escape') {
             closeMentionMenu();
         }
     });
 
-    // 3. 點擊旁邊空白處時，關閉選單
+    // 3. 點擊旁邊空白處時關閉選單 (維持不變)
     document.addEventListener('click', (e) => {
         if (mentionActive && e.target.id !== 'new-msg-text' && !e.target.closest('.mention-menu')) {
             closeMentionMenu();
@@ -2566,20 +2647,24 @@ function loadMoreMessages() {
     currentMsgPage++;
     renderMessagesPaginated();
 }
-
 function generateSingleMessageHTML(msg) {
     const key = msg._firebaseKey;
     let timeStr = msg.Time || "剛剛"; 
     const id = msg.LineID || msg.UserId;
-    let picUrl = window.userAvatarMap[id] || window.userAvatarMap[msg.Name] || msg.AvatarUrl;
-    let fallbackText = msg.AvatarText || (msg.Name ? msg.Name[0] : "?");
+
+    // 🌟 優先從 members 字典撈取最新的名字與頭貼網址
+    let msgDisplayName = window.userNameMap[id] || msg.Name || "匿名";
+    let picUrl = window.userAvatarMap[id] || window.userAvatarMap[msgDisplayName] || msg.AvatarUrl;
+
+    let fallbackText = msg.AvatarText || (msgDisplayName ? msgDisplayName[0] : "?");
     let avatarHtml = picUrl 
         ? `<div style="position:relative; width:100%; height:100%; display:flex; justify-content:center; align-items:center;">
                 <span style="position:absolute; font-size:14px; font-weight:700;">${fallbackText}</span>
                 <img src="${picUrl}" style="position:absolute; width:100%; height:100%; object-fit:cover; border-radius:50%; z-index:1;" onerror="this.style.display='none'">
             </div>` 
         : `<div style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;">${fallbackText}</div>`;
-    let isMyMessage = (id && id === currentUser.id) || (msg.Name === currentUser.name);
+        
+    let isMyMessage = (id && id === currentUser.id) || (msg.Name === currentUser.name || msgDisplayName === currentUser.name);
     let likesArray = [];
     try {
         if (typeof msg.Likes === 'string') likesArray = JSON.parse(msg.Likes || "[]");
@@ -2599,7 +2684,7 @@ function generateSingleMessageHTML(msg) {
             <div class="msg-avatar">${avatarHtml}</div>
             <div class="msg-body">
                 <div class="msg-header">
-                    <span class="msg-name">${msg.Name}</span>
+                    <span class="msg-name">${msgDisplayName}</span>
                     <div class="msg-header-right">
                         <span class="msg-time">${timeStr}</span>
                         ${editBtnHtml}
