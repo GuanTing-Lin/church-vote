@@ -844,19 +844,25 @@ function checkUserMemberStatus(data) {
             }).catch(e => console.error("GAS 新訪客寫回失敗:", e));
         }
     }
+    // 🌟【關鍵修正】：不論是否首次載入，每次 Firebase 廣播都即時更新訪客標籤與登入時間
+    const visitorBadge = document.getElementById('visitor-badge');
+    if (visitorBadge) {
+        visitorBadge.style.display = (currentUser.isVoted && currentUser.votedOption === 3) ? 'inline-flex' : 'none';
+    }
 
+    // 🚀 只有在「首次載入」時，才執行開機畫面解鎖
     if (!isFirstLoadComplete) {
-        isFirstLoadComplete = true; // 鎖上防護鎖，後續資料變更時不再跑進來跳轉頁面
+        isFirstLoadComplete = true;
         
         const loadingEl = document.getElementById('loading');
-        const lockScreenEl = document.getElementById('lock-screen');
+        const lockScreenEl = document.documentElement.querySelector('#lock-screen');
         if (loadingEl) loadingEl.style.display = 'none';
         if (lockScreenEl) lockScreenEl.style.display = 'none'; 
         
         console.log("🚀 [首次載入] 身分比對成功，執行開機畫面解鎖");
+        
+        // 🎯【徹底修復】：直接呼叫原生解鎖，移除未定義的 updateLastLoginTime 報錯，絕不卡死！
         unlockMainApp();
-    } else {
-        console.log("⚡ [實時同步] 背景數據更新，鎖定當前頁面不跳轉");
     }
 }
 
@@ -2003,13 +2009,6 @@ function updateChecklistProgressTotals() {
 function togglePrepCategory(catId) {
     openCategories[catId] = !openCategories[catId];
     renderChecklist();
-}
-
-function toggleChecklistItem(itemId) {
-    userChecklistState[itemId] = !userChecklistState[itemId];
-    isChecklistModified = true; 
-    renderChecklist(); 
-    saveChecklistBackground();
 }
 
 // =========================================================================
