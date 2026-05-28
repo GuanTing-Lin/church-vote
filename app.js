@@ -172,27 +172,34 @@ function updateBadgeCount() {
     const lastReadId = cloudLastReadId; 
     let unreadCount = 0;
     
-    // 🌟【新客防呆防線】：資料庫沒有紀錄的人（第一次全新登入，lastReadId 為空時）
-    // 依據新規則：完全不顯示任何未讀數字提醒！直到他未來產生第一筆已讀紀錄為止
-    if (!lastReadId) {
+    // 🌟【雙重智慧防呆防線】：同時檢查雲端已讀 ID 以及本地歷史已讀時間
+    // 只有當這兩者「同時空無一物」時，才認定他是第一天剛進來的超級新客（不顯示任何數字）
+    const hasLocalHistory = localStorage.getItem('last_seen_msg_time');
+
+    if (!lastReadId && !hasLocalHistory) {
+        // 100% 全新登入的新朋友，維持你最想要的規則：乾乾淨淨，不秀任何數字！
         unreadCount = 0;
     } else {
-        // 🔄 100% 完整回歸你最穩定原本的算法：
-        // allMessages 是反轉過的陣列，最新留言在最前面。我們往下尋找已讀基準點
+        // 🔄 進入你最正宗、精準的歷史陣列尋找比對公式：
         let found = false;
         
         for (let i = 0; i < allMessages.length; i++) {
             if (allMessages[i].MsgID === lastReadId) {
-                found = true; // 順利在歷史紀錄中找到你上一次讀到的那一則留言！
+                found = true; 
                 break;
             }
-            unreadCount++; // 這則留言比你雲端記錄的 ID 還要新，精準列入未讀數字累加
+            unreadCount++; // 精準累加未讀則數
         }
         
-        // 🌟【關鍵防呆】：如果跑完所有留言，發現你原本記錄的已讀 ID 在後台被管理員刪除了
-        // 依據你的核心規格：直接歸零，什麼都不顯示！避免計算爆表或錯位
-        if (!found) {
+        // 🌟【快取備援】：萬一他沒開通知（拿不到雲端 lastReadId），但他是老組員（本地有歷史紀錄）
+        // 如果上面沒能成功用 ID 定錨（found 為 false），我們退回用「本地已讀時間戳」幫他把未讀則數精準修正回來！
+        if (!found && hasLocalHistory) {
             unreadCount = 0;
+            allMessages.forEach(msg => {
+                if (msg && msg.Time && msg.Time > hasLocalHistory) {
+                    unreadCount++;
+                }
+            });
         }
     }
 
@@ -901,6 +908,11 @@ async function processLoadedData() {
             // 4. 默默對齊人數分頁數據 (前台 0 閃爍)
             if (typeof renderPeoplePage === 'function') {
                 renderPeoplePage(data);
+            }
+            // 🌟【終極回歸防線】：不論這個人有沒有開原生通知、有沒有 Token、是不是訪客
+            // 只要 Firebase 廣播資料回來，通通在背景動態執行一遍紅點數字加總！徹底根絕沒開通知就不亮數字的硬傷！
+            if (typeof updateBadgeCount === 'function') {
+                updateBadgeCount();
             }
         }
     });
