@@ -178,7 +178,7 @@ let isInitialLoad = true; // 紀錄是否為初次載入
 
 // =========================================================================
 // 🎯 [留言板未讀數字計數器 - 終極跨權限精準完全體] 
-// 💡 100% 還原雲端 ID 比對公式，加入本地快取 ID 鎖，徹底終結冷熱啟動抓不到與卡 1 的宿疾！
+// 💡 100% 還原雲端 ID 比對公式，加入本地快取 ID 鎖，徹底解決冷熱啟動抓不到與卡 1 宿疾！
 // =========================================================================
 function updateBadgeCount() {
     const badge = document.getElementById('board-badge');
@@ -188,8 +188,8 @@ function updateBadgeCount() {
         return;
     }
 
-    // 🎯【核心理順】：優先讀取 Firebase 廣播回來的雲端已讀 ID。
-    // 萬一沒開通知（雲端網路連線在開機/解凍第一微秒塞車），秒速改拿本地 0 延遲的「快取已讀 ID（last_seen_msg_id）」當作備援定錨點！
+    // 🎯【核心突破】：優先讀取 Firebase 廣播回來的雲端已讀 ID。
+    // 萬一關閉通知（雲端網路連線在開機/解凍第一微秒塞車），秒速改拿本地 0 延遲的「快取已讀 ID（last_seen_msg_id）」當作備援定錨點！
     const lastReadId = cloudLastReadId || localStorage.getItem('last_seen_msg_id') || "";
     const hasLocalHistory = localStorage.getItem('last_seen_msg_time');
     
@@ -199,22 +199,20 @@ function updateBadgeCount() {
     if (!lastReadId && !hasLocalHistory) {
         unreadCount = 0;
     } else {
-        // 🔄 100% 完美回歸你最穩定、最正宗的歷史陣列逐則尋找比對公式：
-        // allMessages 是反轉過的陣列，最新留言在最前面。我們往下尋找已讀基準點
+        // 🔄 100% 完美回歸你最穩定、最正宗的歷史陣列逐則尋找比對公式
         let found = false;
         for (let i = 0; i < allMessages.length; i++) {
             if (allMessages[i].MsgID === lastReadId) {
-                found = true; // 🎯 精準比對到你已讀的記號了！立刻卡死中斷，後面不再累加[cite: 2]！
+                found = true; // 🎯 精準比對到已讀記號！立刻中斷，後面不再累加
                 break;
             }
-            unreadCount++; // 這則留言比你原本記錄的已讀記號還要新，精準計入未讀數字累加[cite: 2]
+            unreadCount++; // 這則留言比你原本記錄的已讀記號還要新，精準計入未讀數字累加[cite: 3]
         }
         
-        // 🌟【關鍵防呆】：如果跑完所有留言，發現你原本定錨的已讀 ID 在後台被刪除了[cite: 2]
-        // 或者是因為關閉通知導致熱啟動解凍的一瞬間，歷史陣列正在非同步拉取、暫時對不齊[cite: 2]
+        // 🌟【關鍵防卡 1 保險】：萬一因為關閉通知導致熱啟動解凍的一瞬間，歷史陣列正在重新建立、暫時對不齊（found 為 false）
         if (!found && hasLocalHistory) {
             unreadCount = 0;
-            // 啟動第二重精準保險：改用 0 延遲的本地已讀時間戳，幫你把未讀增量精準算出來，絕不卡在 1[cite: 2]！
+            // 啟動第二重精準分流：改用 0 延遲的本地已讀時間戳，幫你把未讀增量精準算出來，絕不卡在 1！
             allMessages.forEach(msg => {
                 if (msg && msg.Time && msg.Time > hasLocalHistory) {
                     unreadCount++;
@@ -223,20 +221,19 @@ function updateBadgeCount() {
         }
     }
 
-    // 🌐 渲染前台導覽列標籤 (index.html 第 514 行)[cite: 2]
+    // 🌐 渲染前台導覽列標籤 (index.html 第 514 行)
     if (badge) {
-        // 只有未讀數大於 0 且「目前使用者沒有停在留言板頁面」時才亮起數字[cite: 2]
+        // 只有未讀數大於 0 且「目前使用者沒有停在留言板頁面」時才亮起數字[cite: 3]
         if (unreadCount > 0 && !document.getElementById('view-board').classList.contains('active')) {
             badge.innerText = unreadCount > 99 ? '99+' : unreadCount;
-            badge.style.display = 'block'; // 亮起紅色數字圈圈[cite: 2]
-            console.log(`🔴 [精準計數] 比對已讀記號成功，算出當前有 ${unreadCount} 則全新未讀留言`);
+            badge.style.display = 'block'; // 亮起紅色數字圈圈
         } else {
             badge.innerText = '';
-            badge.style.display = 'none'; // 🎯 若沒有新訊息或已看過，完美呈現 0 隱藏[cite: 2]！
+            badge.style.display = 'none'; // 🎯 若沒有新訊息或已看過，完美呈現 0 隱藏[cite: 3]！
         }
     }
 
-    // 📱 控制手機桌面 App Icon 紅點數字（有開通知才有差別，沒開系統會安全跳過）[cite: 2]
+    // 📱 控制手機桌面 App Icon 紅點數字（有開通知才有差別，沒開系統會安全跳過）[cite: 3]
     if ('setAppBadge' in navigator) {
         if (unreadCount > 0) {
             if (Notification.permission === 'granted') {
@@ -248,20 +245,20 @@ function updateBadgeCount() {
     }
 }
 
-// 🌟【精準已讀清空器】：只有在使用者真正點擊、切換到留言板分頁的當下才執行已讀[cite: 2]
+// 🌟【精準已讀清空器】：只有在使用者真正點擊、切換到留言板分頁的當下才執行已讀[cite: 3]
 function clearBadge() {
     if (allMessages && allMessages.length > 0) {
         const latestMsgId = allMessages[0].MsgID || "";
         const latestMsgTime = allMessages[0].Time || "";
         
         if (latestMsgId) {
-            // 🌟 點進去的瞬間，幫冷、熱啟動打好完美的 0 延遲本地備援記號[cite: 2]
-            localStorage.setItem('last_seen_msg_id', latestMsgId);      // 本地定錨 ID[cite: 2]
-            localStorage.setItem('last_seen_msg_time', latestMsgTime);  // 本地時間基準點[cite: 2]
+            // 🌟 點進去的瞬間，幫冷、熱啟動打好完美的 0 延遲本地備援記號[cite: 3]
+            localStorage.setItem('last_seen_msg_id', latestMsgId);      // 本地定錨 ID
+            localStorage.setItem('last_seen_msg_time', latestMsgTime);  // 本地時間基準點
             
             if (currentUser && currentUser.id) {
                 db.ref('readReceipts/' + currentUser.id).set(latestMsgId);
-                cloudLastReadId = latestMsgId; // 即時同步記憶體[cite: 2]
+                cloudLastReadId = latestMsgId; // 即時同步記憶體[cite: 3]
             }
         }
     }
@@ -292,13 +289,7 @@ function requestPushPermission(fromToggle = false) {
                         console.log("🎟️ 成功取得推播 Token");
                         if (currentUser && currentUser.id) {
                             localStorage.setItem('myDeviceFCMToken', currentToken);
-                            db.ref('pushTokens/' + currentUser.id).set(currentToken);
-                            
-                            db.ref('readReceipts/' + currentUser.id).once('value', (snap) => {
-                                if (!snap.exists() && allMessages && allMessages.length > 0) {
-                                    db.ref('readReceipts/' + currentUser.id).set(allMessages[0].MsgID);
-                                }
-                            });
+                            db.ref('pushTokens/' + currentUser.id).set(currentToken);                      
                             
                             if (fromToggle) {
                                 document.getElementById('user-push-master-toggle').checked = true;
@@ -511,35 +502,23 @@ function handlePushMasterToggle(checkbox) {
                 closeModal();
                 requestPushPermission(true); 
                 localStorage.setItem('user_notification_setting', 'enabled');
-                if (currentUser && currentUser.id) {
-                    db.ref(`users/${currentUser.id}/notificationMuted`).set(false);
-                }
             };
             document.getElementById('custom-modal').style.display = 'flex';
             
         } else if (Notification.permission === 'granted') {
             requestPushPermission(true);
             localStorage.setItem('user_notification_setting', 'enabled');
-            if (currentUser && currentUser.id) {
-                db.ref(`users/${currentUser.id}/notificationMuted`).set(false);
-            }
         } else {
             checkbox.checked = false;
             showCustomAlert("無法開啟", "您已封鎖通知，請前往系統設定解除封鎖。");
         }
     } else {
-        // 🎯【終極修正核心】：用戶關閉通知時，100% 保持 Token 健全，絕對不呼叫 remove()！
+        // 🎯【PM 終極規格修正】：用戶想關閉通知時，絕對不呼叫 db.ref().remove() 刪除 Token！
+        // 100% 保持 Token 健全與 API 背景暢通連線，差別只在本地上記錄一個靜音標記！
         localStorage.setItem('user_notification_setting', 'disabled');
         
-        if (currentUser && currentUser.id) {
-            // 默默同步到資料庫，讓後台知道這個人現在是靜音狀態，但依然保留他的 Token 連線
-            db.ref(`users/${currentUser.id}/notificationMuted`).set(true);
-        }
-        
-        console.log("🤫 [通知靜音管理] 僅在本地與雲端標記靜音，底層 FCM API 保持暢通連線。");
-        
-        // 讓子選項保持可設定狀態（或者你要隱藏也可以，依據你的規格讓子選單同步更新）
-        // 這裡我們維持原本的子選單動畫
+        console.log("🤫 [通知靜音管理] 僅在本地標記靜音，底層 FCM API 保持暢通連線，桌面數字照常累加。");
+        document.getElementById('push-sub-options').style.display = 'none';
         savePushPrefs();
     }
 }
