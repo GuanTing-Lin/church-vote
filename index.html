@@ -8,41 +8,52 @@
     <meta property="og:title" content="【出遊指南】香草山小組出遊指南">
     <meta property="og:description" content="趕快點擊查看，詳細行程、車位與住宿分配、行前準備清單都在這！">
     <meta property="og:image" content="https://raw.githubusercontent.com/GuanTing-Lin/church-vote/main/banner-1.png">
+
     <meta property="og:image" id="meta-og-image" content="https://guanting-lin.github.io/church-vote/assets/default-cover.jpg">
+
     <script>
         (function() {
-            // 🎯 1. 檢查網址有沒有帶公告 ID
+            // 🎯 A. 偵測網址有沒有帶公告 ID
             const urlParams = new URLSearchParams(window.location.search);
             const noticeId = urlParams.get('notice');
             
             if (noticeId) {
-                // 🎯 2. 用最快的純原生 fetch 速度，秒速連線到你的 Firebase 資料庫撈取這則公告
-                // 請確保對齊你 Firebase 的資料庫路徑，通常是 /notices/noticeId
-                const dbUrl = `https://trip-guide-cfdac-default-rtdb.firebaseio.com/notices/${noticeId}.json`;
+                // 🎯 B. 0延遲直接連線到你的 Firebase 資料庫路徑 (對齊 trip-guide-cfdac)
+                const dbUrl = `https://trip-guide-cfdac-default-rtdb.asia-southeast1.firebasedatabase.app/config/NoticesData.json`;
                 
                 fetch(dbUrl)
                     .then(response => response.json())
-                    .then(data => {
-                        if (data && data.content) {
-                            // 🎯 3. 正則表達式雷達：在公告內文中，精準抓取第一張 <img> 的 src 網址
-                            const imgRegex = /<img[^>]+src="([^">]+)"/i;
-                            const match = data.content.match(imgRegex);
+                    .then(noticesJson => {
+                        if (noticesJson) {
+                            // 你的 noticesData 是存在 config/NoticesData 底下的 JSON 字串陣列
+                            const noticesArray = typeof noticesJson === 'string' ? JSON.parse(noticesJson) : noticesJson;
                             
-                            let targetImgUrl = "";
-                            if (match && match[1]) {
-                                targetImgUrl = match[1]; // 成功抓到公告內的第一張圖！
-                            } else if (data.imageUrl) {
-                                targetImgUrl = data.imageUrl; // 備援：萬一你們後台有獨立的欄位
-                            }
+                            // 尋找對應 noticeId 的那則公告
+                            const targetNotice = noticesArray.find(n => n.id === noticeId);
                             
-                            // 🎯 4. 乾坤大挪移：一秒覆蓋頂層的 og:image 標籤，讓 LINE 爬蟲抓到它！
-                            if (targetImgUrl) {
-                                document.getElementById('meta-og-image').setAttribute('content', targetImgUrl);
-                                console.log("📸 [LINE 預覽優化] 成功動態定錨公告第一張圖為分享預覽:", targetImgUrl);
+                            if (targetNotice) {
+                                let targetImgUrl = "";
+                                
+                                // 優先抓取公告內獨立的 imgUrl 欄位
+                                if (targetNotice.imgUrl && targetNotice.imgUrl.trim() !== "") {
+                                    // 如果有多張圖（換行），切出第一張
+                                    targetImgUrl = targetNotice.imgUrl.split('\n')[0].trim();
+                                } else if (targetNotice.desc) {
+                                    // 備援：萬一圖是寫在內文裡，用正則表達式撈出第一張 <img> 的 src
+                                    const imgRegex = /<img[^>]+src="([^">]+)"/i;
+                                    const match = targetNotice.desc.match(imgRegex);
+                                    if (match && match[1]) targetImgUrl = match[1];
+                                }
+                                
+                                // 🎯 C. 乾坤大挪移：在 LINE 爬蟲解析完畢前，強行把預覽圖換成公告第一張圖！
+                                if (targetImgUrl) {
+                                    document.getElementById('meta-og-image').setAttribute('content', targetImgUrl);
+                                    console.log("📸 [動態預覽圖] 成功捕捉公告首張圖並覆蓋 OG 標籤:", targetImgUrl);
+                                }
                             }
                         }
                     })
-                    .catch(err => console.log("OG Image dynamic error:", err));
+                    .catch(err => console.log("OG Image dynamic catch:", err));
             }
         })();
     </script>
