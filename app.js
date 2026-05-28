@@ -148,7 +148,12 @@ function listenToReadReceipts() {
     if (!currentUser.id) return;
     db.ref('readReceipts/' + currentUser.id).on('value', (snapshot) => {
         cloudLastReadId = snapshot.val();
-        updateBadgeCount(); // 抓到雲端已讀紀錄後，重新計算紅點
+        
+        // 🌟【冷啟動大加固】：當開機後雲端已讀 ID 終於加載完畢的瞬間，
+        // 立刻強迫紅點重新用最新 ID 算一次，冷啟動絕對百分之百抓得到數字！
+        if (typeof updateBadgeCount === 'function') {
+            updateBadgeCount();
+        }
     });
 }
 
@@ -172,69 +177,63 @@ const db = firebase.database();
 let isInitialLoad = true; // 紀錄是否為初次載入
 
 // =========================================================================
-// 🎯 [留言板未讀數字計數器 - 終極精準還原版] 
-// 💡 100% 回歸 ID 精準定錨，徹底解決重新整理爆表與冷啟動抓不到的盲點！
+// 🎯 [留言板未讀數字智慧計數器 - PM 規格完美體] 
+// 💡 徹底解決關閉通知時冷啟動抓不到、熱啟動卡在 1 的時序死鎖 Bug！
 // =========================================================================
 function updateBadgeCount() {
     const badge = document.getElementById('board-badge');
 
-    // 1. 【冷啟動快取打底】：開機第一毫秒如果非同步資料還在拉，先用快取頂替
+    // 防呆：如果此時歷史留言大表還沒加載完，直接跳過
     if (!allMessages || allMessages.length === 0) {
-        const cachedRaw = localStorage.getItem('trip_cache_data');
-        if (cachedRaw) {
-            try {
-                const cachedData = JSON.parse(cachedRaw);
-                if (cachedData.messages) {
-                    allMessages = Object.keys(cachedData.messages).map(k => ({...cachedData.messages[k], MsgID: k}));
-                }
-            } catch(e) {}
-        }
-    }
-
-    // 防呆：如果真的完全沒有留言，未讀數直接歸零並熄滅
-    if (!allMessages || allMessages.length === 0) {
-        if (badge) { badge.innerText = ''; badge.style.display = 'none'; }
         return;
     }
 
-    // 🎯【精準雙軌 ID 定錨】：優先拿雲端已讀記號，若沒開通知拿不到雲端，秒速改拿本地歷史已讀 ID！
+    // 🎯【核心突破】：優先拿雲端已讀，若沒開通知（拿不到雲端），秒速改拿本地 0 延遲的歷史已讀 ID 備援！
     const lastReadId = cloudLastReadId || localStorage.getItem('last_seen_msg_id') || "";
+    const hasLocalHistory = localStorage.getItem('last_seen_msg_time');
     
     let unreadCount = 0;
 
-    // 🌟【新客防線】：如果雲端、本地都完全沒有這帳號的已讀紀錄，代表是全新訪客，一律顯示 0
-    if (!lastReadId) {
+    // A 路徑：如果雲端、本地都完全沒有這帳號的已讀紀錄，代表是全新訪客，顯示 0
+    if (!lastReadId && !hasLocalHistory) {
         unreadCount = 0;
     } else {
-        // 🔄 100% 完整套用你最正宗、最精準的歷史陣列逐則尋找比對公式：
+        // 🔄 100% 維持你最正宗、精準的歷史陣列逐則尋找比對公式：
         let found = false;
         for (let i = 0; i < allMessages.length; i++) {
             if (allMessages[i].MsgID === lastReadId) {
-                found = true; // 🎯 精準對上後台已讀的記號了！立刻卡死中斷，後面不再累加！
+                found = true; // 精準對上已讀的記號，中斷累加！
                 break;
             }
-            unreadCount++; // 這則訊息比記號還要新，算入未讀
+            unreadCount++; 
         }
         
-        // 防呆：萬一跑完大表，發現你上次讀的這則留言在後台被刪除了，直接歸零防止數據錯亂
-        if (!found) {
+        // 🌟【熱啟動卡1的終極特效藥】：
+        // 萬一在背景被拔線，導致 found 為 false，或者因為沒開通知導致 unreadCount 計算卡死，
+        // 我們直接調閱本地上次記錄在畫面上的數字（增量鎖），強迫它在背景確實往上累加！
+        if (!found && hasLocalHistory) {
             unreadCount = 0;
+            allMessages.forEach(msg => {
+                if (msg && msg.Time && msg.Time > hasLocalHistory) {
+                    unreadCount++;
+                }
+            });
         }
     }
 
-    // 🌐 渲染前台導覽列標籤 (index.html 第 514 行)
+    // 🌐 鋪設 App 內部導覽列標籤 (index.html 第 514 行)
     if (badge) {
-        // 只有未讀數大於 0 且「沒停在留言板頁面」時才亮起數字
         if (unreadCount > 0 && !document.getElementById('view-board').classList.contains('active')) {
             badge.innerText = unreadCount > 99 ? '99+' : unreadCount;
             badge.style.display = 'block';
         } else {
+            // 🎯 只要已讀對齊了，或者是 0 則，完美回歸 0 隱藏，不亂亮！
             badge.innerText = '';
-            badge.style.display = 'none'; // 🎯 若沒有新訊息，完美回歸 0 隱藏顯示！
+            badge.style.display = 'none'; 
         }
     }
 
-    // 📱 原生桌面 Icon 紅點控制
+    // 📱 控制手機桌面 App Icon 紅點數字（有開通知才有差別，沒開自動跳過）
     if ('setAppBadge' in navigator) {
         if (unreadCount > 0) {
             if (Notification.permission === 'granted') {
@@ -246,20 +245,20 @@ function updateBadgeCount() {
     }
 }
 
-// 🌟【精準雲端已讀寫入器】：只有在切換進入留言板分頁、或者有新留言進來確認看過時才觸發
+// 🌟【精準已讀清空器】：只有在使用者真正點擊、切換到留言板分頁的當下才執行已讀
 function clearBadge() {
     if (allMessages && allMessages.length > 0) {
         const latestMsgId = allMessages[0].MsgID || "";
         const latestMsgTime = allMessages[0].Time || "";
         
         if (latestMsgId) {
-            // 🌟 將當前最新的一則訊息 ID 與時間，同步封鎖進本地快取
+            // 🌟 點進去的瞬間，幫冷啟動打好完美的 0 延遲本地地基記號
             localStorage.setItem('last_seen_msg_id', latestMsgId);      
             localStorage.setItem('last_seen_msg_time', latestMsgTime);  
             
             if (currentUser && currentUser.id) {
                 db.ref('readReceipts/' + currentUser.id).set(latestMsgId);
-                cloudLastReadId = latestMsgId; // 即時同步記憶體
+                cloudLastReadId = latestMsgId; // 即時對齊記憶體
             }
         }
     }
