@@ -1350,7 +1350,28 @@ function renderDynamicUI(data) {
 
     renderPeoplePage(data);
     renderFeesPage(data);
-}
+
+    // =========================================================================
+    // 🌟 [補報名提交按鈕 - 精準物理鎖定與防破版安全線]
+    // 💡 報名過就直接封鎖按鈕不准按、更改文字、並就地強制撐開 160px 邊距徹底解決破版！
+    // =========================================================================
+    const realSubmitBtn = document.getElementById('btn-submit-vote');
+    if (realSubmitBtn) {
+        // 🎯 1. 物理鎖死防護：只要 currentUser 已經投過票(isVoted)且不是訪客(votedOption !== 3)
+        if (currentUser && currentUser.isVoted && String(currentUser.votedOption) !== '3') {
+            realSubmitBtn.disabled = true;                // 🔒 不能按
+            realSubmitBtn.innerText = "您已完成報名";       // 📝 變更文字
+            realSubmitBtn.style.background = "#cbd5e0";    // 🎨 灰色
+            realSubmitBtn.style.color = "#718096";
+            realSubmitBtn.style.cursor = "not-allowed";
+        }
+        
+        // 🎯 2. 絕殺破版防護：不管是不是訪客，這顆按鈕在補報名頁面下方一律強制加上 60px 的 margin-bottom
+        // 配合外層 view-voting 的 padding，直接在 JS 端將按鈕向上推頂，永遠完美懸浮在導覽列上方！
+        realSubmitBtn.style.setProperty('margin-bottom', '60px', 'important');
+    }
+} 
+
 
 // 🌟 補回核心：車次滑塊控制函式（手機回歸原生極速貼邊滾動，電腦保留滑鼠拖曳，防止程式斷頭）
 function initCarGridDrag() {
@@ -2224,7 +2245,11 @@ function selectVote(o) {
 async function submitLateVote() {
     if (!lateVoteSelection) return showCustomAlert("提示", "請點選我要參加");
     if (cachedPollData?.config?.VotingLocked === 'true') return showCustomAlert("系統已鎖定", "主辦人已關閉報名系統。");
-    if (currentUser.isVoted && (currentUser.votedOption === 1 || currentUser.votedOption === 2)) return showCustomAlert("提示", "您已經完成報名囉！");
+    
+    // 🎯 核心加固：改用多重比對，只要 votedOption 存在且不等於 3 (不是訪客)，一律直接攔截轟出去！
+    if (currentUser.isVoted && currentUser.votedOption && String(currentUser.votedOption) !== '3') {
+        return showCustomAlert("提示", "您已經完成報名囉！無需重複報名。");
+    }
 
     showCustomAlert("資料傳送中", "請稍候...", false);
                 

@@ -379,7 +379,19 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 
 .btn-confirm:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(249,168,38,0.35); }
 .cards-row { display: grid; grid-template-columns: 1fr; gap: 12px; }
 .trip-card-vote { border: 2px solid transparent; border-radius: 16px; padding: 15px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; background: rgba(255,255,255,0.7); box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 10px; transition: 0.3s; }
-.trip-card-vote.selected { border-color: var(--primary-green); background: rgba(59, 208, 175, 0.15); box-shadow: 0 4px 12px rgba(59, 208, 175, 0.2); transform: scale(1.02); }
+.trip-card-vote, .trip-card-vote * {
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-focus-ring-color: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+.trip-card-vote.selected { 
+    border-color: var(--primary-green) !important; 
+    background: rgba(59, 208, 175, 0.15) !important; 
+    box-shadow: 0 4px 12px rgba(59, 208, 175, 0.15) !important;
+    transform: none !important; /* 🎯 核心：沒收縮放，保證 100% 絕不噴出外框破版！ */
+}
+
 .trip-card { background: rgba(255,255,255,0.6); border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.04); display: flex; flex-direction: column; border: 2px solid white; backdrop-filter: blur(10px); }
 .card-img-block { position: relative; height: 160px; background-color: #eee; }
 .card-img-block img { width: 100%; height: 100%; object-fit: cover; }
@@ -809,4 +821,20 @@ textarea,
     -ms-user-select: text !important;
     user-select: text !important;
     -webkit-touch-callout: default !important; /* 恢復輸入框內正常的長按剪下、複製、貼上選單 */
+}
+/* =========================================================================
+   🌟 [補報名系統 - 介面防破版安全鎖完全體]
+   💡 修正 ID 對齊與行內衝突，強制將提交按鈕往上拉提，留下完美的呼吸空間！
+   ========================================================================= */
+#view-voting {
+    padding-bottom: 180px !important; /* 🎯 強制幫補報名分頁底部留出 180px 巨大空白底座 */
+    box-sizing: border-box !important;
+}
+
+/* 🎯 精準對齊實體按鈕 ID，強制加上 margin-bottom 防止被底部導覽列沒收 */
+#btn-submit-vote {
+    margin-top: 25px !important;
+    margin-bottom: 50px !important; /* 🌟 核心：強制在按鈕下方推開 50px 的剛性防火牆！ */
+    position: relative !important;
+    z-index: 100 !important;
 }
