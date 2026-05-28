@@ -473,9 +473,26 @@ function openSettings() {
             descDiv.innerHTML = '開啟後才能設定此裝置的通知類型';
         }
     }
+    
+    // 🌟【開關狀態初始化回填】：確保每次打開設定頁面時，開關正確對齊上一次的勾選狀態
+    const pushSetting = localStorage.getItem('user_notification_setting');
+    if (pushSetting === 'disabled') {
+        masterToggle.checked = false;
+        if (document.getElementById('push-sub-options')) {
+            document.getElementById('push-sub-options').style.display = 'none';
+        }
+    } else if (Notification.permission === 'granted' && localStorage.getItem('myDeviceFCMToken')) {
+        masterToggle.checked = true;
+        if (document.getElementById('push-sub-options')) {
+            document.getElementById('push-sub-options').style.display = 'block';
+        }
+    }
 }
 
-// 2. 處理總開關切換動作
+// =========================================================================
+// 🎯 [處理總開關切換動作 - 智慧靜音改版]
+// 💡 關閉通知時絕對不刪除 Token，維持 API 連線，只在本地與雲端標記靜音狀態！
+// =========================================================================
 function handlePushMasterToggle(checkbox) {
     const isTurningOn = checkbox.checked;
     
@@ -493,33 +510,37 @@ function handlePushMasterToggle(checkbox) {
             btnConfirm.onclick = function() {
                 closeModal();
                 requestPushPermission(true); 
+                localStorage.setItem('user_notification_setting', 'enabled');
+                if (currentUser && currentUser.id) {
+                    db.ref(`users/${currentUser.id}/notificationMuted`).set(false);
+                }
             };
             document.getElementById('custom-modal').style.display = 'flex';
             
         } else if (Notification.permission === 'granted') {
             requestPushPermission(true);
+            localStorage.setItem('user_notification_setting', 'enabled');
+            if (currentUser && currentUser.id) {
+                db.ref(`users/${currentUser.id}/notificationMuted`).set(false);
+            }
         } else {
             checkbox.checked = false;
             showCustomAlert("無法開啟", "您已封鎖通知，請前往系統設定解除封鎖。");
         }
     } else {
-        // 用戶想關閉通知：刪除 Token 並隱藏子選單
+        // 🎯【終極修正核心】：用戶關閉通知時，100% 保持 Token 健全，絕對不呼叫 remove()！
+        localStorage.setItem('user_notification_setting', 'disabled');
+        
         if (currentUser && currentUser.id) {
-            const myLocalToken = localStorage.getItem('myDeviceFCMToken');
-            
-            // 先偷看一下雲端的 Token 是不是我的
-            db.ref('pushTokens/' + currentUser.id).once('value', snap => {
-                if (snap.val() === myLocalToken) {
-                    // 💡 只有當雲端 Token 是我這台機器的，我才有資格刪除它！
-                    db.ref('pushTokens/' + currentUser.id).remove()
-                    .then(() => {
-                        console.log("🗑️ 已關閉通知，Token 刪除成功");
-                    }).catch(err => console.error("刪除 Token 失敗", err));
-                }
-            });
-            
-            document.getElementById('push-sub-options').style.display = 'none';
+            // 默默同步到資料庫，讓後台知道這個人現在是靜音狀態，但依然保留他的 Token 連線
+            db.ref(`users/${currentUser.id}/notificationMuted`).set(true);
         }
+        
+        console.log("🤫 [通知靜音管理] 僅在本地與雲端標記靜音，底層 FCM API 保持暢通連線。");
+        
+        // 讓子選項保持可設定狀態（或者你要隱藏也可以，依據你的規格讓子選單同步更新）
+        // 這裡我們維持原本的子選單動畫
+        savePushPrefs();
     }
 }
 

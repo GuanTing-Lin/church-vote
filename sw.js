@@ -18,19 +18,45 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// 讓 Firebase SDK 原生接管通知彈窗，保證通知 100% 跳出
-messaging.onBackgroundMessage(function(payload) {
-    console.log('[sw.js] 收到背景推播：', payload);
-    try {
-        if (payload.data && payload.data.badge) {
-            const badgeCount = parseInt(payload.data.badge, 10);
-            if ('setAppBadge' in navigator) {
-                navigator.setAppBadge(badgeCount).catch(() => {});
-            }
-        }
-    } catch (e) {
-        console.error("更新紅點失敗", e);
+// =========================================================================
+// 🎯 [sw.js Service Worker 背景智慧推播攔截核心]
+// =========================================================================
+messaging.onBackgroundMessage((payload) => {
+    console.log("📥 [背景推播 API 成功作動] 收到 FCM 封包:", payload);
+
+    // 🌟 1. 不論通知開或關，既然 API 暢通，背景無條件強制把最新的未讀數轟炸到桌面紅點上！
+    let unreadCount = 1;
+    if (payload.data && payload.data.unreadCount) {
+        unreadCount = parseInt(payload.data.unreadCount);
     }
+    if ('setAppBadge' in navigator) {
+        navigator.setAppBadge(unreadCount).catch(() => {});
+    }
+
+    // 🌟 2. 智慧分流：檢查使用者在 App 內部是不是切換成了「關閉通知（disabled）」
+    // 這裡可以直接由發送通知的後台（Server/GAS）在 payload.data 裡面塞入使用者的靜音狀態（isMuted）
+    const isMuted = payload.data && (payload.data.isMuted === 'true' || payload.data.notificationMuted === 'true');
+
+    // -----------------------------------------------------------------
+    // 【狀況 2】若設定為「關閉通知」── 直接 return 攔截，絕對不顯示任何彈窗橫幅與音效！
+    // -----------------------------------------------------------------
+    if (isMuted) {
+        console.log("🤫 [背景攔截成功] 使用者設定為關閉通知。僅在桌面更新紅點數字，直接跳過橫幅顯示！");
+        return; // 🎯 核心終結點：不呼叫 showNotification
+    }
+
+    // -----------------------------------------------------------------
+    // 【狀況 1】若設定為「開啟通知」── 照常彈出原生手機橫幅
+    // -----------------------------------------------------------------
+    const notificationTitle = payload.notification ? payload.notification.title : "留言板有新訊息";
+    const notificationOptions = {
+        body: payload.notification ? payload.notification.body : "趕快點擊查看最新留言！",
+        icon: '/app-icon.png',
+        badge: '/app-icon.png',
+        data: payload.data
+    };
+
+    return self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
 // 監聽原生 push 事件做為雙重保險（確保 Android/部分 iOS 在背景能同步刷上數字）
