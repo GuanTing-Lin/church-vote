@@ -172,75 +172,74 @@ const db = firebase.database();
 let isInitialLoad = true; // 紀錄是否為初次載入
 
 // =========================================================================
-// 🎯 [留言板未讀數字計數器 - 終極跨權限完全體] 
-// 💡 徹底解決關閉通知時系統拔線、冷熱啟動卡死的時序黑洞！裡外絕對同步！
+// 🎯 [留言板未讀數字計數器 - 終極精準還原版] 
+// 💡 100% 回歸 ID 精準定錨，徹底解決重新整理爆表與冷啟動抓不到的盲點！
 // =========================================================================
 function updateBadgeCount() {
     const badge = document.getElementById('board-badge');
 
-    // 🌟【快取打底】：如果開機第一秒歷史大表還沒非同步加載完，強制先拉 LocalStorage
+    // 1. 【冷啟動快取打底】：開機第一毫秒如果非同步資料還在拉，先用快取頂替
     if (!allMessages || allMessages.length === 0) {
         const cachedRaw = localStorage.getItem('trip_cache_data');
         if (cachedRaw) {
             try {
                 const cachedData = JSON.parse(cachedRaw);
                 if (cachedData.messages) {
-                    allMessages = Object.keys(cachedData.messages).map(k => ({...cachedData.messages[k], MsgID: k, Time: cachedData.messages[k].Time}));
+                    allMessages = Object.keys(cachedData.messages).map(k => ({...cachedData.messages[k], MsgID: k}));
                 }
             } catch(e) {}
         }
     }
 
+    // 防呆：如果真的完全沒有留言，未讀數直接歸零並熄滅
     if (!allMessages || allMessages.length === 0) {
         if (badge) { badge.innerText = ''; badge.style.display = 'none'; }
         return;
     }
 
-    // 🎯【終極核心修正】：為了免疫「關閉通知時雲端連線塞車」的硬傷，
-    // 計算未讀數一律優先採用本地 0 延遲的「已讀時間戳基準點」！
-    const hasLocalHistory = localStorage.getItem('last_seen_msg_time') || "";
+    // 🎯【精準雙軌 ID 定錨】：優先拿雲端已讀記號，若沒開通知拿不到雲端，秒速改拿本地歷史已讀 ID！
     const lastReadId = cloudLastReadId || localStorage.getItem('last_seen_msg_id') || "";
     
     let unreadCount = 0;
 
-    if (!lastReadId && !hasLocalHistory) {
-        // 真正第一天剛註冊的全新新訪客：0 提示
+    // 🌟【新客防線】：如果雲端、本地都完全沒有這帳號的已讀紀錄，代表是全新訪客，一律顯示 0
+    if (!lastReadId) {
         unreadCount = 0;
     } else {
-        // 🌟 核心算法分流加固：
-        if (hasLocalHistory) {
-            // A 路徑：只要他不是新朋友，不論雲端 ID 到了沒，一律以「本地已讀時間」為最高準則！
-            // 逐一比對名單，只要留言時間大於上次已讀時間，未讀數直接精準爆發累加，絕不卡 1 或卡 2！
-            allMessages.forEach(msg => {
-                if (msg && msg.Time && msg.Time > hasLocalHistory) {
-                    unreadCount++;
-                }
-            });
-        } else {
-            // B 路徑：極端情況下退回用雲端 ID 尋找比對公式
-            let found = false;
-            for (let i = 0; i < allMessages.length; i++) {
-                if (allMessages[i].MsgID === lastReadId) { found = true; break; }
-                unreadCount++;
+        // 🔄 100% 完整套用你最正宗、最精準的歷史陣列逐則尋找比對公式：
+        let found = false;
+        for (let i = 0; i < allMessages.length; i++) {
+            if (allMessages[i].MsgID === lastReadId) {
+                found = true; // 🎯 精準對上後台已讀的記號了！立刻卡死中斷，後面不再累加！
+                break;
             }
+            unreadCount++; // 這則訊息比記號還要新，算入未讀
+        }
+        
+        // 防呆：萬一跑完大表，發現你上次讀的這則留言在後台被刪除了，直接歸零防止數據錯亂
+        if (!found) {
+            unreadCount = 0;
         }
     }
 
-    // 🌐 鋪設 App 內部導覽列標籤 (index.html 第 514 行)
+    // 🌐 渲染前台導覽列標籤 (index.html 第 514 行)
     if (badge) {
+        // 只有未讀數大於 0 且「沒停在留言板頁面」時才亮起數字
         if (unreadCount > 0 && !document.getElementById('view-board').classList.contains('active')) {
             badge.innerText = unreadCount > 99 ? '99+' : unreadCount;
             badge.style.display = 'block';
         } else {
             badge.innerText = '';
-            badge.style.display = 'none';
+            badge.style.display = 'none'; // 🎯 若沒有新訊息，完美回歸 0 隱藏顯示！
         }
     }
 
-    // 📱 控制手機桌面 App Icon 紅點數字（若關閉通知，系統會默默忽略此行，但絕不影響前台導覽列算對數字！）
+    // 📱 原生桌面 Icon 紅點控制
     if ('setAppBadge' in navigator) {
         if (unreadCount > 0) {
-            navigator.setAppBadge(unreadCount).catch(() => {});
+            if (Notification.permission === 'granted') {
+                navigator.setAppBadge(unreadCount).catch(() => {});
+            }
         } else {
             navigator.clearAppBadge().catch(() => {});
         }
@@ -254,12 +253,13 @@ function clearBadge() {
         const latestMsgTime = allMessages[0].Time || "";
         
         if (latestMsgId) {
-            localStorage.setItem('last_seen_msg_id', latestMsgId);      // 🌟 冷啟動備援 ID
-            localStorage.setItem('last_seen_msg_time', latestMsgTime);  // 🌟 時間基準點
+            // 🌟 將當前最新的一則訊息 ID 與時間，同步封鎖進本地快取
+            localStorage.setItem('last_seen_msg_id', latestMsgId);      
+            localStorage.setItem('last_seen_msg_time', latestMsgTime);  
             
             if (currentUser && currentUser.id) {
                 db.ref('readReceipts/' + currentUser.id).set(latestMsgId);
-                cloudLastReadId = latestMsgId;
+                cloudLastReadId = latestMsgId; // 即時同步記憶體
             }
         }
     }
