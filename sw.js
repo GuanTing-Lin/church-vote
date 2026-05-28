@@ -16,35 +16,37 @@ firebase.initializeApp({
     appId: "1:464557372626:web:c2bb8c82b90c6c094c290b"
 });
 
+// =========================================================================
+// 🎯 [sw.js 修正段落] 補上背景紅點與防止通知跳兩次核心
+// =========================================================================
 const messaging = firebase.messaging();
 
-// =========================================================================
-// 🎯 [sw.js 還原完全體] 拋棄所有本地靜音攔截，回歸標準通知推播與跳窗
-// =========================================================================
-importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js');
-importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js');
-
-// 🌟 請用你原本的 Firebase Config 設定直接貼在下方
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    databaseURL: "YOUR_DATABASE_URL",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
-};
-
-firebase.initializeApp(firebaseConfig);
-const messaging = firebase.messaging();
-
-// 🌟 背景收到 FCM 訊息時，不作任何邏輯干擾，100% 正常彈出手機系統橫幅
 messaging.onBackgroundMessage((payload) => {
-    console.log("📥 [背景推播] 收到標準 FCM 封包，準備正常跳出手機橫幅:", payload);
+    console.log("📥 [背景推播] 收到標準 FCM 封包，開始處理紅點與跳窗:", payload);
 
-    const notificationTitle = payload.notification ? payload.notification.title : "留言板有新訊息";
+    // 1. 🎯【外面 APP 數字連線】：在背景收到通知時，強制撈取後台帶來的 badge 數量，並同步到外面桌面 APP 圖示上！
+    let unreadCount = 1;
+    if (payload.data && payload.data.badge) {
+        unreadCount = parseInt(payload.data.badge, 10);
+    } else if (payload.notification && payload.notification.badge) {
+        unreadCount = parseInt(payload.notification.badge, 10);
+    }
+    
+    if ('setAppBadge' in navigator) {
+        navigator.setAppBadge(unreadCount).catch(() => {});
+    }
+
+    // 2. 🎯【防止重複跳兩次通知】：如果這則推播已經有標準的 notification 欄位，
+    // Firebase SDK 本身就會自動強制跳窗了，這裡我們就直接 return，絕對不要再重複呼叫 showNotification！
+    if (payload.notification) {
+        console.log("🛑 Firebase SDK 預設已會處理跳窗，SW 攔截重複彈窗，僅默默更新外面數字。");
+        return; 
+    }
+
+    // 3. 萬一後台發送的是純資料封包 (Data Message)，SDK 不會自動跳窗，才由 SW 來補發通知橫幅
+    const notificationTitle = "留言板有新訊息";
     const notificationOptions = {
-        body: payload.notification ? payload.notification.body : "趕快點擊 App 查看最新留言！",
+        body: payload.data ? payload.data.body : "趕快點擊 App 查看最新留言！",
         icon: '/app-icon.png',
         badge: '/app-icon.png',
         data: payload.data

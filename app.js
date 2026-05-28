@@ -224,8 +224,8 @@ function updateBadgeCount() {
     // 📱 控制手機桌面 App Icon 紅點數字 ── 100% 直接與前台算出來的內部 unreadCount 對齊！
     if ('setAppBadge' in navigator) {
         if (unreadCount > 0) {
-            // 🌟 徹底拔除 Notification.permission 攔截，只要內部算出來大於 0，就毫無保留直接轟炸到外面桌面上！
-            navigator.setAppBadge(unreadCount).catch((e) => console.log("Badge error:", e));
+            // 🌟 徹底拔除 Notification.permission 攔截，只要內部算出來大於 0，就毫無保留直接刷新到外面桌面上！
+            navigator.setAppBadge(unreadCount).catch(() => {});
         } else {
             navigator.clearAppBadge().catch(() => {});
         }
