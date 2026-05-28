@@ -22,17 +22,22 @@ if ('serviceWorker' in navigator) {
                 });
             });
 
-            // 🌟【熱啟動解凍重算防線】：隨時監聽手機 APP 是否從背景被喚醒
             document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
-                console.log("📱 [熱啟動解凍] APP 喚醒，強制重對齊雲端已讀定錨！");
+                console.log("📱 [熱啟動喚醒] 網頁解凍！跳過網路握手，直接就地執行前端快取數字重算！");
+                
+                // 1. ⚡ 不等網路，第一毫秒直接強制重算，讓沒開通知的人在解凍當下數字立刻跳對！
+                if (typeof updateBadgeCount === 'function') updateBadgeCount();
+                
+                // 2. 默默在後台重新與 Firebase 握手建立連線，對齊雲端已讀
                 if (currentUser && currentUser.id) {
                     db.ref('readReceipts/' + currentUser.id).once('value').then((snapshot) => {
                         const val = snapshot.val();
                         if (val) {
                             cloudLastReadId = val;
-                            localStorage.setItem('last_seen_msg_id', val); // 寫入備援鎖
+                            localStorage.setItem('last_seen_msg_id', val);
                         }
+                        // 雲端資料到了之後，後線再次微調確保數字萬無一失
                         if (typeof updateBadgeCount === 'function') updateBadgeCount();
                     });
                 }
@@ -167,59 +172,57 @@ const db = firebase.database();
 let isInitialLoad = true; // 紀錄是否為初次載入
 
 // =========================================================================
-// 🎯 [留言板未讀數字智慧計數器 - 終極生命週期完全體] 
-// 💡 徹底解決冷、熱啟動時序卡死，100% 與網頁凍結、通知解綁，開機一秒亮數字！
+// 🎯 [留言板未讀數字計數器 - 終極跨權限完全體] 
+// 💡 徹底解決關閉通知時系統拔線、冷熱啟動卡死的時序黑洞！裡外絕對同步！
 // =========================================================================
 function updateBadgeCount() {
     const badge = document.getElementById('board-badge');
 
-    // 🌟【第一道生命週期防禦】：如果全網大表此時連一次都還沒載入，先拿本地 LocalStorage 快取撐場
-    // 這樣冷啟動第一毫秒絕對不會閃退歸零，會直接咬住上次的健康未讀數！
+    // 🌟【快取打底】：如果開機第一秒歷史大表還沒非同步加載完，強制先拉 LocalStorage
     if (!allMessages || allMessages.length === 0) {
         const cachedRaw = localStorage.getItem('trip_cache_data');
         if (cachedRaw) {
             try {
                 const cachedData = JSON.parse(cachedRaw);
                 if (cachedData.messages) {
-                    allMessages = Object.keys(cachedData.messages).map(k => ({...cachedData.messages[k], MsgID: k}));
+                    allMessages = Object.keys(cachedData.messages).map(k => ({...cachedData.messages[k], MsgID: k, Time: cachedData.messages[k].Time}));
                 }
             } catch(e) {}
         }
     }
 
-    // 防呆：如果完全無留言，直接隱藏
     if (!allMessages || allMessages.length === 0) {
         if (badge) { badge.innerText = ''; badge.style.display = 'none'; }
         return;
     }
 
-    // 🌟【冷啟動盲點修正】：如果 cloudLastReadId 還在網路上塞車，
-    // 我們立刻啟動本地快取雙重備援，防止開機第一秒被新客防線誤判歸零！
+    // 🎯【終極核心修正】：為了免疫「關閉通知時雲端連線塞車」的硬傷，
+    // 計算未讀數一律優先採用本地 0 延遲的「已讀時間戳基準點」！
+    const hasLocalHistory = localStorage.getItem('last_seen_msg_time') || "";
     const lastReadId = cloudLastReadId || localStorage.getItem('last_seen_msg_id') || "";
-    const hasLocalHistory = localStorage.getItem('last_seen_msg_time');
     
     let unreadCount = 0;
 
     if (!lastReadId && !hasLocalHistory) {
-        // 真正第一天剛註冊的全新訪客：0 提示
+        // 真正第一天剛註冊的全新新訪客：0 提示
         unreadCount = 0;
     } else {
-        // 🔄 採用你最正宗的雲端已讀基準點公式：
-        let found = false;
-        for (let i = 0; i < allMessages.length; i++) {
-            if (allMessages[i].MsgID === lastReadId) {
-                found = true; 
-                break;
-            }
-            unreadCount++;
-        }
-        
-        // 🌟【熱啟動/斷網加固】：萬一背景凍結或 ID 對不齊，直接用時間戳進行增量兜底，絕不卡死
-        if (!found && hasLocalHistory) {
-            unreadCount = 0;
+        // 🌟 核心算法分流加固：
+        if (hasLocalHistory) {
+            // A 路徑：只要他不是新朋友，不論雲端 ID 到了沒，一律以「本地已讀時間」為最高準則！
+            // 逐一比對名單，只要留言時間大於上次已讀時間，未讀數直接精準爆發累加，絕不卡 1 或卡 2！
             allMessages.forEach(msg => {
-                if (msg && msg.Time && msg.Time > hasLocalHistory) unreadCount++;
+                if (msg && msg.Time && msg.Time > hasLocalHistory) {
+                    unreadCount++;
+                }
             });
+        } else {
+            // B 路徑：極端情況下退回用雲端 ID 尋找比對公式
+            let found = false;
+            for (let i = 0; i < allMessages.length; i++) {
+                if (allMessages[i].MsgID === lastReadId) { found = true; break; }
+                unreadCount++;
+            }
         }
     }
 
@@ -234,8 +237,7 @@ function updateBadgeCount() {
         }
     }
 
-    // 📱【終結熱啟動卡2的黑科技】：手機桌面 App Icon 紅點數字
-    // 不論前端網頁有沒有被手機凍結，強迫操作原生系統 Badge 核心，直接把數字轟炸到手機桌面上！
+    // 📱 控制手機桌面 App Icon 紅點數字（若關閉通知，系統會默默忽略此行，但絕不影響前台導覽列算對數字！）
     if ('setAppBadge' in navigator) {
         if (unreadCount > 0) {
             navigator.setAppBadge(unreadCount).catch(() => {});
