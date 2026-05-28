@@ -8,6 +8,44 @@
     <meta property="og:title" content="【出遊指南】香草山小組出遊指南">
     <meta property="og:description" content="趕快點擊查看，詳細行程、車位與住宿分配、行前準備清單都在這！">
     <meta property="og:image" content="https://raw.githubusercontent.com/GuanTing-Lin/church-vote/main/banner-1.png">
+    <meta property="og:image" id="meta-og-image" content="https://guanting-lin.github.io/church-vote/assets/default-cover.jpg">
+    <script>
+        (function() {
+            // 🎯 1. 檢查網址有沒有帶公告 ID
+            const urlParams = new URLSearchParams(window.location.search);
+            const noticeId = urlParams.get('notice');
+            
+            if (noticeId) {
+                // 🎯 2. 用最快的純原生 fetch 速度，秒速連線到你的 Firebase 資料庫撈取這則公告
+                // 請確保對齊你 Firebase 的資料庫路徑，通常是 /notices/noticeId
+                const dbUrl = `https://trip-guide-cfdac-default-rtdb.firebaseio.com/notices/${noticeId}.json`;
+                
+                fetch(dbUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data.content) {
+                            // 🎯 3. 正則表達式雷達：在公告內文中，精準抓取第一張 <img> 的 src 網址
+                            const imgRegex = /<img[^>]+src="([^">]+)"/i;
+                            const match = data.content.match(imgRegex);
+                            
+                            let targetImgUrl = "";
+                            if (match && match[1]) {
+                                targetImgUrl = match[1]; // 成功抓到公告內的第一張圖！
+                            } else if (data.imageUrl) {
+                                targetImgUrl = data.imageUrl; // 備援：萬一你們後台有獨立的欄位
+                            }
+                            
+                            // 🎯 4. 乾坤大挪移：一秒覆蓋頂層的 og:image 標籤，讓 LINE 爬蟲抓到它！
+                            if (targetImgUrl) {
+                                document.getElementById('meta-og-image').setAttribute('content', targetImgUrl);
+                                console.log("📸 [LINE 預覽優化] 成功動態定錨公告第一張圖為分享預覽:", targetImgUrl);
+                            }
+                        }
+                    })
+                    .catch(err => console.log("OG Image dynamic error:", err));
+            }
+        })();
+    </script>
 
     <meta name="theme-color" content="#f0f4f8">
     <meta name="apple-mobile-web-app-capable" content="yes">
