@@ -1114,8 +1114,7 @@ drawerContent.addEventListener('touchend', (e) => {
 });
 
 async function shareNotice(title, id) {
-    // 🎯 重點：在網址最後面加上 &openExternalBrowser=1
-    const shareUrl = window.location.href.split('?')[0] + '?notice=' + id + '&openExternalBrowser=1';
+    const shareUrl = window.location.href.split('?')[0] + '?notice=' + id;
     
     const shareTextContent = "【出遊指南公告】\n" + title + "\n👉 點擊查看完整內容：";
     
