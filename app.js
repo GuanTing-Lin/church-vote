@@ -157,51 +157,61 @@ const db = firebase.database();
 let isInitialLoad = true; // 紀錄是否為初次載入
 
 // =========================================================================
-// 🎯 [留言板未讀數字計數器完全體] 100% 與通知解綁，裡外精準同步顯示未讀則數
+// 🎯 [留言板未讀數字智慧計數器] 完全還原雲端 ID 算法，完美加入全新登入防呆閘門
 // =========================================================================
 function updateBadgeCount() {
-    // 🌟 正確抓取 index.html 第 514 行的導覽列未讀數字標籤
-    const outerBadge = document.getElementById('board-badge');
-
-    // 如果資料庫根本沒有任何留言，未讀數直接歸零並熄滅
+    // 1. 防呆：如果資料庫完全沒留言，直接隱藏紅點並歸零
     if (!allMessages || allMessages.length === 0) {
-        if (outerBadge) { outerBadge.innerText = ''; outerBadge.style.display = 'none'; }
+        const badge = document.getElementById('board-badge');
+        if (badge) { badge.innerText = ''; badge.style.display = 'none'; }
         if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {});
         return;
     }
-
-    // 🎯 核心邏輯：計算到底有「幾則新留言」的時間大於上一次已讀時間戳記
-    const lastSeenStr = localStorage.getItem('last_seen_msg_time') || "";
+    
+    // 2. 讀取 Firebase 雲端廣播回來的最新本人已讀 ID
+    const lastReadId = cloudLastReadId; 
     let unreadCount = 0;
-
-    if (!lastSeenStr) {
-        // 如果使用者這輩子從來沒點過留言板，未讀數就是當前大表的總留言則數
-        unreadCount = allMessages.length;
+    
+    // 🌟【新客防呆防線】：資料庫沒有紀錄的人（第一次全新登入，lastReadId 為空時）
+    // 依據新規則：完全不顯示任何未讀數字提醒！直到他未來產生第一筆已讀紀錄為止
+    if (!lastReadId) {
+        unreadCount = 0;
     } else {
-        // 智慧計算：逐一比對每則留言的時間
-        allMessages.forEach(msg => {
-            if (msg && msg.Time && msg.Time > lastSeenStr) {
-                unreadCount++;
+        // 🔄 100% 完整回歸你最穩定原本的算法：
+        // allMessages 是反轉過的陣列，最新留言在最前面。我們往下尋找已讀基準點
+        let found = false;
+        
+        for (let i = 0; i < allMessages.length; i++) {
+            if (allMessages[i].MsgID === lastReadId) {
+                found = true; // 順利在歷史紀錄中找到你上一次讀到的那一則留言！
+                break;
             }
-        });
-    }
-
-    // 🌟【精準數字渲染】：當未讀數大於 0 且使用者「目前沒有停在留言板頁面」時才亮起
-    if (unreadCount > 0 && !document.getElementById('view-board').classList.contains('active')) {
-        if (outerBadge) {
-            // 如果未讀數超過 99 則，標準 App 體驗會截短顯示為 99+
-            outerBadge.innerText = unreadCount > 99 ? "99+" : unreadCount;
-            outerBadge.style.display = 'block'; // 讓它漂亮地長出來
-            console.log(`🔴 [未讀計數] 偵測到 ${unreadCount} 則新留言，同步顯示未讀數字！`);
+            unreadCount++; // 這則留言比你雲端記錄的 ID 還要新，精準列入未讀數字累加
         }
-    } else {
-        if (outerBadge) { outerBadge.innerText = ''; outerBadge.style.display = 'none'; }
+        
+        // 🌟【關鍵防呆】：如果跑完所有留言，發現你原本記錄的已讀 ID 在後台被管理員刪除了
+        // 依據你的核心規格：直接歸零，什麼都不顯示！避免計算爆表或錯位
+        if (!found) {
+            unreadCount = 0;
+        }
     }
 
-    // 3. 手機桌面 App Icon 紅點數字控制：有開通知才有差別，沒開通知自動跳過
+    // 3. 🌐 更新 App 內部導覽列的未讀數字提示 (對齊 index.html 第 514 行)
+    const badge = document.getElementById('board-badge');
+    if (badge) {
+        // 只有當未讀數大於 0，且使用者「沒有停在留言板分頁」時，才顯示精準數字
+        if (unreadCount > 0 && !document.getElementById('view-board').classList.contains('active')) {
+            badge.innerText = unreadCount > 99 ? '99+' : unreadCount; // 超過99則顯示99+
+            badge.style.display = 'block'; // 亮起紅色數字圈圈
+        } else {
+            badge.innerText = '';
+            badge.style.display = 'none'; // 熄滅
+        }
+    }
+
+    // 4. 📱 同步更新手機桌面的 App Icon 紅點數字 (有開通知才有差別，沒開自動跳過)
     if ('setAppBadge' in navigator) {
         if (unreadCount > 0) {
-            // 只有最新留言大於已讀，且使用者「有允許通知權限」時，手機桌面圖示才會跳數字
             if (Notification.permission === 'granted') {
                 navigator.setAppBadge(unreadCount).catch(() => {});
             }
@@ -211,30 +221,31 @@ function updateBadgeCount() {
     }
 }
 
-// 🌟【精準已讀清空器】：只有在使用者真正點擊、切換到留言板分頁的當下才執行已讀
+// 🌟【精準雲端已讀寫入器】：只有在切換進入留言板分頁、或者有新留言進來確認看過時才觸發
 function clearBadge() {
-    if (allMessages && allMessages.length > 0) {
-        const latestMsg = allMessages[0];
-        if (latestMsg && latestMsg.Time) {
-            // 🎯【時序校正】：將 LocalStorage 封存為「當前最新那則留言的時間」！
-            localStorage.setItem('last_seen_msg_time', latestMsg.Time);
-            console.log("🧹 [已讀覆蓋] 進入留言板，已讀時間鎖定在最新留言：", latestMsg.Time);
-        }
+    // 只有當真正停留在留言板分頁時，才允許把「當前最新的一則留言 ID」當作已讀標記寫回雲端
+    const viewBoard = document.getElementById('view-board');
+    if (!viewBoard || !viewBoard.classList.contains('active')) return;
 
-        // 同時維護你原本設計的雲端回寫防線（讓有開通知的裝置在後台同步清除）
-        if (currentUser && currentUser.id) {
-            db.ref('readReceipts/' + currentUser.id).set(latestMsg.MsgID);
+    if (allMessages && allMessages.length > 0) {
+        let msg = allMessages[0];
+        let readMarker = msg.MsgID || "";
+        
+        // 🎯 只要一進去，立刻以最高優先權將最新的一則 MsgID 寫入 Firebase 雲端節點！
+        if (currentUser && currentUser.id && readMarker) {
+            db.ref('readReceipts/' + currentUser.id).set(readMarker);
+            console.log("🧹 [雲端已讀] 已將最新留言 ID 寫回 Firebase 備份：", readMarker);
         }
     }
     
-    // 讓紅點數字在畫面當下「流暢熄滅並清空文字」
+    // 讓導覽列上的未讀數字圈圈瞬間清空並隱藏
     const badge = document.getElementById('board-badge');
     if (badge) {
         badge.innerText = '';
         badge.style.display = 'none';
     }
 
-    // 清除手機桌面的 App Icon 紅點數字
+    // 同步清空手機桌面的 App Icon 數字
     if ('clearAppBadge' in navigator) {
         navigator.clearAppBadge().catch(() => {});
     }
