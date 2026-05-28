@@ -1352,22 +1352,43 @@ function renderDynamicUI(data) {
     renderFeesPage(data);
 
     // =========================================================================
-    // 🌟 [補報名提交按鈕 - 精準物理鎖定與防破版安全線]
-    // 💡 報名過就直接封鎖按鈕不准按、更改文字、並就地強制撐開 160px 邊距徹底解決破版！
+    // 🌟 [補報名確認提交按鈕 - 終極完全體鎖定與防破版安全線]
+    // 💡 徹底無視全半形冒號與空格干擾！只要已報名，就地封鎖按鈕、改字、變灰，並推開 60px 間距消滅破版！
     // =========================================================================
     const realSubmitBtn = document.getElementById('btn-submit-vote');
     if (realSubmitBtn) {
-        // 🎯 1. 物理鎖死防護：只要 currentUser 已經投過票(isVoted)且不是訪客(votedOption !== 3)
-        if (currentUser && currentUser.isVoted && String(currentUser.votedOption) !== '3') {
-            realSubmitBtn.disabled = true;                // 🔒 不能按
+        
+        // 🎯 核心加固：只要當前用戶有投票紀錄(isVoted)
+        // 且他的偏好行程欄位「不包含」無法參加與訪客字眼，直接霸道沒收權限，防範一切字串錯位！
+        const currentTripStr = currentUser.votedOption ? String(currentUser.votedOption) : '';
+        const rawTripText = (cachedPollData && myFirebaseIndex > -1) ? String(extractMembers(cachedPollData)[myFirebaseIndex]['偏好行程'] || '') : '';
+
+        if (currentUser.isVoted && !rawTripText.includes("無法參加") && !rawTripText.includes("訪客")) {
+            
+            realSubmitBtn.disabled = true;                // 🔒 物理鎖死：不能按
             realSubmitBtn.innerText = "您已完成報名";       // 📝 變更文字
-            realSubmitBtn.style.background = "#cbd5e0";    // 🎨 灰色
-            realSubmitBtn.style.color = "#718096";
-            realSubmitBtn.style.cursor = "not-allowed";
+            
+            // 🎨 視覺降級：用最高權限行內樣式，確保 100% 變灰不發光
+            realSubmitBtn.style.setProperty('background', '#cbd5e0', 'important');    
+            realSubmitBtn.style.setProperty('color', '#718096', 'important');
+            realSubmitBtn.style.setProperty('cursor', 'not-allowed', 'important');
+            realSubmitBtn.style.setProperty('box-shadow', 'none', 'important');
+            realSubmitBtn.style.setProperty('opacity', '0.8', 'important');
+            
+            // 🛡️ 沒收點擊：防止任何穿透
+            realSubmitBtn.onclick = null;
+        } else {
+            // 狀況 B：真的是未報名的訪客，維持健康的原本綠色按鈕
+            realSubmitBtn.disabled = false;
+            realSubmitBtn.innerText = "確認提交";
+            realSubmitBtn.style.background = "";
+            realSubmitBtn.style.color = "";
+            realSubmitBtn.style.cursor = "pointer";
+            realSubmitBtn.style.boxShadow = "";
+            realSubmitBtn.style.opacity = "";
         }
         
-        // 🎯 2. 絕殺破版防護：不管是不是訪客，這顆按鈕在補報名頁面下方一律強制加上 60px 的 margin-bottom
-        // 配合外層 view-voting 的 padding，直接在 JS 端將按鈕向上推頂，永遠完美懸浮在導覽列上方！
+        // 🎯 絕殺破版防護：不管狀態如何，按鈕下方強制加上 60px 剛性邊距，保證永遠懸浮在導覽列上方！
         realSubmitBtn.style.setProperty('margin-bottom', '60px', 'important');
     }
 } 
