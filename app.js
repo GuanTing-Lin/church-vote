@@ -1180,26 +1180,31 @@ function renderDynamicUI(data) {
     renderNoticesWithMagic(cfg); 
 
     // =========================================================================
-    // 🌟 2. 旅遊基本資訊、天數倒數渲染
+    // 🌟 2. 旅遊基本資訊、天數倒數渲染（淨化時間戳 ＆ 接入動態圖片資料庫）
     // =========================================================================
     if(cfg.TripTitle) { document.getElementById('ui-trip-title').innerText = cfg.TripTitle; document.getElementById('vote-ui-title').innerText = cfg.TripTitle; }
     if(cfg.TripDate) { document.getElementById('ui-trip-date').innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> <span>${cfg.TripDate}</span>`; }
     if(cfg.InfoAcc) document.getElementById('ui-info-acc').innerText = cfg.InfoAcc;
     if(cfg.InfoPpl) document.getElementById('ui-info-ppl').innerText = cfg.InfoPpl;
     if(cfg.InfoPrice) document.getElementById('ui-info-price').innerText = cfg.InfoPrice;
-    if(cfg.DepartureDate) countdownTargetDate = new Date(cfg.DepartureDate).getTime();
+    
+    // 🎯【時間戳格式淨化防護】：不論 GAS 不小心回寫了 T00:00:00 還是帶有任何雜質，
+    // 我們強制切除、只撈取前 10 個字（YYYY-MM-DD），確保 iOS Safari 絕對不會拋出 NaN 錯誤！
+    if(cfg.DepartureDate) {
+        const cleanDateStr = String(cfg.DepartureDate).substring(0, 10).replace(/\//g, '-');
+        countdownTargetDate = new Date(cleanDateStr + "T00:00:00").getTime();
+    }
     initDaysCountdown();
 
-    // 🌟 3. 處理補報名系統「確認提交」按鈕的鎖定狀態
-    const voteBtn = document.getElementById('btn-submit-vote');
-    const isAlreadyRegistered = currentUser.isVoted && (currentUser.votedOption === 1 || currentUser.votedOption === 2);
-
-    if (getConfigBool(cfg, 'VotingLocked', false)) {
-        if (voteBtn) { voteBtn.disabled = true; voteBtn.innerText = "系統已鎖定，停止報名"; }
-    } else if (isAlreadyRegistered) {
-        if (voteBtn) { voteBtn.disabled = true; voteBtn.innerText = "您已報名"; }
-    } else {
-        if (voteBtn) { voteBtn.disabled = false; voteBtn.innerText = "確認提交"; }
+    // 🌟【首頁圖片動態資料庫連線】：
+    // 尋找你 index.html 首頁頂端的那張 class="hero-image-compact"
+    const heroImgEl = document.querySelector('.hero-image-compact');
+    if (heroImgEl) {
+        // 如果 Firebase 資料庫裡面有設定 HeroImageUrl，就一秒替換它；
+        // 萬一沒有設定，就完美咬住你原本在 HTML 裡面寫死的那張原始預設圖（防線建立）！
+        if (cfg.HeroImageUrl && cfg.HeroImageUrl.trim() !== "") {
+            heroImgEl.src = cfg.HeroImageUrl.trim();
+        }
     }
 
     // =========================================================================
@@ -1674,15 +1679,19 @@ function unlockMainApp() {
 }
 
 function initDaysCountdown() {
-    const targetDate = new Date(2026, 5, 27, 0, 0, 0); 
+    // 🎯【修正】：不要在函式內部寫死 2026, 5, 27，改為直接對齊我們在 renderDynamicUI 幫你淨化算好的全域變數值！
+    if (!countdownTargetDate) return;
     
-    const diffTime = targetDate.getTime() - new Date().getTime();
+    const diffTime = countdownTargetDate - new Date().getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
     // 確保不會出現負數 (如果日期過了就顯示 0)
     const displayDays = Math.max(0, diffDays);
     
-    document.getElementById('days-countdown').innerText = isNaN(displayDays) ? "--" : displayDays;
+    const countdownEl = document.getElementById('days-countdown');
+    if (countdownEl) {
+        countdownEl.innerText = isNaN(displayDays) ? "--" : displayDays;
+    }
 }
 
 function markArchive() {
