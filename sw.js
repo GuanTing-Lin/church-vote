@@ -19,38 +19,32 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 // =========================================================================
-// 🎯 [sw.js Service Worker 背景智慧推播攔截核心]
+// 🎯 [sw.js 還原完全體] 拋棄所有本地靜音攔截，回歸標準通知推播與跳窗
 // =========================================================================
+importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js');
+importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js');
+
+// 🌟 請用你原本的 Firebase Config 設定直接貼在下方
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    databaseURL: "YOUR_DATABASE_URL",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging();
+
+// 🌟 背景收到 FCM 訊息時，不作任何邏輯干擾，100% 正常彈出手機系統橫幅
 messaging.onBackgroundMessage((payload) => {
-    console.log("📥 [背景推播 API 成功作動] 收到 FCM 封包:", payload);
+    console.log("📥 [背景推播] 收到標準 FCM 封包，準備正常跳出手機橫幅:", payload);
 
-    // 🌟 1. 不論通知開或關，既然 API 暢通，背景無條件強制把最新的未讀數轟炸到桌面紅點上！
-    let unreadCount = 1;
-    if (payload.data && payload.data.unreadCount) {
-        unreadCount = parseInt(payload.data.unreadCount);
-    }
-    if ('setAppBadge' in navigator) {
-        navigator.setAppBadge(unreadCount).catch(() => {});
-    }
-
-    // 🌟 2. 智慧分流：檢查使用者在 App 內部是不是切換成了「關閉通知（disabled）」
-    // 這裡可以直接由發送通知的後台（Server/GAS）在 payload.data 裡面塞入使用者的靜音狀態（isMuted）
-    const isMuted = payload.data && (payload.data.isMuted === 'true' || payload.data.notificationMuted === 'true');
-
-    // -----------------------------------------------------------------
-    // 【狀況 2】若設定為「關閉通知」── 直接 return 攔截，絕對不顯示任何彈窗橫幅與音效！
-    // -----------------------------------------------------------------
-    if (isMuted) {
-        console.log("🤫 [背景攔截成功] 使用者設定為關閉通知。僅在桌面更新紅點數字，直接跳過橫幅顯示！");
-        return; // 🎯 核心終結點：不呼叫 showNotification
-    }
-
-    // -----------------------------------------------------------------
-    // 【狀況 1】若設定為「開啟通知」── 照常彈出原生手機橫幅
-    // -----------------------------------------------------------------
     const notificationTitle = payload.notification ? payload.notification.title : "留言板有新訊息";
     const notificationOptions = {
-        body: payload.notification ? payload.notification.body : "趕快點擊查看最新留言！",
+        body: payload.notification ? payload.notification.body : "趕快點擊 App 查看最新留言！",
         icon: '/app-icon.png',
         badge: '/app-icon.png',
         data: payload.data

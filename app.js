@@ -35,7 +35,6 @@ if ('serviceWorker' in navigator) {
                         const val = snapshot.val();
                         if (val) {
                             cloudLastReadId = val;
-                            localStorage.setItem('last_seen_msg_id', val); // 寫入備援鎖[cite: 2]
                         }
                         // 雲端連線對齊後，後線再次微調確保數字萬無一失[cite: 2]
                         if (typeof updateBadgeCount === 'function') updateBadgeCount();
@@ -177,8 +176,7 @@ const db = firebase.database();
 let isInitialLoad = true; // 紀錄是否為初次載入
 
 // =========================================================================
-// 🎯 [留言板未讀數字計數器 - 終極跨權限精準完全體] 
-// 💡 100% 還原雲端 ID 比對公式，加入本地快取 ID 鎖，徹底解決冷熱啟動抓不到與卡 1 宿疾！
+// 🎯 [留言板未讀數字計數器 - 正宗還原版] 
 // =========================================================================
 function updateBadgeCount() {
     const badge = document.getElementById('board-badge');
@@ -188,52 +186,42 @@ function updateBadgeCount() {
         return;
     }
 
-    // 🎯【核心突破】：優先讀取 Firebase 廣播回來的雲端已讀 ID。
-    // 萬一關閉通知（雲端網路連線在開機/解凍第一微秒塞車），秒速改拿本地 0 延遲的「快取已讀 ID（last_seen_msg_id）」當作備援定錨點！
-    const lastReadId = cloudLastReadId || localStorage.getItem('last_seen_msg_id') || "";
-    const hasLocalHistory = localStorage.getItem('last_seen_msg_time');
-    
+    // 🔄 100% 完整回歸你最穩定、最正宗的歷史陣列逐則尋找比對公式
+    const lastReadId = cloudLastReadId; 
     let unreadCount = 0;
 
-    // 🌟【新客防線】：如果雲端和本地都空空如也，代表是完全沒紀錄的全新訪客，一律顯示 0
-    if (!lastReadId && !hasLocalHistory) {
+    // 新客防線：如果完全沒有雲端已讀紀錄，代表是全新帳號，顯示 0
+    if (!lastReadId) {
         unreadCount = 0;
     } else {
-        // 🔄 100% 完美回歸你最穩定、最正宗的歷史陣列逐則尋找比對公式
         let found = false;
         for (let i = 0; i < allMessages.length; i++) {
             if (allMessages[i].MsgID === lastReadId) {
-                found = true; // 🎯 精準比對到已讀記號！立刻中斷，後面不再累加
+                found = true; // 🎯 精準比對到你雲端已讀的記號了！立刻卡死中斷，後面不再累加！
                 break;
             }
-            unreadCount++; // 這則留言比你原本記錄的已讀記號還要新，精準計入未讀數字累加[cite: 3]
+            unreadCount++; // 這則留言比你雲端記錄的已讀記號還要新，精準計入未讀數字累加
         }
         
-        // 🌟【關鍵防卡 1 保險】：萬一因為關閉通知導致熱啟動解凍的一瞬間，歷史陣列正在重新建立、暫時對不齊（found 為 false）
-        if (!found && hasLocalHistory) {
+        // 關鍵防呆：如果跑完所有留言，發現你原本定錨的已讀 ID 在後台被刪除了，直接歸零
+        if (!found) {
             unreadCount = 0;
-            // 啟動第二重精準分流：改用 0 延遲的本地已讀時間戳，幫你把未讀增量精準算出來，絕不卡在 1！
-            allMessages.forEach(msg => {
-                if (msg && msg.Time && msg.Time > hasLocalHistory) {
-                    unreadCount++;
-                }
-            });
         }
     }
 
     // 🌐 渲染前台導覽列標籤 (index.html 第 514 行)
     if (badge) {
-        // 只有未讀數大於 0 且「目前使用者沒有停在留言板頁面」時才亮起數字[cite: 3]
+        // 只有未讀數大於 0 且「目前使用者沒有停在留言板頁面」時才亮起數字
         if (unreadCount > 0 && !document.getElementById('view-board').classList.contains('active')) {
             badge.innerText = unreadCount > 99 ? '99+' : unreadCount;
             badge.style.display = 'block'; // 亮起紅色數字圈圈
         } else {
             badge.innerText = '';
-            badge.style.display = 'none'; // 🎯 若沒有新訊息或已看過，完美呈現 0 隱藏[cite: 3]！
+            badge.style.display = 'none'; // 🎯 若沒有新訊息或已看過，完美呈現 0 隱藏！
         }
     }
 
-    // 📱 控制手機桌面 App Icon 紅點數字（有開通知才有差別，沒開系統會安全跳過）[cite: 3]
+    // 📱 控制手機桌面 App Icon 紅點數字（有開通知才有差別，沒開系統會安全跳過）
     if ('setAppBadge' in navigator) {
         if (unreadCount > 0) {
             if (Notification.permission === 'granted') {
@@ -245,20 +233,15 @@ function updateBadgeCount() {
     }
 }
 
-// 🌟【精準已讀清空器】：只有在使用者真正點擊、切換到留言板分頁的當下才執行已讀[cite: 3]
+// 🌟【精準已讀清空器】：只有在使用者真正點擊、切換到留言板分頁的當下才執行已讀
 function clearBadge() {
     if (allMessages && allMessages.length > 0) {
         const latestMsgId = allMessages[0].MsgID || "";
-        const latestMsgTime = allMessages[0].Time || "";
         
         if (latestMsgId) {
-            // 🌟 點進去的瞬間，幫冷、熱啟動打好完美的 0 延遲本地備援記號[cite: 3]
-            localStorage.setItem('last_seen_msg_id', latestMsgId);      // 本地定錨 ID
-            localStorage.setItem('last_seen_msg_time', latestMsgTime);  // 本地時間基準點
-            
             if (currentUser && currentUser.id) {
                 db.ref('readReceipts/' + currentUser.id).set(latestMsgId);
-                cloudLastReadId = latestMsgId; // 即時同步記憶體[cite: 3]
+                cloudLastReadId = latestMsgId; // 即時同步記憶體
             }
         }
     }
@@ -465,24 +448,10 @@ function openSettings() {
         }
     }
     
-    // 🌟【開關狀態初始化回填】：確保每次打開設定頁面時，開關正確對齊上一次的勾選狀態
-    const pushSetting = localStorage.getItem('user_notification_setting');
-    if (pushSetting === 'disabled') {
-        masterToggle.checked = false;
-        if (document.getElementById('push-sub-options')) {
-            document.getElementById('push-sub-options').style.display = 'none';
-        }
-    } else if (Notification.permission === 'granted' && localStorage.getItem('myDeviceFCMToken')) {
-        masterToggle.checked = true;
-        if (document.getElementById('push-sub-options')) {
-            document.getElementById('push-sub-options').style.display = 'block';
-        }
-    }
-}
+} 
 
 // =========================================================================
-// 🎯 [處理總開關切換動作 - 智慧靜音改版]
-// 💡 關閉通知時絕對不刪除 Token，維持 API 連線，只在本地與雲端標記靜音狀態！
+// 🔔 還原通知總開關：關閉通知時確實由 Firebase 節點移除 Token 訂閱
 // =========================================================================
 function handlePushMasterToggle(checkbox) {
     const isTurningOn = checkbox.checked;
@@ -501,25 +470,33 @@ function handlePushMasterToggle(checkbox) {
             btnConfirm.onclick = function() {
                 closeModal();
                 requestPushPermission(true); 
-                localStorage.setItem('user_notification_setting', 'enabled');
             };
             document.getElementById('custom-modal').style.display = 'flex';
             
         } else if (Notification.permission === 'granted') {
             requestPushPermission(true);
-            localStorage.setItem('user_notification_setting', 'enabled');
         } else {
             checkbox.checked = false;
             showCustomAlert("無法開啟", "您已封鎖通知，請前往系統設定解除封鎖。");
         }
     } else {
-        // 🎯【PM 終極規格修正】：用戶想關閉通知時，絕對不呼叫 db.ref().remove() 刪除 Token！
-        // 100% 保持 Token 健全與 API 背景暢通連線，差別只在本地上記錄一個靜音標記！
-        localStorage.setItem('user_notification_setting', 'disabled');
-        
-        console.log("🤫 [通知靜音管理] 僅在本地標記靜音，底層 FCM API 保持暢通連線，桌面數字照常累加。");
-        document.getElementById('push-sub-options').style.display = 'none';
-        savePushPrefs();
+        // 🎯【完美還原】：用戶想關閉通知時，徹底將 Firebase 雲端上的 Token 節點刪除移除！
+        if (currentUser && currentUser.id) {
+            const myLocalToken = localStorage.getItem('myDeviceFCMToken');
+            
+            // 先偷看一下雲端的 Token 是不是我的
+            db.ref('pushTokens/' + currentUser.id).once('value', snap => {
+                if (snap.val() === myLocalToken) {
+                    // 💡 只有當雲端 Token 是我這台機器的，我才有資格刪除它！
+                    db.ref('pushTokens/' + currentUser.id).remove()
+                    .then(() => {
+                        console.log("🗑️ 已關閉通知，Token 刪除成功");
+                    }).catch(err => console.error("刪除 Token 失敗", err));
+                }
+            });
+            
+            document.getElementById('push-sub-options').style.display = 'none';
+        }
     }
 }
 
