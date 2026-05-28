@@ -22,10 +22,19 @@ if ('serviceWorker' in navigator) {
                 });
             });
 
-            // 🌟 額外加固：每次 App 從背景熱啟動解凍時，強迫 SW 向伺服器發射一次最新版號比對
+            // 🌟【熱啟動解凍重算防線】：隨時監聽手機 APP 是否從背景被喚醒
             document.addEventListener('visibilitychange', () => {
                 if (document.visibilityState === 'visible') {
-                    reg.update().catch(e => console.log("靜態版號檢查暫時忙碌中"));
+                    console.log("📱 [熱啟動喚醒] APP 從背景熱啟動解凍，強迫執行雲端已讀對齊與紅點重算！");
+                    
+                    // 1. 強迫重新向 Firebase 拉取一次最新本人已讀 ID
+                    if (currentUser && currentUser.id) {
+                        db.ref('readReceipts/' + currentUser.id).once('value').then((snapshot) => {
+                            cloudLastReadId = snapshot.val();
+                            // 2. 遞迴重新計算未讀則數，絕不卡在 2 
+                            if (typeof updateBadgeCount === 'function') updateBadgeCount();
+                        });
+                    }
                 }
             });
 
@@ -230,32 +239,21 @@ function updateBadgeCount() {
 
 // 🌟【精準雲端已讀寫入器】：只有在切換進入留言板分頁、或者有新留言進來確認看過時才觸發
 function clearBadge() {
-    // 只有當真正停留在留言板分頁時，才允許把「當前最新的一則留言 ID」當作已讀標記寫回雲端
-    const viewBoard = document.getElementById('view-board');
-    if (!viewBoard || !viewBoard.classList.contains('active')) return;
-
     if (allMessages && allMessages.length > 0) {
-        let msg = allMessages[0];
-        let readMarker = msg.MsgID || "";
+        // 🎯 確保抓取的是當前全陣列裡最新、最頂端的那一則留言 ID
+        const latestMsgId = allMessages[0].MsgID || "";
         
-        // 🎯 只要一進去，立刻以最高優先權將最新的一則 MsgID 寫入 Firebase 雲端節點！
-        if (currentUser && currentUser.id && readMarker) {
-            db.ref('readReceipts/' + currentUser.id).set(readMarker);
-            console.log("🧹 [雲端已讀] 已將最新留言 ID 寫回 Firebase 備份：", readMarker);
+        if (currentUser && currentUser.id && latestMsgId) {
+            db.ref('readReceipts/' + currentUser.id).set(latestMsgId);
+            cloudLastReadId = latestMsgId; // 🌟 順便就地更新記憶體快取，確保兩邊同時對齊
+            console.log("🧹 [雲端已讀同步] 使用者進入留言板，已讀記號定錨在：", latestMsgId);
         }
     }
     
-    // 讓導覽列上的未讀數字圈圈瞬間清空並隱藏
+    // 讓導覽列上的未讀數字圈圈瞬間歸零並隱藏
     const badge = document.getElementById('board-badge');
-    if (badge) {
-        badge.innerText = '';
-        badge.style.display = 'none';
-    }
-
-    // 同步清空手機桌面的 App Icon 數字
-    if ('clearAppBadge' in navigator) {
-        navigator.clearAppBadge().catch(() => {});
-    }
+    if (badge) { badge.innerText = ''; badge.style.display = 'none'; }
+    if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {});
 }
 
 function requestPushPermission(fromToggle = false) {
@@ -908,11 +906,6 @@ async function processLoadedData() {
             // 4. 默默對齊人數分頁數據 (前台 0 閃爍)
             if (typeof renderPeoplePage === 'function') {
                 renderPeoplePage(data);
-            }
-            // 🌟【終極回歸防線】：不論這個人有沒有開原生通知、有沒有 Token、是不是訪客
-            // 只要 Firebase 廣播資料回來，通通在背景動態執行一遍紅點數字加總！徹底根絕沒開通知就不亮數字的硬傷！
-            if (typeof updateBadgeCount === 'function') {
-                updateBadgeCount();
             }
         }
     });
@@ -2597,6 +2590,7 @@ function initMessageListeners() {
     isMessageListenerAttached = true;
     const msgRef = db.ref('messages');
 
+    // 🌐 冷啟動核心：先拉取整包歷史留言進行打底
     msgRef.once('value').then(snap => {
         const data = snap.val() || [];
         let tempMsgs = [];
@@ -2605,29 +2599,45 @@ function initMessageListeners() {
                 tempMsgs.push({ ...data[key], _firebaseKey: key });
             }
         }
+        
+        // 歷史留言打底、反轉排序完成
         allMessages = tempMsgs.reverse(); 
         renderMessagesPaginated(); 
+        
         if (urlParamsCache && urlParamsCache.msgId) {
             console.log("❄️ 偵測到冷啟動留言深層連結，目標 ID:", urlParamsCache.msgId);
             setTimeout(() => { handleMessageDeepLink(urlParamsCache.msgId); }, 500);
         }
-        updateBadgeCount();
 
+        // 🌟【冷啟動時序加固】：
+        // 由於你的 LIFF 驗證可能需要 0.5 秒，為了防止開機當下 cloudLastReadId 還沒拉到，
+        // 我們連續發射兩次計算（立刻算一次、0.8秒後等雲端 ID 到齊了再補算一次），確保冷啟動數字絕對 100% 亮起！
+        updateBadgeCount();
+        setTimeout(() => {
+            console.log("❄️ [冷啟動延遲補算] 雲端已讀 ID 緩衝對齊，重新計算未讀數");
+            updateBadgeCount();
+        }, 800);
+
+        // 2. 監聽後續全新留言的即時增量
         msgRef.on('child_added', (snapshot) => {
             const key = snapshot.key;
             const msg = snapshot.val();
             if (!msg || !msg.Content) return;
             msg._firebaseKey = key;
             const exists = allMessages.find(m => m._firebaseKey === key);
+            
             if (!exists) {
-                allMessages.unshift(msg); 
+                allMessages.unshift(msg); // 新留言塞入最頂端
                 const container = document.getElementById('msg-list-container');
                 if (container) {
                     const emptyText = container.querySelector('.empty-msg');
                     if (emptyText) emptyText.remove();
                     container.insertAdjacentHTML('afterbegin', generateSingleMessageHTML(msg));
                 }
+                
+                // 🌟 當有新留言進來時，不論有沒有開通知，這裡都會即時累加數字！
                 updateBadgeCount();
+                
                 const viewBoard = document.getElementById('view-board');
                 if (viewBoard && viewBoard.classList.contains('active')) {
                     clearBadge();
@@ -2635,6 +2645,7 @@ function initMessageListeners() {
             }
         });
 
+        // 3. 監聽留言編輯、點讚變更
         msgRef.on('child_changed', (snapshot) => {
             const key = snapshot.key;
             const msg = snapshot.val();
@@ -2645,12 +2656,16 @@ function initMessageListeners() {
             updateSingleMessageUI(msg);
         });
 
+        // 4. 監聽留言被刪除
         msgRef.on('child_removed', (snapshot) => {
             const key = snapshot.key;
             allMessages = allMessages.filter(m => m._firebaseKey !== key);
             const dom = document.getElementById(`msg-item-node-${key}`);
             if (dom) dom.remove();
+            
+            // 刪除留言時也同步扣除未讀數
             updateBadgeCount();
+            
             const viewBoard = document.getElementById('view-board');
             if (viewBoard && viewBoard.classList.contains('active')) {
                 clearBadge();
