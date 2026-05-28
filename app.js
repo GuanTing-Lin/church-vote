@@ -24,19 +24,20 @@ if ('serviceWorker' in navigator) {
 
             // 🌟【熱啟動解凍重算防線】：隨時監聽手機 APP 是否從背景被喚醒
             document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'visible') {
-                    console.log("📱 [熱啟動喚醒] APP 從背景熱啟動解凍，強迫執行雲端已讀對齊與紅點重算！");
-                    
-                    // 1. 強迫重新向 Firebase 拉取一次最新本人已讀 ID
-                    if (currentUser && currentUser.id) {
-                        db.ref('readReceipts/' + currentUser.id).once('value').then((snapshot) => {
-                            cloudLastReadId = snapshot.val();
-                            // 2. 遞迴重新計算未讀則數，絕不卡在 2 
-                            if (typeof updateBadgeCount === 'function') updateBadgeCount();
-                        });
-                    }
+            if (document.visibilityState === 'visible') {
+                console.log("📱 [熱啟動解凍] APP 喚醒，強制重對齊雲端已讀定錨！");
+                if (currentUser && currentUser.id) {
+                    db.ref('readReceipts/' + currentUser.id).once('value').then((snapshot) => {
+                        const val = snapshot.val();
+                        if (val) {
+                            cloudLastReadId = val;
+                            localStorage.setItem('last_seen_msg_id', val); // 寫入備援鎖
+                        }
+                        if (typeof updateBadgeCount === 'function') updateBadgeCount();
+                    });
                 }
-            });
+            }
+        });
 
         }).catch(err => console.error('PWA 註冊失敗:', err));
     });
@@ -166,71 +167,78 @@ const db = firebase.database();
 let isInitialLoad = true; // 紀錄是否為初次載入
 
 // =========================================================================
-// 🎯 [留言板未讀數字智慧計數器] 完全還原雲端 ID 算法，完美加入全新登入防呆閘門
+// 🎯 [留言板未讀數字智慧計數器 - 終極生命週期完全體] 
+// 💡 徹底解決冷、熱啟動時序卡死，100% 與網頁凍結、通知解綁，開機一秒亮數字！
 // =========================================================================
 function updateBadgeCount() {
-    // 1. 防呆：如果資料庫完全沒留言，直接隱藏紅點並歸零
+    const badge = document.getElementById('board-badge');
+
+    // 🌟【第一道生命週期防禦】：如果全網大表此時連一次都還沒載入，先拿本地 LocalStorage 快取撐場
+    // 這樣冷啟動第一毫秒絕對不會閃退歸零，會直接咬住上次的健康未讀數！
     if (!allMessages || allMessages.length === 0) {
-        const badge = document.getElementById('board-badge');
+        const cachedRaw = localStorage.getItem('trip_cache_data');
+        if (cachedRaw) {
+            try {
+                const cachedData = JSON.parse(cachedRaw);
+                if (cachedData.messages) {
+                    allMessages = Object.keys(cachedData.messages).map(k => ({...cachedData.messages[k], MsgID: k}));
+                }
+            } catch(e) {}
+        }
+    }
+
+    // 防呆：如果完全無留言，直接隱藏
+    if (!allMessages || allMessages.length === 0) {
         if (badge) { badge.innerText = ''; badge.style.display = 'none'; }
-        if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {});
         return;
     }
-    
-    // 2. 讀取 Firebase 雲端廣播回來的最新本人已讀 ID
-    const lastReadId = cloudLastReadId; 
-    let unreadCount = 0;
-    
-    // 🌟【雙重智慧防呆防線】：同時檢查雲端已讀 ID 以及本地歷史已讀時間
-    // 只有當這兩者「同時空無一物」時，才認定他是第一天剛進來的超級新客（不顯示任何數字）
+
+    // 🌟【冷啟動盲點修正】：如果 cloudLastReadId 還在網路上塞車，
+    // 我們立刻啟動本地快取雙重備援，防止開機第一秒被新客防線誤判歸零！
+    const lastReadId = cloudLastReadId || localStorage.getItem('last_seen_msg_id') || "";
     const hasLocalHistory = localStorage.getItem('last_seen_msg_time');
+    
+    let unreadCount = 0;
 
     if (!lastReadId && !hasLocalHistory) {
-        // 100% 全新登入的新朋友，維持你最想要的規則：乾乾淨淨，不秀任何數字！
+        // 真正第一天剛註冊的全新訪客：0 提示
         unreadCount = 0;
     } else {
-        // 🔄 進入你最正宗、精準的歷史陣列尋找比對公式：
+        // 🔄 採用你最正宗的雲端已讀基準點公式：
         let found = false;
-        
         for (let i = 0; i < allMessages.length; i++) {
             if (allMessages[i].MsgID === lastReadId) {
                 found = true; 
                 break;
             }
-            unreadCount++; // 精準累加未讀則數
+            unreadCount++;
         }
         
-        // 🌟【快取備援】：萬一他沒開通知（拿不到雲端 lastReadId），但他是老組員（本地有歷史紀錄）
-        // 如果上面沒能成功用 ID 定錨（found 為 false），我們退回用「本地已讀時間戳」幫他把未讀則數精準修正回來！
+        // 🌟【熱啟動/斷網加固】：萬一背景凍結或 ID 對不齊，直接用時間戳進行增量兜底，絕不卡死
         if (!found && hasLocalHistory) {
             unreadCount = 0;
             allMessages.forEach(msg => {
-                if (msg && msg.Time && msg.Time > hasLocalHistory) {
-                    unreadCount++;
-                }
+                if (msg && msg.Time && msg.Time > hasLocalHistory) unreadCount++;
             });
         }
     }
 
-    // 3. 🌐 更新 App 內部導覽列的未讀數字提示 (對齊 index.html 第 514 行)
-    const badge = document.getElementById('board-badge');
+    // 🌐 鋪設 App 內部導覽列標籤 (index.html 第 514 行)
     if (badge) {
-        // 只有當未讀數大於 0，且使用者「沒有停在留言板分頁」時，才顯示精準數字
         if (unreadCount > 0 && !document.getElementById('view-board').classList.contains('active')) {
-            badge.innerText = unreadCount > 99 ? '99+' : unreadCount; // 超過99則顯示99+
-            badge.style.display = 'block'; // 亮起紅色數字圈圈
+            badge.innerText = unreadCount > 99 ? '99+' : unreadCount;
+            badge.style.display = 'block';
         } else {
             badge.innerText = '';
-            badge.style.display = 'none'; // 熄滅
+            badge.style.display = 'none';
         }
     }
 
-    // 4. 📱 同步更新手機桌面的 App Icon 紅點數字 (有開通知才有差別，沒開自動跳過)
+    // 📱【終結熱啟動卡2的黑科技】：手機桌面 App Icon 紅點數字
+    // 不論前端網頁有沒有被手機凍結，強迫操作原生系統 Badge 核心，直接把數字轟炸到手機桌面上！
     if ('setAppBadge' in navigator) {
         if (unreadCount > 0) {
-            if (Notification.permission === 'granted') {
-                navigator.setAppBadge(unreadCount).catch(() => {});
-            }
+            navigator.setAppBadge(unreadCount).catch(() => {});
         } else {
             navigator.clearAppBadge().catch(() => {});
         }
@@ -240,17 +248,19 @@ function updateBadgeCount() {
 // 🌟【精準雲端已讀寫入器】：只有在切換進入留言板分頁、或者有新留言進來確認看過時才觸發
 function clearBadge() {
     if (allMessages && allMessages.length > 0) {
-        // 🎯 確保抓取的是當前全陣列裡最新、最頂端的那一則留言 ID
         const latestMsgId = allMessages[0].MsgID || "";
+        const latestMsgTime = allMessages[0].Time || "";
         
-        if (currentUser && currentUser.id && latestMsgId) {
-            db.ref('readReceipts/' + currentUser.id).set(latestMsgId);
-            cloudLastReadId = latestMsgId; // 🌟 順便就地更新記憶體快取，確保兩邊同時對齊
-            console.log("🧹 [雲端已讀同步] 使用者進入留言板，已讀記號定錨在：", latestMsgId);
+        if (latestMsgId) {
+            localStorage.setItem('last_seen_msg_id', latestMsgId);      // 🌟 冷啟動備援 ID
+            localStorage.setItem('last_seen_msg_time', latestMsgTime);  // 🌟 時間基準點
+            
+            if (currentUser && currentUser.id) {
+                db.ref('readReceipts/' + currentUser.id).set(latestMsgId);
+                cloudLastReadId = latestMsgId;
+            }
         }
     }
-    
-    // 讓導覽列上的未讀數字圈圈瞬間歸零並隱藏
     const badge = document.getElementById('board-badge');
     if (badge) { badge.innerText = ''; badge.style.display = 'none'; }
     if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {});
