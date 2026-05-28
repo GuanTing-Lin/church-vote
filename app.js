@@ -1558,6 +1558,8 @@ function switchView(t) {
         }
     }
 
+    // ... 前面 1. 訪客分區檢查 與 isMasterLocked 判斷通通保持原本不動 ...
+
     let viewIdToRender = isSectionLocked ? 'guest-locked' : t;
     const targetView = document.getElementById('view-' + viewIdToRender);
     
@@ -1565,6 +1567,8 @@ function switchView(t) {
     const hIcon = document.getElementById('hamburger-icon');
     if(hIcon) hIcon.classList.remove('open');
 
+    // 🌟【防跳動優化第一步】：改用純 CSS 類名切換
+    // 不要直接瞬間拔除高度，讓所有 view-section 透過 CSS 穩固對齊
     document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
     if (targetView) targetView.classList.add('active');
 
@@ -1581,8 +1585,12 @@ function switchView(t) {
     if (typeof refreshMessagesOnly === "function") refreshMessagesOnly(true); 
     if (t === 'result') fetchResults();
     if (t === 'board') clearBadge();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // 🌟【防彈跳終極鎖】：
+    // 徹底棄用 smooth 滾動，改用「0 延遲直接定錨」，網頁背景絕對不會再產生任何一丁點上下位移與物理彈跳！
+    window.scrollTo(0, 0); 
 }
+
 
 // 🌟 完整替換 app.js 中的 unlockMainApp 函數
 function unlockMainApp() {

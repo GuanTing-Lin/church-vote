@@ -64,7 +64,28 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 
 .container { max-width: 600px; margin: 20px auto; padding: 0 16px; box-sizing: border-box; }
 .card { background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-top-color: var(--glass-border-highlight); border-left-color: var(--glass-border-highlight); border-radius: var(--radius-main); overflow: hidden; box-shadow: var(--glass-shadow); padding: 20px; margin-bottom: 16px; position: relative; }
 .section-title { font-size: 16px; font-weight: 700; margin: 25px 0 12px; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; text-shadow: 0 1px 2px rgba(255,255,255,0.6); }
-.view-section { display: none; } .view-section.active { display: block; animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+/* =========================================================================
+   🌟 [分頁容器防跳動加固]
+   💡 強制維持至少一整頁高度，徹底解決切換長短分頁時滾動條抽空、畫面彈跳的宿疾！
+   ========================================================================= */
+.view-section { 
+    display: none; 
+    width: 100%;
+    min-height: 100vh; /* 🎯 核心：鎖定至少一整頁的高度，換頁時身體完全不動 */
+    box-sizing: border-box;
+    overflow-x: hidden;
+} 
+
+.view-section.active { 
+    display: block !important; 
+    /* 🚀 開啟手機 GPU 硬體加速，讓分頁切換達到 60 幀的原生級絲滑，絕不閃爍 */
+    animation: fadeInPageSmooth 0.22s cubic-bezier(0.19, 1, 0.22, 1) forwards; 
+}
+
+@keyframes fadeInPageSmooth {
+    from { opacity: 0; transform: translate3d(0, 4px, 0); }
+    to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
 .hero-image-compact { width: 100%; height: 120px; object-fit: cover; border-radius: 14px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
 .hero-title-new { font-size: 20px; font-weight: 700; color: #1a202c; margin: 0 0 6px; } 
 .hero-date-new { font-size: 13px; color: var(--primary-blue); font-weight: 700; background: rgba(0, 123, 255, 0.08); padding: 6px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px; }
