@@ -1184,7 +1184,6 @@ function renderDynamicUI(data) {
     if(cfg.TripTitle) { document.getElementById('ui-trip-title').innerText = cfg.TripTitle; document.getElementById('vote-ui-title').innerText = cfg.TripTitle; }
     if(cfg.TripDate) { document.getElementById('ui-trip-date').innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> <span>${cfg.TripDate}</span>`; }
     if(cfg.InfoAcc) document.getElementById('ui-info-acc').innerText = cfg.InfoAcc;
-    if(cfg.InfoPpl) document.getElementById('ui-info-ppl').innerText = cfg.InfoPpl;
     if(cfg.InfoPrice) document.getElementById('ui-info-price').innerText = cfg.InfoPrice;
     
     // 🎯【時間戳格式淨化防護】：不論 GAS 不小心回寫了 T00:00:00 還是帶有任何雜質，
@@ -1629,9 +1628,11 @@ function switchView(t) {
     }
 
     if (typeof refreshMessagesOnly === "function") refreshMessagesOnly(true); 
-    if (t === 'result') fetchResults();
     if (t === 'board') clearBadge();
-    
+    if (t === 'result') {
+    switchView('overview');
+    return;
+    }
     // 🌟【防彈跳終極鎖】：
     // 徹底棄用 smooth 滾動，改用「0 延遲直接定錨」，網頁背景絕對不會再產生任何一丁點上下位移與物理彈跳！
     window.scrollTo(0, 0); 
@@ -2314,63 +2315,69 @@ async function submitLateVote() {
     }).catch(e => showCustomAlert("錯誤", "網路異常，請稍後再試。"));
 }
 
+// 🎯 全域計時器防護鎖，確保不重複啟動巡邏
+if (typeof overviewGuardInterval !== 'undefined') {
+    clearInterval(overviewGuardInterval);
+    overviewGuardInterval = null;
+}
+var overviewGuardInterval = null;
+
 async function fetchResults() {
-    const resultContainer = document.getElementById('result-chart-area');
-    if (!resultContainer) return;
-    resultContainer.innerHTML = `<div style="text-align: center; margin-top: 60px;"><div class="spinner" style="margin: 0 auto 15px;"></div><h2 style="color: #4a5568;">統計中...</h2></div>`;
-    
     try {
+        // 1. 撈取目前快取或即時的成員大表資料
         let data = cachedPollData ? extractMembers(cachedPollData) : [];
         if (!cachedPollData) { 
             const response = await fetch(GAS_API_URL, { cache: 'no-store', redirect: 'follow' }); 
             cachedPollData = await response.json(); 
             data = cachedPollData ? extractMembers(cachedPollData) : []; 
         }
-        let totalVotes = 0; let votersHtml = ""; let t1_d1 = 0; let t1_d2 = 0; let t2_d1 = 0; let t2_d2 = 0; let unableCount = 0; let unableHtml = "";
+        let activeParticipants = 0;
         
+        // 2. 核心人數純前端自動計算 (扣除無法參加)
         data.forEach(row => {
             if (!row) return;
             const id = row['LINE ID'] || row['LINEID'];
-            if (id === "test_user_001") return;
+            if (id === "test_user_001") return; // 排除測試帳號
 
-            totalVotes++; 
             const trip = row['偏好行程']; 
-            const name = row['LINE 名稱'] || row['LINE名稱']; 
-            
             if (trip && trip.includes("無法參加")) { 
-                unableCount++; 
-                if (name) unableHtml += `<div style="display: inline-block; background: rgba(255,255,255,0.4); padding: 4px 12px; border-radius: 20px; margin: 4px 6px 4px 0; font-size: 12px; border: 1px solid rgba(255,255,255,0.6); color: var(--text-muted); box-shadow: 0 2px 5px rgba(0,0,0,0.02);">${name}</div>`; 
-                return; 
+                return; // 只要包含無法參加，直接跳過不計入
             }
-            const isTrip1 = trip && trip.includes("方案一"); 
-            const isTrip2 = trip && trip.includes("方案二");
-
-            const opt1 = row['time_opt1'] || row['6/13-6/14'];
-            const opt2 = row['time_opt2'] || row['6/27-6/28'];
-
-            if (isTrip1) { 
-                if (opt1 === 'V') t1_d1++; 
-                if (opt2 === 'V') t1_d2++; 
-            } else if (isTrip2) { 
-                if (opt1 === 'V') t2_d1++; 
-                if (opt2 === 'V') t2_d2++; 
-            }
-            
-            if (name && (isTrip1 || isTrip2)) {
-                votersHtml += `<div style="display: inline-block; background: rgba(255,255,255,0.6); padding: 4px 12px; border-radius: 20px; margin: 4px 6px 4px 0; font-size: 12px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.6), 0 4px 10px rgba(0,0,0,0.04); color: var(--text-main); border: 1px solid rgba(255,255,255,0.8);">${name} <span style="color:var(--primary-green); font-size:11px; margin-left: 4px;">✔</span></div>`;
-            }
+            activeParticipants++; // 真正報名參加人數累加
         });
-        const t1_max = Math.max(t1_d1, t1_d2); const t2_max = Math.max(t2_d1, t2_d2);
-        const t1_d1_c = (t1_d1 === t1_max && t1_max > 0) ? 'var(--primary-orange)' : 'var(--text-main)';
-        const t1_d2_c = (t1_d2 === t1_max && t1_max > 0) ? 'var(--primary-orange)' : 'var(--text-main)';
-        const t2_d1_c = (t2_d1 === t2_max && t2_max > 0) ? 'var(--primary-blue)' : 'var(--text-main)';
-        const t2_d2_c = (t2_d2 === t2_max && t2_max > 0) ? 'var(--primary-blue)' : 'var(--text-main)';
+
+        // 3. 🛡️ 漢衛精準導正：對齊 index.html 的真實標籤 id "ui-info-ppl"
+        const targetText = `已報名${activeParticipants}人`;
         
-        resultContainer.innerHTML = `<div class="fade-in"><h2 style="text-align: center; color: var(--text-main); margin-top: 0; margin-bottom: 20px; text-shadow: 0 1px 2px rgba(255,255,255,0.6); display: flex; align-items: center; justify-content: center; gap: 8px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg> 投票結果統計</h2><div class="card" style="padding: 20px; background: rgba(255,255,255,0.45);"><div style="text-align: center; margin-bottom: 12px; font-weight: 700; font-size: 15px; color: var(--primary-orange);">方案一：宜蘭深度放鬆 (二天一夜)</div><div style="font-size: 14px; color: var(--text-main); background: rgba(255,255,255,0.4); padding: 15px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.7); box-shadow: inset 0 1px 1px rgba(255,255,255,0.6);"><div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 8px;"><span style="color: var(--text-muted); display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> 6/13-6/14</span><span style="font-weight: 700; font-size: 15px; color: ${t1_d1_c};">${t1_d1} 票</span></div><div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted); display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> 6/27-6/28</span><span style="font-weight: 700; font-size: 15px; color: ${t1_d2_c};">${t1_d2} 票</span></div></div></div><div class="card" style="padding: 20px; background: rgba(255,255,255,0.45);"><div style="text-align: center; margin-bottom: 12px; font-weight: 700; font-size: 15px; color: var(--primary-blue);">方案二：基隆海派清涼 (一日遊)</div><div style="font-size: 14px; color: var(--text-main); background: rgba(255,255,255,0.4); padding: 15px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.7); box-shadow: inset 0 1px 1px rgba(255,255,255,0.6);"><div style="display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 8px;"><span style="color: var(--text-muted); display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> 6/13-6/14</span><span style="font-weight: 700; font-size: 15px; color: ${t2_d1_c};">${t2_d1} 票</span></div><div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted); display: flex; align-items: center; gap: 4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> 6/27-6/28</span><span style="font-weight: 700; font-size: 15px; color: ${t2_d2_c};">${t2_d2} 票</span></div></div></div><div style="margin-top: 30px; text-align: center;"><div style="font-weight: 700; color: var(--text-muted); font-size: 13px; margin-bottom: 12px;">已完成投票名單(${totalVotes} 人已投)：</div><div style="display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 20px;">${votersHtml || "<span style='color: #a0aec0; font-size: 12px;'>尚無人投票</span>"}</div></div>${unableCount > 0 ? `<div style="background: rgba(255,255,255,0.3); padding: 16px; border-radius: 14px; border: 1px dashed rgba(255,255,255,0.6); text-align: left; margin-top: 10px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);"><div style="font-weight: 700; color: #ff4d4f; font-size: 13px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg> 無法參加(訪客查看) (${unableCount} 人)</div><div style="display: flex; flex-wrap: wrap;">${unableHtml}</div></div>` : ''}</div>`;
+        // 打開網頁立刻先洗掉第一次
+        const overviewRegCountEl = document.getElementById('ui-info-ppl');
+        if (overviewRegCountEl) {
+            overviewRegCountEl.textContent = targetText;
+        }
+
+        // 啟動 0.5 秒高頻糾察隊巡邏，只要 Firebase 企圖用舊數字蓋台，秒殺修正！
+        if (!overviewGuardInterval) {
+            overviewGuardInterval = setInterval(() => {
+                const el = document.getElementById('ui-info-ppl');
+                if (el && el.textContent !== targetText) {
+                    el.textContent = targetText;
+                    console.log(`[核心守衛] 成功攔截 Firebase 蓋台，強制校正人數為自動統計的：${activeParticipants} 人`);
+                }
+            }, 500);
+        }
+
     } catch (error) { 
-        resultContainer.innerHTML = `<h3 style="color: #ff4d4f; text-align: center; margin-top: 50px;">連線超時，請重試。</h3>`; 
+        console.log("自動統計出遊人數發生異常:", error);
     }
 }
+
+// 🎯 雙重安全引信，檔案最底端直接定時發射
+setTimeout(fetchResults, 400);
+setTimeout(fetchResults, 1500);
+
+// 🎯【絕殺密技】完全不需要找進入點！直接在 app.js 檔案最底部加上這兩行呼叫：
+setTimeout(fetchResults, 500);
+setTimeout(fetchResults, 2000);
 
 window.addEventListener('click', function(event) {
     const avatarMenu = document.getElementById('avatar-menu');
