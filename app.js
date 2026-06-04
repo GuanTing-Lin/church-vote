@@ -309,6 +309,10 @@ function requestPushPermission(fromToggle = false) {
     });
 }
 
+// =========================================================================
+// 🎯 [單一函數修補 ── getLikesIgStyle 卡片面按讚人名轉譯大腦]
+// 💡 修正原理：調整轉譯時序，先完整轉譯人名再判斷字串長度，徹底降維打擊 U4b8d864 亂碼！
+// =========================================================================
 function getLikesIgStyle(likesArray) {
     if (!likesArray || likesArray.length === 0) return "";
     
@@ -317,10 +321,10 @@ function getLikesIgStyle(likesArray) {
     
     recentLikes.forEach((likeId, idx) => {
         let cleanId = String(likeId).trim();
-        // 👑 先翻譯！找不到翻譯才用原始 ID
+        // 👑 先從全域字典進行完整對位翻譯！找不到才回退用原始 ID
         let name = window.userNameMap[cleanId] || cleanId;
         
-        // 翻譯完後，如果名字真的是沒對齊的幽靈長 ID，才允許截短
+        // 翻譯完後，如果名字依然是沒有被成功對齊的長 ID 亂碼，才允許截短防破版
         if (name && name.length > 12 && name.startsWith('U') && !window.userNameMap[cleanId]) { 
             name = name.substring(0, 8) + '...'; 
         }
@@ -337,7 +341,7 @@ function getLikesIgStyle(likesArray) {
     avatarsHtml += `</div>`;
     
     let lastNameOrId = String(likesArray[likesArray.length - 1]).trim();
-    // 👑 先從字典完整對位翻譯，再判定長度！
+    // 👑 頂部核心：優先從字典完整對位翻譯，再判定字串長度！
     let lastDisplayName = window.userNameMap[lastNameOrId] || lastNameOrId;
     
     // 只有在查無此人、完全是純亂碼長 ID 的情況下，才允許截短防爆，絕不污染正常人名！
@@ -3332,7 +3336,7 @@ db.ref('messages').on('value', snapshot => {
                     <div class="msg-avatar" style="width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0;">${avatarHtml}</div>
                     <div class="msg-body" style="flex:1;min-width:0;margin-left:12px;">
                         <div class="msg-header" style="display:flex;justify-content:between;align-items:center;margin-bottom:4px;">
-                            <span class="msg-name" style="font-weight:700;font-size:14px;color:var(--text-main);">${uName}</span>
+                            <span class="msg-name" style="font-weight:700;font-size:14px;color:var(--text-main);">${msgDisplayName}</span>
                             <span class="msg-time" style="font-size:11px;color:var(--text-muted);margin-left:auto;">${timeStr} ${editBtnHtml}</span>
                         </div>
                         <div class="msg-text" style="font-size:14px;color:var(--text-main);line-height:1.5;white-space:pre-wrap;word-break:break-all;">${msgTextHtml}</div>
