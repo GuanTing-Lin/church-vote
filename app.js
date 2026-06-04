@@ -1641,7 +1641,6 @@ function renderNoticesWithMagic(cfg) {
     }
     
     let html = "";
-    
     function parseMagicLinks(str) {
         if (!str) return "";
         return str
@@ -1652,7 +1651,7 @@ function renderNoticesWithMagic(cfg) {
             .replace(/\[前往留言板按鈕\]/g, `<span onclick="switchView('board'); event.stopPropagation();" class="magic-link-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> 留言板</span>`)
             .replace(/\[前往人數按鈕\]/g, `<span onclick="switchView('people'); event.stopPropagation();" class="magic-link-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> 查看報名狀況</span>`)
             .replace(/\[前往費用按鈕\]/g, `<span onclick="switchView('fees'); event.stopPropagation();" class="magic-link-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg> 查看費用</span>`);
-    } // 👈 這是小包包 parseMagicLinks 的結束大括號
+    }
 
     adminNoticesArray.forEach(n => {
         if (n.isHidden) return;
@@ -1687,7 +1686,7 @@ function renderNoticesWithMagic(cfg) {
             </div>`;
     });
     if(container) container.innerHTML = html;
-} // 👑 【補正關鍵】：你原本最新的檔案中就是漏掉了這最後一個大括號！
+} // 👑 【補上結束大括號】：後半段所有被掐斷的 PWA、FCM 監聽程式碼瞬間滿血接通！
 
 // =========================================================================
 // 🎛️ [最高指揮官 switchView - 世紀 Bug 終結完全體通電版]
@@ -1697,7 +1696,7 @@ function switchView(t) {
     const topNav = document.querySelector('.top-nav');
     const mainAppEl = document.getElementById('app'); 
     
-    // 🌟【防破版第一線修正】：頂導覽列智慧收合
+    // 👑 頂部導覽列智慧收合：記帳修改頁面時自動隱藏，其餘頁面確實顯現，防範任何排版遮擋！
     if (topNav) {
         if (t === 'add-fee') {
             topNav.style.setProperty('display', 'none', 'important');
@@ -1738,14 +1737,10 @@ function switchView(t) {
         document.getElementById('guest-lock-screen').style.display = 'none';
         document.getElementById('lock-screen').style.display = 'none';
         
-        // 🎯 【最終救贖防線】：不論從哪裡換頁，最高優先權強制將主容器大殼改為 block 放行亮起，徹底打通 DOM Tree 渲染
-        if (mainAppEl) {
-            mainAppEl.style.setProperty('display', 'block', 'important');
-        }
+        if (mainAppEl) mainAppEl.style.setProperty('display', 'block', 'important');
 
         if (currentUser.isVoted) {
             if (currentUser.votedOption !== 3 || (currentUser.votedOption === 3 && isGuestViewEnabled)) {
-                // 🌟 如果是填寫表單頁、明細頁、或是進階分帳頁，下方導覽列一律同步消失
                 if (t === 'add-fee' || t === 'fees' || t === 'custom-split-page') {
                     document.getElementById('bottom-nav-block').style.setProperty('display', 'none', 'important');
                 } else {
@@ -1769,10 +1764,8 @@ function switchView(t) {
     const activeTab = document.getElementById('tab-' + baseTabId);
     const indicator = document.getElementById('nav-indicator');
 
-    // 清除所有 Nav 亮起狀態
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     
-    // 只有當目標按鈕在 HTML 中千真萬確存在時，才允許重算 Indicator 滑塊位置
     if (activeTab) {
         activeTab.classList.add('active');
         if (indicator) { 
@@ -1788,12 +1781,12 @@ function switchView(t) {
         calculateAndRenderSettlement(); 
     }
 
+    // 🔒 剛性 0 延遲定錨防抖：全面代替老舊的 smooth 滾動，任何分頁換頁絕不引發彈跳位移！
     window.scrollTo(0, 0);
     
     const isFeePage = (t === 'fees' || t === 'add-fee' || t === 'custom-split-page');
     document.getElementById('bottom-blur-mask').style.setProperty('display', isFeePage ? 'none' : 'block', 'important');
     
-    // 🎯 核心大放行：清除我之前手殘打錯的重複 setProperty 語法，完美打通明細頁 + 號按鈕！
     const floatingBtnWrap = document.querySelector('.fee-floating-btn-wrap');
     if (floatingBtnWrap) {
         if (t === 'fees') {
