@@ -3267,24 +3267,18 @@ async function postMessage() {
     }).catch(e => console.error("Sheets 留言同步失敗:", e));
 }
 
-
 // =========================================================================
-// 🎯 [留言板全站即時接收大腦 ── 規格對齊 ＆ 視覺尺寸還原完全體]
-// 💡 修正原理：
-//    1. 導入 lineID 大小寫全棲相容雷達，剛性打通線上版真名與頭貼轉譯，絕不漏查！
-//    2. 徹底沒收 40px 等行內寫死樣式，改用純淨 HTML 結構，將尺寸主導權完美還給 style.css！
+// 🎯 👑【留言板全站即時接收大腦 ── 終極不跳動、100% 姓名頭貼回歸神盾】
 // =========================================================================
 db.ref('messages').on('value', snapshot => {
     const container = document.getElementById('msg-list-container');
     if (!container) return;
     
-    // 🛡️ 防禦連動：如果是我自己正在點愛心，前台已經透過樂觀 UI 畫好了，後台即時廣播直接放行攔截，絕不允許畫面閃爍跳動！
     if (window.myOwnLikeClickActive === true) {
-        console.log("🛡️ [點讚自衛系統] 偵測到本機點讚引起的廣播，已剛性阻斷全頁重繪，保衛愛心動畫！");
+        console.log("🛡️ [點讚自衛系統] 阻斷全頁重繪，保衛愛心動畫！");
         return;
     }
 
-    // 🛡️ 頁面防護：如果使用者此時根本沒有打開留言板頁面，直接安靜更新數據快取，不需要盲目重繪前台 HTML！
     if (!document.getElementById('view-board').classList.contains('active')) {
         return;
     }
@@ -3298,64 +3292,55 @@ db.ref('messages').on('value', snapshot => {
         for (let key in msgData) { if (msgData[key]) msgArray.push({ ...msgData[key], _firebaseKey: key }); }
     }
 
-    // 🚀 【情境識別核心大腦 ── 完美修正重整後第一次按讚跳動 Bug】
     const firstCardDOM = container.querySelector('.msg-item');
     const currentTopDOMMsgId = firstCardDOM ? firstCardDOM.getAttribute('data-msg-id') : "";
-    
-    // 抓出後台最新的一則留言的 MsgID
     const latestCloudMsgId = msgArray.length > 0 ? msgArray[msgArray.length - 1].MsgID : "";
-
-    // 🎯 剛性判定：只有當前台完全沒留言，或者後台最新留言的 ID 與前端頂端對不上時，才叫「有新留言進來」！
     const isRealNewMessageIn = (currentTopDOMMsgId === "" || currentTopDOMMsgId !== latestCloudMsgId);
 
     if (isRealNewMessageIn) {
-        // 🌟 只有在「有千真萬確的新留言」時，才允許自然的整頁全量鋪設
         console.log("📝 [留言板] 偵測到有全新留言加入/刪除，執行全量自然鋪設。");
         let itemsHtml = "";
         const renderArray = [...msgArray].reverse();
 
         renderArray.forEach(msg => {
-            // =========================================================================
-            // 🎯【核心修復】：精準打通留言主卡片查表，防範用真名去查長 ID 字典的時序 Bug
-            // =========================================================================
+            const key = msg._firebaseKey;
+            
+            // 🛡️ 1. 剛性格式大小寫全棲相容雷達
             const id = (msg.LineID || msg.lineID || msg.UserId || msg.userId || "").trim();
             const rawName = (msg.Name || "").trim();
-
+            
+            // 🛡️ 2. 修正變數名稱錯位：統一剛性定義 msgDisplayName 與 picUrl
             let msgDisplayName = "匿名組員";
             let picUrl = "";
 
-            // 🚀 A 軌道：如果拿得到精準的 LINE 長 ID，直接查字典
+            // 🚀 A 軌道：如果拿得到精準的 LINE 長 ID，直接去字典精確查表
             if (id && window.userNameMap[id]) {
                 msgDisplayName = window.userNameMap[id];
                 picUrl = window.userAvatarMap[id] || "";
             } 
-            // 🚀 B 軌道（世紀修正）：如果拿不到 ID 或者字典沒對上，但有真名，反向遍歷字典找出此人的長 ID！
+            // 🚀 B 軌道：如果只有真名字串，反向遍歷字典找出此人的長 ID 抓取大頭貼
             else if (rawName) {
                 msgDisplayName = rawName;
-                
-                // 從 userNameMap 裡面倒查，看誰的名字等於 rawName，藉此抓出他的真實長 ID
-                const foundUid = Object.keys(window.userNameMap).find(key => window.userNameMap[key] === rawName);
+                const foundUid = Object.keys(window.userNameMap).find(k => window.userNameMap[k] === rawName);
                 if (foundUid) {
                     picUrl = window.userAvatarMap[foundUid] || "";
                 }
             }
 
-            // 🚀 C 軌道（兜底防護）：萬一雲端快取什麼都沒對上，保留原廠發言資料與預設頭貼
             if (!picUrl) {
                 picUrl = msg.AvatarUrl || "";
             }
 
             let fallbackText = msg.AvatarText || (msgDisplayName ? msgDisplayName[0] : "?");
             
-            // 🛡️ 3. 視覺復原：將 avatarHtml 還原為純淨的 CSS 類名對位，洗掉 100% 強制放大
+            // 🛡️ 3. 視覺尺寸大還原：洗掉 HTML 寫死的 40px，完全交還給 style.css 掌控
             let avatarHtml = picUrl 
                 ? `<img src="${picUrl}" class="msg-avatar-img" onerror="this.style.display='none'">
-                   <span class="msg-avatar-text">${fallbackText}</span>` 
+                   <span class="msg-avatar-text" style="display:none;">${fallbackText}</span>` 
                 : `<span class="msg-avatar-text">${fallbackText}</span>`;
 
             let timeStr = msg.Time || "";
             let rawContent = msg.Content || "";
-            const key = msg._firebaseKey;
 
             let msgTextHtml = rawContent;
             msgTextHtml = msgTextHtml.replace(/@([^\s@\n，。？!,]+)/g, function(match, name) {
@@ -3369,14 +3354,14 @@ db.ref('messages').on('value', snapshot => {
             } catch(e) {}
             
             let isLiked = likesArray.includes(currentUser.id) || likesArray.includes(currentUser.name);
-            let isMyMessage = msg.LineID === currentUser.id || msg.Name === currentUser.name;
+            let isMyMessage = id === currentUser.id || rawName === currentUser.name;
             let editBtnHtml = isMyMessage ? `<span class="msg-edit-link" onclick="openEditMessage('${key}')" style="font-size:11px;color:var(--primary-blue);margin-left:8px;cursor:pointer;">編輯</span>` : "";
+            
+            // 🚀 呼叫愛心精算：此時字典已注滿，絕不噴出亂碼
             let likesTextInner = getLikesIgStyle(likesArray);
             let likesText = `<div id="like-text-${key}" ${likesArray.length > 0 ? `onclick="showLikesDrawer('${key}')"` : ''} style="flex-grow: 1; display: flex; align-items: center; cursor: ${likesArray.length > 0 ? 'pointer' : 'default'}; text-align: left;">${likesTextInner}</div>`;
             let heartIconHtml = `<div id="like-btn-${key}" class="like-btn ${isLiked ? 'liked' : 'unliked'}" onclick="toggleLike('${key}')">${svgHeart}</div>`;
 
-            // 🛡️ 4. 視覺大歸位：移除外層寫死的 style="..." 寬高，完全交還給 style.css 掌控！
-            // 並將原先寫死的 \${uName} 改為翻譯好的 \${msgDisplayName}
             itemsHtml += `
                 <div class="msg-item fade-in" id="msg-item-node-${key}" data-msg-id="${msg.MsgID || ''}">
                     <div class="msg-avatar">${avatarHtml}</div>
@@ -3394,9 +3379,8 @@ db.ref('messages').on('value', snapshot => {
                 </div>
             `;
         });
-        container.innerHTML = htmlStr = itemsHtml;
+        container.innerHTML = itemsHtml;
     } else {
-        // 🌟 【增量局部精密刷新】：如果最新一則 ID 對得上，代表這趟廣播 100% 只是有人按讚！
         console.log("💖 [點讚廣播連動] 執行精準局部微刷，全頁面死鎖不動。");
         msgArray.forEach(msg => {
             if (typeof updateSingleMessageUI === 'function') updateSingleMessageUI(msg);
