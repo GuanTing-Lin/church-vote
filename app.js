@@ -3336,7 +3336,7 @@ db.ref('messages').on('value', snapshot => {
                     <div class="msg-avatar" style="width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0;">${avatarHtml}</div>
                     <div class="msg-body" style="flex:1;min-width:0;margin-left:12px;">
                         <div class="msg-header" style="display:flex;justify-content:between;align-items:center;margin-bottom:4px;">
-                            <span class="msg-name" style="font-weight:700;font-size:14px;color:var(--text-main);">${msgDisplayName}</span>
+                            <span class="msg-name" style="font-weight:700;font-size:14px;color:var(--text-main);">${uName}</span>
                             <span class="msg-time" style="font-size:11px;color:var(--text-muted);margin-left:auto;">${timeStr} ${editBtnHtml}</span>
                         </div>
                         <div class="msg-text" style="font-size:14px;color:var(--text-main);line-height:1.5;white-space:pre-wrap;word-break:break-all;">${msgTextHtml}</div>
