@@ -316,11 +316,16 @@ function getLikesIgStyle(likesArray) {
     let avatarsHtml = `<div class="like-avatar-stack">`;
     
     recentLikes.forEach((likeId, idx) => {
-        let name = window.userNameMap[likeId] || likeId;
-        // 🌟 防呆：如果名字還是長 ID，截短顯示
-        if (name && name.length > 12 && name.startsWith('U')) { name = name.substring(0, 8) + '...'; }
+        let cleanId = String(likeId).trim();
+        // 👑 先翻譯！找不到翻譯才用原始 ID
+        let name = window.userNameMap[cleanId] || cleanId;
         
-        let picUrl = window.userAvatarMap[likeId] || window.userAvatarMap[name];
+        // 翻譯完後，如果名字真的是沒對齊的幽靈長 ID，才允許截短
+        if (name && name.length > 12 && name.startsWith('U') && !window.userNameMap[cleanId]) { 
+            name = name.substring(0, 8) + '...'; 
+        }
+        
+        let picUrl = window.userAvatarMap[cleanId] || window.userAvatarMap[name];
         let zIndex = 3 - idx; 
         let fbText = name ? name[0] : "?";
         let avContent = picUrl 
@@ -331,11 +336,12 @@ function getLikesIgStyle(likesArray) {
     });
     avatarsHtml += `</div>`;
     
-    let lastNameOrId = likesArray[likesArray.length - 1];
+    let lastNameOrId = String(likesArray[likesArray.length - 1]).trim();
+    // 👑 先從字典完整對位翻譯，再判定長度！
     let lastDisplayName = window.userNameMap[lastNameOrId] || lastNameOrId;
     
-    // 🌟【精準防爆鎖】：如果按讚的是幽靈帳號或未成功比對的 ID，強制截短，絕不破壞 App 畫面比例！
-    if (lastDisplayName && lastDisplayName.length > 15) {
+    // 只有在查無此人、完全是純亂碼長 ID 的情況下，才允許截短防爆，絕不污染正常人名！
+    if (lastDisplayName && lastDisplayName.length > 15 && !window.userNameMap[lastNameOrId]) {
         lastDisplayName = lastDisplayName.substring(0, 8) + '...';
     }
     
