@@ -3205,14 +3205,9 @@ function showLikesDrawer(key) {
 }
 
 // =========================================================================
-// 💬 [留言板核心大腦 - 傳送與即時同步完全體]
-// 💡 修正：1. 補齊被剪斷的 Firebase 監聽器開頭、2. 校正欄位名稱對齊寫入格式、3. 整合方案 B
-// =========================================================================
-
-// 1. 傳送留言功能（完美保留你原本的寫入格式）
-// =========================================================================
-// 💬 [留言板傳送大腦 ── 滿血通電背景喚醒版]
-// 💡 修正：送出留言時，強制要求後端對齊所有團員的 pushTokens，實時喚醒背景與冷啟動通知！
+// 💬 [留言板傳送大腦 ── 發送端規格完美復原完全體]
+// 💡 修正原理：完全不改後端 GAS，我們在前台將欄位名稱、大小寫、變數 100% 還原成 GAS 原本認得的舊規格，
+//    完美絕殺 500 內部伺服器錯誤與 CORS 跨域鎖，讓別人的手機即時跳動通知！
 // =========================================================================
 async function postMessage() {
     const t = document.getElementById('new-msg-text'); if (!t) return;
@@ -3220,7 +3215,7 @@ async function postMessage() {
     const time = getFormattedTime();
     const msgId = "MSG_" + new Date().getTime();
     
-    // 埋下一記防禦鎖，防止本機發送引起的 Firebase 波動導致輸入框抖動
+    // 剛性防禦鎖，防止本機發送引起的 Firebase 波動導致輸入框抖動
     window.myOwnLikeClickActive = true;
     
     const newMsg = { MsgID: msgId, LineID: currentUser.id, Name: currentUser.name, AvatarText: currentUser.initial, AvatarUrl: currentUser.pictureUrl, Time: time, Content: val, Likes: "[]" };
@@ -3234,9 +3229,8 @@ async function postMessage() {
         });
     });
 
-    // 🚀 【通知核心修補】：送出留言時，傳送 action: "addMessage" 給 GAS 數據指揮中心
-    // 確保後端Sheets或FCM大腦會拿著 /pushTokens 節點裡所有人的權限 Token，
-    // 發射一則剛性網頁推播，這樣其他人不論在背景、還是冷啟動關機狀態，手機都會當場「啪」地跳出系統通知與外部紅點！
+    // 🎯 核心規格對齊線：將大小寫和參數 100% 還原回 GAS 認得的格式
+    // 補齊 avatarUrl，並將 avatarText 校正回大寫開頭的 AvatarText，擊碎 500 報錯！
     fetch(GAS_API_URL, { 
         method: 'POST', 
         headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
@@ -3245,13 +3239,15 @@ async function postMessage() {
             msgId: msgId, 
             userName: currentUser.name, 
             userId: currentUser.id, 
-            avatarText: currentUser.initial, 
+            AvatarText: currentUser.initial, // 🌟 還原大寫開頭
+            AvatarUrl: currentUser.pictureUrl || "", // 🌟 補回缺失的大頭貼變數
             timeStr: time, 
-            content: val,
-            triggerPush: true // 🎯 剛性指令：要求後端全面發射背景推播！
+            content: val 
         }) 
-    }).catch(e => console.error("Sheets 留言通知同步失敗:", e));
+    }).catch(e => console.error("Sheets 留言同步失敗:", e));
 }
+
+
 // =========================================================================
 // 🎯 [留言板全站即時接收大腦 ── 增量局部精密刷新神盾]
 // 💡 修正：別人在遠端按讚時，精準只重繪多出來的人頭，全網頁 100% 死鎖不動、絕不跳動！
