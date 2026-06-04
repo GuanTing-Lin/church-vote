@@ -943,11 +943,6 @@ async function processLoadedData() {
         });
     }
 
-    // =========================================================================
-// 🎯 [全域即時分流監聽器 ── 字典剛性記憶防失憶完全體]
-// 💡 修正原理：徹底沒收 window.userNameMap = {}; 粗暴清空代碼。
-//    改為增量累積記憶，並在數據波動時利用歷史快取剛性保底，100% 絕殺線上版人名變亂碼 ID 與頭貼消失 Bug！
-// =========================================================================
     db.ref('/').on('value', snapshot => {
         hasLoadedFromFirebase = true; 
         
@@ -956,23 +951,23 @@ async function processLoadedData() {
             cachedPollData = data;
             localStorage.setItem('trip_cache_data', JSON.stringify(data));
             
-            // 🛡️ 核心大加固：初始化防空字典（只有在完全沒生出來時才建立，絕對不允許每次都清空！）
+            // =========================================================================
+            // 🎯【時序剛性加固】：線上環境防止 LIFF 慢半拍導致字典真空
+            // =========================================================================
             if (!window.userNameMap) window.userNameMap = {};
             if (!window.userAvatarMap) window.userAvatarMap = {};
-            
-            // 🚀 雷達Ａ軌：優先從這趟 Firebase 傳回來的最新資料中提取名單注滿字典
+
+            // 1. 嘗試從當前廣播資料包中提取
             let membersArray = extractMembers(data);
-            
-            // 🚀 雷達Ｂ軌（強效保底）：萬一這趟廣播純粹是點讚、沒帶完整 members 陣列，
-            // 影子雷達會光速切到 localStorage 舊快取名單裡，剛性倒灌把字典全部塞滿，不漏看任何一人！
-            if (!membersArray || membersArray.length === 0) {
-                try {
-                    const localBackupRaw = localStorage.getItem('trip_cache_data');
-                    if (localBackupRaw) {
-                        const localBackupObj = JSON.parse(localBackupRaw);
-                        membersArray = extractMembers(localBackupObj);
-                    }
-                } catch(e) { console.log("讀取字典備援快取失敗:", e); }
+
+            // 2. 👑 線上開機防爆核心：如果當前廣播沒帶成員（例如純留言更新），且目前字典是空的
+            if ((!membersArray || membersArray.length === 0) && Object.keys(window.userNameMap).length === 0) {
+                console.log("🛡️ [防護警報] 發現線上版開機時序錯位（字典真空），立刻穿透雲端強制回填名單...");
+                
+                // 直接利用你一開機就建立的唯讀或即時路徑，去把 members 節點撈出來強制灌滿字典
+                if (data.members) {
+                    membersArray = extractMembers(data.members);
+                }
             }
 
             // 開始無痕塞入字典（增量累積，只蓋新不刪舊）
@@ -981,7 +976,7 @@ async function processLoadedData() {
                     if (!v) return;
                     const id = v['LINE ID'] || v['LINEID']; 
                     const name = v['LINE 名稱'] || v['LINE名稱'];
-                    const pic = v['AvatarUrl'] || v['pictureUrl'] || v['照片'];
+                    const pic = v['AvatarUrl'] || v['pictureUrl'] || v['照片'] || v['pictureurl'];
                     if (id) {
                         if (name) window.userNameMap[id] = name;
                         if (pic) window.userAvatarMap[id] = pic; 
