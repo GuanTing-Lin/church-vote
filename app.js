@@ -90,6 +90,8 @@ let allMessages = []; let currentMsgPage = 1; const MSG_PER_PAGE = 10;
 // 🌟 1. 智慧識別：完美從根目錄撈出純數字的成員資料
 function extractMembers(data) {
     if (!data) return [];
+    
+    // 狀況 A：如果傳進來的是整包根目錄，且肚子裡有 members 欄位
     if (data.members) {
         let raw = data.members;
         if (Array.isArray(raw)) return raw.filter(r => r !== null && r !== undefined);
@@ -99,13 +101,29 @@ function extractMembers(data) {
             return arr;
         }
     }
-    let arr = [];
-    for (let key in data) {
-        if (!isNaN(key) && typeof data[key] === 'object' && data[key] !== null) {
-            arr.push(data[key]);
-        }
+    
+    // 狀況 B：如果傳進來的是 members 節點本體（陣列型態）
+    if (Array.isArray(data)) {
+        return data.filter(r => r !== null && r !== undefined);
     }
-    return arr;
+    
+    // 狀況 C：線上版變更廣播回傳的物件結構（相容任何 key 值型態）
+    if (typeof data === 'object') {
+        let arr = [];
+        // 🛡️ 剛性檢查：如果這個物件看起來就是單一成員，直接包成陣列丟回去
+        if (data['LINE ID'] || data['LINEID'] || data['LINE 名稱'] || data['LINE名稱']) {
+            return [data];
+        }
+        // 遍歷所有節點，只要是物件且含有成員特徵，通通灌進去
+        for (let key in data) {
+            if (data[key] && typeof data[key] === 'object') {
+                arr.push(data[key]);
+            }
+        }
+        return arr;
+    }
+    
+    return [];
 }
 
 function saveMembersToRoot(vArray) {
@@ -142,6 +160,7 @@ window.lastConfigAdminClickTime = 0;
 
 // 宣告一個全域變數來存雲端的已讀 ID
 let cloudLastReadId = null;
+
 
 // 在 processLoadedData (監聽 Firebase 的地方) 加上這段監聽：
 function listenToReadReceipts() {
