@@ -2957,8 +2957,16 @@ function renderMessagesPaginated() {
     const container = document.getElementById('msg-list-container');
     if (!container) return;
     
-    // 自衛隔離：如果是我自己正在點愛心，前台樂觀 UI 已經處理好，直接放行防止愛心閃爍
-    if (window.myOwnLikeClickActive === true) return;
+    // =========================================================================
+    // 🎯【智慧自衛分流】：只在「純點讚廣播」時靜音；「自己發言」時剛性放行更新畫面！
+    // =========================================================================
+    if (window.myOwnLikeClickActive === true && window.myOwnPostMessageActive !== true) {
+        console.log("🛡️ [點讚自衛] 偵測到純愛心點擊，攔截整頁重繪以保衛動態特效。");
+        return;
+    }
+
+    // 👑 當發言重繪順利通過後，當場將發言旗標歸零重置
+    window.myOwnPostMessageActive = false;
 
     let htmlStr = "";
     const msgsToShow = allMessages.slice(0, currentMsgPage * MSG_PER_PAGE);
@@ -3352,8 +3360,8 @@ async function postMessage() {
     const time = getFormattedTime();
     const msgId = "MSG_" + new Date().getTime();
     
-    // 剛性防禦鎖，防止本機發送引起的 Firebase 波動導致輸入框抖動
-    window.myOwnLikeClickActive = true;
+    // 🚀 修正：改用專屬的發言辨識旗標，不與點讚愛心搶方向盤
+    window.myOwnPostMessageActive = true;
     
     const newMsg = { MsgID: msgId, LineID: currentUser.id, Name: currentUser.name, AvatarText: currentUser.initial, AvatarUrl: currentUser.pictureUrl, Time: time, Content: val, Likes: "[]" };
     t.value = ''; 
