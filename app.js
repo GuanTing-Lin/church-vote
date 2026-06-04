@@ -3844,7 +3844,7 @@ function renderFeesPage(data) {
                             <div class="fee-item-meta"><span class="fee-payer-tag" style="color:var(--primary-orange); font-weight:700;">${finalCardPayerText}</span></div>
                             <div class="fee-member-stack">
                                 ${miniAvatarsHtml}
-                                <span style="font-size: 11px; color: var(--text-muted); font-weight: 500; margin-left: 4px;">分攤 ${voterCount} 人 · ${displayCostReference}</span>
+                                <span style="font-size: 11px; color: var(--text-muted); font-weight: 500; margin-left: 4px;"> ${voterCount} 人分攤 · ${displayCostReference}</span>
                             </div>
                         </div>
                     </div>
