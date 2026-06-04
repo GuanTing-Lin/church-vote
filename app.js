@@ -3315,12 +3315,35 @@ db.ref('messages').on('value', snapshot => {
         const renderArray = [...msgArray].reverse();
 
         renderArray.forEach(msg => {
-            // 🛡️ 1. 剛性大小寫相容防線：相容線上版 Firebase 廣播回傳的所有 ID 格式
-            const id = msg.LineID || msg.lineID || msg.UserId || msg.userId || "";
-            
-            // 🛡️ 2. 優先查轉譯字典注滿真名與頭貼網址
-            let msgDisplayName = window.userNameMap[id] || msg.Name || "匿名組員";
-            let picUrl = window.userAvatarMap[id] || window.userAvatarMap[msgDisplayName] || msg.AvatarUrl || "";
+            // =========================================================================
+            // 🎯【核心修復】：精準打通留言主卡片查表，防範用真名去查長 ID 字典的時序 Bug
+            // =========================================================================
+            const id = (msg.LineID || msg.lineID || msg.UserId || msg.userId || "").trim();
+            const rawName = (msg.Name || "").trim();
+
+            let msgDisplayName = "匿名組員";
+            let picUrl = "";
+
+            // 🚀 A 軌道：如果拿得到精準的 LINE 長 ID，直接查字典
+            if (id && window.userNameMap[id]) {
+                msgDisplayName = window.userNameMap[id];
+                picUrl = window.userAvatarMap[id] || "";
+            } 
+            // 🚀 B 軌道（世紀修正）：如果拿不到 ID 或者字典沒對上，但有真名，反向遍歷字典找出此人的長 ID！
+            else if (rawName) {
+                msgDisplayName = rawName;
+                
+                // 從 userNameMap 裡面倒查，看誰的名字等於 rawName，藉此抓出他的真實長 ID
+                const foundUid = Object.keys(window.userNameMap).find(key => window.userNameMap[key] === rawName);
+                if (foundUid) {
+                    picUrl = window.userAvatarMap[foundUid] || "";
+                }
+            }
+
+            // 🚀 C 軌道（兜底防護）：萬一雲端快取什麼都沒對上，保留原廠發言資料與預設頭貼
+            if (!picUrl) {
+                picUrl = msg.AvatarUrl || "";
+            }
 
             let fallbackText = msg.AvatarText || (msgDisplayName ? msgDisplayName[0] : "?");
             
