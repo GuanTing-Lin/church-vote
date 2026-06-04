@@ -219,26 +219,34 @@ function updateBadgeCount() {
         unreadCount = 0;
     }
 
-    // 🌐 1. 鋪設前台留言板標籤紅色圈圈 (index.html)
+    // 🌐 1. 鋪設前台留言板標籤紅色圈圈 (index.html) - 保持通暢
     if (badge) {
-        // 只有未讀數大於 0 且「目前使用者沒有停在留言板頁面」時才亮起數字
         if (unreadCount > 0 && !document.getElementById('view-board').classList.contains('active')) {
             badge.innerText = unreadCount > 99 ? '99+' : unreadCount;
-            badge.style.setProperty('display', 'block', 'important'); // 🎯 滿血強行亮起紅色數字圈圈！
+            badge.style.setProperty('display', 'block', 'important');
         } else {
             badge.innerText = '';
-            badge.style.setProperty('display', 'none', 'important'); // 已看過則完美隱藏
+            badge.style.setProperty('display', 'none', 'important');
         }
     }
 
-    // 📱 2. 控制手機桌面 App Icon 紅點數字 ── 100% 滿血通電發射！
-    if ('setAppBadge' in navigator) {
-        if (unreadCount > 0) {
-            // 👑 徹底解封：只要算出來有新未讀，毫無保留直接刷新跳動到手機外殼桌面上！
+    // =========================================================================
+    // 🎯 👑 【全環境外殼通知雙保險】
+    // 💡 解決：彌補 LINE/LIFF 內嵌環境不認得 setAppBadge 的硬傷，確保背景滑掉也能跨界通知！
+    // =========================================================================
+    if (unreadCount > 0) {
+        // 保險 A：如果是正宗 PWA 模式（加入主畫面），毫無保留直接亮起手機桌面 Icon 實體紅點！
+        if ('setAppBadge' in navigator) {
             navigator.setAppBadge(unreadCount).catch(() => {});
-        } else {
+        }
+        // 保險 B：如果是 LINE / 微信等內嵌瀏覽器，動態修改網頁分頁 Tab 標題（例如：【新訊息 (3)】香草山小組出遊指南）
+        // 這樣使用者滑掉、停在手機分頁大廳時，也能一眼看出有幾則新留言！
+        document.title = `(${unreadCount}) 香草山小組出遊指南`;
+    } else {
+        if ('clearAppBadge' in navigator) {
             navigator.clearAppBadge().catch(() => {});
         }
+        document.title = "香草山小組出遊指南"; // 歸零還原
     }
 }
 
@@ -3200,19 +3208,47 @@ function showLikesDrawer(key) {
 // =========================================================================
 
 // 1. 傳送留言功能（完美保留你原本的寫入格式）
+// =========================================================================
+// 💬 [留言板傳送大腦 ── 滿血通電背景喚醒版]
+// 💡 修正：送出留言時，強制要求後端對齊所有團員的 pushTokens，實時喚醒背景與冷啟動通知！
+// =========================================================================
 async function postMessage() {
     const t = document.getElementById('new-msg-text'); if (!t) return;
     const val = t.value.trim(); if (!val) return;
     const time = getFormattedTime();
     const msgId = "MSG_" + new Date().getTime();
+    
+    // 埋下一記防禦鎖，防止本機發送引起的 Firebase 波動導致輸入框抖動
+    window.myOwnLikeClickActive = true;
+    
     const newMsg = { MsgID: msgId, LineID: currentUser.id, Name: currentUser.name, AvatarText: currentUser.initial, AvatarUrl: currentUser.pictureUrl, Time: time, Content: val, Likes: "[]" };
     t.value = ''; 
+    
     db.ref('messages').once('value').then(snap => {
         const currentMsgs = snap.val() || [];
         const newIndex = currentMsgs.length;
-        db.ref(`messages/${newIndex}`).set(newMsg);
+        db.ref(`messages/${newIndex}`).set(newMsg).then(() => {
+            setTimeout(() => { window.myOwnLikeClickActive = false; }, 300);
+        });
     });
-    fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "addMessage", msgId: msgId, userName: currentUser.name, userId: currentUser.id, avatarText: currentUser.initial, timeStr: time, content: val }) }).catch(e => console.error("Sheets 留言同步失敗:", e));
+
+    // 🚀 【通知核心修補】：送出留言時，傳送 action: "addMessage" 給 GAS 數據指揮中心
+    // 確保後端Sheets或FCM大腦會拿著 /pushTokens 節點裡所有人的權限 Token，
+    // 發射一則剛性網頁推播，這樣其他人不論在背景、還是冷啟動關機狀態，手機都會當場「啪」地跳出系統通知與外部紅點！
+    fetch(GAS_API_URL, { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+        body: JSON.stringify({ 
+            action: "addMessage", 
+            msgId: msgId, 
+            userName: currentUser.name, 
+            userId: currentUser.id, 
+            avatarText: currentUser.initial, 
+            timeStr: time, 
+            content: val,
+            triggerPush: true // 🎯 剛性指令：要求後端全面發射背景推播！
+        }) 
+    }).catch(e => console.error("Sheets 留言通知同步失敗:", e));
 }
 // =========================================================================
 // 🎯 [留言板全站即時接收大腦 ── 增量局部精密刷新神盾]
