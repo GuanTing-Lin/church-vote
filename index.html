@@ -74,7 +74,6 @@
         #app, #lock-screen, #guest-lock-screen, #custom-modal, #custom-drawer, .bottom-nav { display: none; }
     </style>
     <link rel="stylesheet" href="style.css?v=9.9">
-
 </head>
 <body>
     <div class="bg-blobs">
@@ -103,23 +102,24 @@
 
     <div id="avatar-menu" class="dropdown-menu">
         <div class="menu-item" onclick="switchView('voting')">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
             補報名系統
         </div>
         <div class="menu-item" onclick="switchView('archive')">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
             歷史方案回顧
         </div>
         <div class="menu-item" onclick="openSettings()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
             通知設定
         </div>
         <div class="menu-item" onclick="handleAdminLogin()" style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 2px;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <svg id="ui-raw-admin-gear-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             後台管理
         </div>
-        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.3.1</div>
+        <div style="text-align: center; font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px; font-weight: 500;">版本 2.3.1</div>
     </div>
+    
     <div id="loading" style="display: flex; flex-direction: column; align-items: center; margin-top: 120px;">
         <div class="spinner"></div>
         <h2 style="color: #4a5568; margin-bottom: 10px; margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5);">系統驗證中...</h2>
@@ -150,8 +150,8 @@
         <div id="cache-warning-banner" style="display: none; background: #fffbe6; border: 1px solid #ffe58f; color: #d46b08; text-align: center; padding: 10px; font-size: 13px; font-weight: 700; border-radius: 12px; margin-bottom: 12px; animation: fadeIn 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
             ⚠️ 網路連線較慢，資料正在更新中...
         </div>
+        
         <div id="view-overview" class="view-section active">
-
             <div class="card" style="text-align: center;">
                 <img src="yilan.png" class="hero-image-compact" onerror="this.style.display='none'" loading="lazy">
                 <h2 class="hero-title-new" id="ui-trip-title">載入中...</h2>
@@ -174,14 +174,14 @@
                         <div class="info-icon">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                         </div>
-                        <div class="info-label">人數</div>
+                        <div class="info-label">報名狀況</div>
                         <div class="info-value" id="ui-info-ppl">--</div>
                     </div>
                     <div class="info-block" id="btn-info-fee" onclick="switchView('fees')" style="cursor: pointer;">
                         <div class="info-icon">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
                         </div>
-                        <div class="info-label">費用</div>
+                        <div class="info-label">目前總花費</div>
                         <div class="info-value" id="ui-info-price">--</div>
                     </div>
                 </div>
@@ -199,10 +199,12 @@
             <div id="ui-notices-container"></div>
         </div>
 
+        <!-- 🔄 民宿資訊頁標題與返回鍵修正 -->
         <div id="view-accommodation" class="view-section">
-            <div class="acc-hero">
-                <div class="acc-back-btn" onclick="switchView('overview')">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <div class="acc-hero" style="position: relative;">
+                <!-- 👑 標準圓形懸浮返回鍵：強制拉高 z-index 浮動在民宿大圖左上角 -->
+                <div class="acc-back-btn" onclick="switchView('overview')" style="position: absolute; left: 16px; top: 16px; z-index: 10000; margin: 0;">
+                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </div>
                 
                 <div class="acc-carousel-wrapper">
@@ -257,7 +259,6 @@
             </div>
 
             <div id="acc-content-info" class="acc-content-section active">
-                
                 <div class="acc-time-grid">
                     <div class="acc-card time-card">
                         <div class="time-label">入住</div>
@@ -325,24 +326,162 @@
             </div>
         </div>
 
+        <!-- 🔄 報名狀況頁標題修正 -->
         <div id="view-people" class="view-section">
-            <div class="card">
-                <div class="acc-back-btn" onclick="switchView('overview')" style="position: static; margin-bottom: 20px;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <div class="card" style="box-sizing: border-box;">
+                <div style="display: flex; align-items: center; justify-content: center; position: relative; width: 100%; height: 40px; margin-bottom: 20px; box-sizing: border-box;">
+                    <div class="acc-back-btn" onclick="switchView('overview')" style="position: absolute; left: 4px; cursor: pointer;">
+                        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </div>
+                    <h2 style="color: var(--text-main); font-size: 18px; font-weight: 700; margin: 0; line-height: 40px; text-shadow: 0 1px 2px rgba(255,255,255,0.6); text-align: center;">報名狀況</h2>
                 </div>
                 <div id="ui-people-container"></div>
             </div>
         </div>
 
         <div id="view-fees" class="view-section">
-        <div class="card">
-            <div class="acc-back-btn" onclick="switchView('overview')" style="position: static; margin-bottom: 20px;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <!-- 🔄 費用明細頁標題修正 -->
+            <div style="display: flex; align-items: center; justify-content: center; position: relative; width: 100%; height: 40px; margin-bottom: 20px; box-sizing: border-box;">
+                <div class="acc-back-btn" onclick="switchView('overview')" style="position: absolute; left: 4px; cursor: pointer;">
+                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </div>
+                <h2 style="color: var(--text-main); font-size: 18px; font-weight: 700; margin: 0; line-height: 40px; text-shadow: 0 1px 2px rgba(255,255,255,0.6); text-align: center;">費用明細</h2>
             </div>
-            <div id="ui-fees-container"></div>
+
+            <div class="card fee-summary-card">
+                <div class="fee-summary-label">我的目前總花費</div>
+                <div class="fee-summary-amount" id="user-total-spend">$0</div>
+                
+                <div class="fee-status-row">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div class="fee-avatar-circle" id="user-fee-avatar">?</div>
+                        <div>
+                            <div class="fee-status-text" id="user-fee-status">計算中...</div>
+                        </div>
+                    </div>
+                    <button class="fee-calc-btn" onclick="showSettlementSuggestions()">費用結算</button>
+                </div>
             </div>
+            <div id="ui-fees-container" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 80px;"></div>  
         </div>
-    
+        
+        <!-- 🔄 結算頁標題修正 -->
+        <div id="view-result" class="view-section" style="padding-top: 5px;">
+            <div style="display: flex; align-items: center; justify-content: center; position: relative; width: 100%; height: 40px; margin-bottom: 16px; box-sizing: border-box;">
+                <div class="acc-back-btn" onclick="switchView('fees')" style="position: absolute; left: 4px; cursor: pointer;">
+                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </div>
+                <h2 style="color: var(--text-main); font-size: 18px; font-weight: 700; margin: 0; line-height: 40px; text-shadow: 0 1px 2px rgba(255,255,255,0.6); text-align: center;">結算(最少付款次數)</h2>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 80px;" id="ui-settlement-transfers-container">
+                </div>
+        </div>
+
+        <!-- =========================================================================
+             💰 [主表單欄位終極完全體]：修正舊 ID 綁定，100% 復活下拉組員名單，雙 Icon 完美對齊
+             ========================================================================= -->
+        
+        <div id="view-add-fee" class="view-section">
+            <div style="display: flex; align-items: center; justify-content: center; position: relative; width: 100%; height: 40px; margin-top: 12px; margin-bottom: 24px; box-sizing: border-box;">
+                <div onclick="switchView('fees')" class="acc-back-btn" style="position: absolute; left: 4px; cursor: pointer;">
+                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </div>
+                <h2 id="fee-form-title" style="color: var(--text-main); font-size: 18px; font-weight: 700; margin: 0; line-height: 40px; text-shadow: 0 1px 2px rgba(255,255,255,0.6); text-align: center;">新增款項</h2>
+            </div>
+
+            <!-- 🎯 玻璃卡片大框框開始：所有的表單欄位、包括動態產生的刪除/儲存按鈕全部都會被鎖在這個肚子裡 -->
+            <div class="card fee-form-card" style="position: relative; z-index: 5000;">
+                
+                <div class="fee-form-group" style="margin-bottom: 20px;">
+                    <label class="fee-form-label" style="font-size: 13px; color: #718096; font-weight: 600; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#718096" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        日期 & 時間
+                    </label>
+                    <input type="datetime-local" id="fee-input-datetime" class="fee-form-input" style="cursor: pointer; width: 100%; box-sizing: border-box;">
+                </div>
+
+                <div class="fee-form-group" style="margin-bottom: 20px;">
+                    <label class="fee-form-label" style="font-size: 13px; color: #718096; font-weight: 600; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#718096" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+                        類別與品項
+                    </label>
+                    <div style="display: flex; gap: 10px; align-items: center; width: 100%;">
+                        <div id="fee-selected-icon-preview" class="fee-form-icon-trigger-box" onclick="openFeeIconPickerModal()" style="cursor: pointer; flex-shrink: 0;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#718096" stroke-width="2.5"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><line x1="12" y1="4" x2="12" y2="20"></line><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                        </div>
+                        <input type="text" id="fee-input-title" class="fee-form-input" placeholder="例如：油錢、週六晚餐、飲料..." style="flex: 1; margin: 0; box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <div class="fee-form-group" style="margin-bottom: 20px;">
+                    <label class="fee-form-label" style="font-size: 13px; color: #718096; font-weight: 600; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#718096" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                        金額 (TWD)
+                    </label>
+                    <input type="number" id="fee-input-amount" class="fee-form-input" placeholder="請輸入品項金額" inputmode="numeric" style="width: 100%; box-sizing: border-box;">
+                </div>
+
+                <div class="fee-form-group" style="margin-bottom: 20px;">
+                    <label style="font-size: 13px; color: #718096; font-weight: 600; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#718096" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        誰先付錢
+                    </label>
+                    <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+                        <div style="flex: 1; position: relative;">
+                            <div id="fee-payer-dropdown-btn" onclick="toggleFeePayerDropdown(event)" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 12px 16px; background: white; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; cursor: pointer; box-sizing: border-box; transition: all 0.2s;">
+                                <span id="fee-payer-selected-text" style="font-size: 14px; font-weight: 700; color: var(--text-main);">請選擇付款人</span>
+                                <span id="fee-payer-arrow" style="font-size: 12px; color: var(--text-muted); transition: transform 0.2s;">▼</span>
+                            </div>
+                            <div id="fee-payer-dropdown-box" class="fee-custom-dropdown-el-box" style="display: none;"></div>
+                        </div>
+                        
+                        <div onclick="goToCustomSplitPage('payer')" class="fee-floating-slider-btn-fluid" style="display: flex; justify-content: center; align-items: center; width: 42px; height: 42px; background: white; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; cursor: pointer; position: relative; transition: all 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.02); flex-shrink: 0;" title="進階混合付款設定">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#718096" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+                            <div id="fee-payer-custom-badge" class="fee-btn-badge-fix">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fee-form-group" style="margin-bottom: 20px;">
+                    <label style="font-size: 13px; color: #718096; font-weight: 600; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#718096" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        如何分攤
+                    </label>
+                    <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+                        <div style="flex: 1; position: relative;">
+                            <div id="fee-voters-dropdown-btn" onclick="toggleFeeVotersDropdown(event)" style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 12px 16px; background: white; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; cursor: pointer; box-sizing: border-box; transition: all 0.2s;">
+                                <span id="fee-dropdown-selected-text" style="font-size: 14px; font-weight: 700; color: var(--text-main);">平均分攤 (已選 0 人)</span>
+                                <span id="fee-dropdown-arrow" style="font-size: 12px; color: var(--text-muted); transition: transform 0.2s;">▼</span>
+                            </div>
+                            <div id="fee-voters-dropdown-box" class="fee-custom-dropdown-el-box" style="display: none; overflow: hidden; animation: fadeInShort 0.18s ease-out;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: rgba(0,0,0,0.02); border-bottom: 1px solid rgba(0,0,0,0.04);">
+                                    <span style="font-size: 11px; font-weight: 700; color: var(--text-muted);">選取要分攤的團員</span>
+                                    <span id="fee-toggle-all-voters" onclick="toggleAllFeeVoters(event)" style="font-size: 12px; font-weight: 800; color: var(--primary-blue); cursor: pointer; padding: 2px 6px;">全不選</span>
+                                </div>
+                                <div id="fee-voters-check-grid" style="padding: 6px 0;"></div>
+                            </div>
+                        </div>
+                        <div id="fee-custom-split-trigger-btn" onclick="goToCustomSplitPage('voter')" class="fee-custom-split-trigger-inline-btn" style="display: flex; justify-content: center; align-items: center; width: 42px; height: 42px; background: white; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; cursor: pointer; position: relative; transition: all 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.02); flex-shrink: 0;" title="進階客製化金額拆帳">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#718096" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+                            <div id="fee-custom-split-badge" class="fee-btn-badge-fix">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fee-form-group" style="margin-bottom: 25px;">
+                    <label class="fee-form-label" style="font-size: 13px; color: #718096; font-weight: 600; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#718096" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        備註
+                    </label>
+                    <textarea id="fee-input-desc" class="fee-form-textarea" placeholder="可選填..." style="width: 100%; box-sizing: border-box;"></textarea>
+                </div>
+                <!-- 原生新增按鈕 -->
+                <button id="fee-btn-submit-form" class="btn-primary" onclick="submitFeeFormCore()">新增</button>
+            </div> <!-- 🎯 玻璃大外殼在這裡準時閉合！下方的紅色防呆提示框已被完全移除了！ -->
+        </div>
+
+
         <div id="view-guest-locked" class="view-section">
             <div style="display: flex; justify-content: center; align-items: center; height: 60vh;">
                 <div class="card" style="display: inline-flex; flex-direction: column; justify-content: center; align-items: center; width: 280px; padding: 40px 20px; text-align: center;">
@@ -354,7 +493,6 @@
                 </div>
             </div>
         </div>
-
 
         <div id="view-itinerary" class="view-section">
             <h2 style="text-align: center; color: var(--primary-blue); margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; gap: 8px;">
@@ -390,13 +528,13 @@
         </div>
         
         <div id="view-board" class="view-section">
-        <h2 style="text-align: center; color: var(--primary-green); margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; gap: 8px;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> 留言板
-        </h2>
+            <h2 style="text-align: center; color: var(--primary-green); margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> 留言板
+            </h2>
             <div class="card msg-input-box" style="position: relative;">
-            <div id="mention-menu" class="mention-menu"></div>
-            <textarea id="new-msg-text" class="msg-textarea" placeholder="想留什麼都可以~，試試看輸入 @ 標記組員！"></textarea>
-            <button class="btn-primary" onclick="postMessage()">送出留言</button>
+                <div id="mention-menu" class="mention-menu"></div>
+                <textarea id="new-msg-text" class="msg-textarea" placeholder="想留什麼都可以~，試試看輸入 @ 標記組員！"></textarea>
+                <button class="btn-primary" onclick="postMessage()">送出留言</button>
             </div>
             <div class="card" style="padding: 10px 20px;">
                 <div id="msg-list-container"></div>
@@ -405,8 +543,8 @@
         
         <div id="view-voting" class="view-section">
             <h2 style="text-align: center; color: var(--text-main); margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; gap: 8px;">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg> 補報名系統
-</h2>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg> 補報名系統
+            </h2>
             <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 20px;">
                 <img src="yilan.png" style="width: 100%; height: 160px; object-fit: cover;" onerror="this.style.display='none'" loading="lazy">
                 <div style="padding: 20px; text-align: center;">
@@ -446,6 +584,7 @@
                 <div class="trip-card" id="archive-card-3"><div class="card-img-block"><img src="pass.png" style="filter: grayscale(60%);" onerror="this.style.display='none'" loading="lazy"></div><div class="card-body"><div class="card-title" style="font-weight:700; font-size:15px; color: #888;">無法參加</div></div></div>
             </div>
         </div>
+
         <div id="view-settings" class="view-section">
             <div style="display: flex; align-items: center; margin-bottom: 20px; position: relative; justify-content: center; height: 40px;">
                 <div onclick="switchView('overview')" style="position: absolute; left: 0; color: var(--text-main); font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 6px 12px; background: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.9); border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); transition: 0.2s; backdrop-filter: blur(10px);">
@@ -502,9 +641,11 @@
                 </div>
             </div>
         </div>
+
         <div id="view-admin" class="view-section">
             <h2 style="text-align: center; color: var(--text-main); margin-top: 0; text-shadow: 0 1px 2px rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; gap: 8px;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> 後台管理
+                <svg id="ui-raw-admin-gear-icon" style="width: 22px !important; height: 22px !important; min-width: 22px !important; min-height: 22px !important;" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> 
+                後台管理
             </h2>
             <div class="card">
                 <div class="admin-menu-item" onclick="openAdminNotices()">
@@ -519,6 +660,17 @@
                 <div class="admin-menu-item">
                     <div style="font-size: 15px; font-weight: 600; color: var(--text-main);">鎖定補投票系統</div>
                     <label class="switch"><input type="checkbox" id="admin-lock-toggle" onchange="toggleVotingLock(this)"><span class="slider"></span></label>
+                </div>
+
+                <div class="admin-menu-item" style="border-bottom: 1px dashed rgba(0,0,0,0.08); padding-bottom: 15px;">
+                    <div style="text-align: left;">
+                        <div style="font-size: 15px; font-weight: 600; color: var(--text-main);">鎖定結算核銷系統</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">開啟後將禁用「已付款完成」按鈕</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="admin-settlement-lock-toggle" onchange="toggleSettlementLock(this)">
+                        <span class="slider"></span>
+                    </label>
                 </div>
 
                 <div class="admin-menu-item" style="flex-direction: column; align-items: stretch; padding-bottom: 20px; border-bottom: none;">
@@ -539,11 +691,11 @@
                             <label class="switch" style="transform: scale(0.7); margin: 0;"><input type="checkbox" id="admin-guest-acc" onchange="toggleGuestViewLock(this, 'Guest_View_Acc')"><span class="slider"></span></label>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-                            <div style="font-size: 13px; font-weight: 600; color: var(--text-muted); margin-left: 12px;">├ 人數</div>
+                            <div style="font-size: 13px; font-weight: 600; color: var(--text-muted); margin-left: 12px;">├ 報名狀況</div>
                             <label class="switch" style="transform: scale(0.7); margin: 0;"><input type="checkbox" id="admin-guest-ppl" onchange="toggleGuestViewLock(this, 'Guest_View_Ppl')"><span class="slider"></span></label>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-                            <div style="font-size: 13px; font-weight: 600; color: var(--text-muted); margin-left: 12px;">├ 費用</div>
+                            <div style="font-size: 13px; font-weight: 600; color: var(--text-muted); margin-left: 12px;">├ 目前總花費</div>
                             <label class="switch" style="transform: scale(0.7); margin: 0;"><input type="checkbox" id="admin-guest-fee" onchange="toggleGuestViewLock(this, 'Guest_View_Fee')"><span class="slider"></span></label>
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
@@ -577,6 +729,7 @@
                 <button class="btn-primary" id="btn-save-notices" onclick="saveAdminNotices()">儲存所有變更</button>
             </div>
         </div>
+
         <div id="view-admin-itinerary" class="view-section">
             <div style="display: flex; align-items: center; margin-bottom: 20px; position: relative; justify-content: center; height: 40px;">
                 <div onclick="switchView('admin')" style="position: absolute; left: 0; color: var(--text-main); font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 6px 12px; background: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.9); border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); transition: 0.2s; backdrop-filter: blur(10px);">
@@ -593,6 +746,76 @@
             </div>
         </div>
     </main>
+
+    <!-- 類別圖示選擇彈窗 -->
+        <div id="fee-icon-picker-modal" class="fee-icon-picker-mask" onclick="closeFeeIconPickerModal()">
+            <div class="fee-icon-picker-board" onclick="event.stopPropagation()">
+                <div style="font-size: 14px; font-weight: 700; color: var(--text-main); margin-bottom: 16px; text-align: center;">類別圖示</div>
+                <div class="fee-icon-picker-grid">
+                    <div class="fee-icon-option-item" data-icon="wallet" onclick="selectFeeIconCore('fa-wallet')">
+                        <div class="opt-icon-circle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="3" x2="12" y2="21"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
+                        <span>雜支</span>
+                    </div>
+                    <div class="fee-icon-option-item" data-icon="food" onclick="selectFeeIconCore('fa-fast-food')">
+                        <div class="opt-icon-circle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8zM6 1v3M10 1v3M14 1v3"/></svg></div>
+                        <span>飲食</span>
+                    </div>
+                    <div class="fee-icon-option-item" data-icon="car" onclick="selectFeeIconCore('fa-car')">
+                        <div class="opt-icon-circle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg></div>
+                        <span>交通</span>
+                    </div>
+                    <div class="fee-icon-option-item" data-icon="ticket" onclick="selectFeeIconCore('fa-ticket')">
+                        <div class="opt-icon-circle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z"></path></svg></div>
+                        <span>玩樂</span>
+                    </div>
+                    <div class="fee-icon-option-item" data-icon="admission" onclick="selectFeeIconCore('fa-admission')">
+                        <div class="opt-icon-circle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5H1v14h14V5zM5 11h6M5 15h6M19 9v10h-2V9h2zm4-4v10h-2V5h2z"/></svg></div>
+                        <span>門票</span>
+                    </div>
+                    <div class="fee-icon-option-item" data-icon="home" onclick="selectFeeIconCore('fa-home')">
+                        <div class="opt-icon-circle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></div>
+                        <span>住宿</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <div id="view-custom-split-page" class="view-section" style="box-sizing: border-box;">
+        <div class="fee-split-flex-container-page">
+            
+            <!-- A. 頂部固定區：移除返回鍵，標題字體與其他頁面完全對齊 -->
+            <div class="fee-split-fixed-top-zone">
+                <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 40px; margin-bottom: 12px; box-sizing: border-box;">
+                    <h2 id="fee-page-split-title" style="color: var(--text-main); font-size: 18px; font-weight: 700; margin: 0; line-height: 40px; text-shadow: 0 1px 2px rgba(255,255,255,0.6); text-align: center;">分帳設定</h2>
+                </div>
+
+                <!-- 智慧試算磨砂卡片 -->
+                <div style="background: rgba(255, 255, 255, 0.45); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid rgba(255,255,255,0.5); border-radius: 16px; padding: 16px; text-align: center; color: var(--text-main); margin-bottom: 16px; box-shadow: var(--glass-shadow);">
+                    <div id="fee-page-calc-label" style="font-size: 13px; opacity: 0.9; margin-bottom: 4px; font-weight: 600; color: var(--text-muted);">進階試算看板</div>
+                    <div id="fee-page-calc-summary" style="font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: var(--text-main);">NT$0 / NT$0</div>
+                    <div id="fee-page-calc-remain" style="font-size: 13px; margin-top: 4px; font-weight: 700; color: var(--primary-green);">剩下 NT$0</div>
+                </div>
+
+                <!-- 表頭細線 -->
+                <div style="display: flex; justify-content: space-between; padding: 0 8px 6px 8px; border-bottom: 1px solid rgba(0,0,0,0.06); margin-bottom: 0;">
+                    <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">成員</span>
+                    <span style="font-size: 12px; color: var(--text-muted); font-weight: 600; padding-right: 24px;">金額</span>
+                </div>
+            </div>
+
+            <!-- B. 中間獨立滾動卡片區 -->
+            <div class="fee-split-scrollable-card-zone">
+                <div id="fee-page-split-rows-container"></div>
+            </div>
+
+            <!-- C. 底部固定區 -->
+            <div class="fee-split-fixed-bottom-zone">
+                <button type="button" onclick="exitCustomSplitPage(false)" class="btn-cancel" style="flex: 1; padding: 14px; border-radius: 12px; border: none; background: rgba(0,0,0,0.05); color: var(--text-main); font-weight: 700; font-size: 15px; cursor: pointer; transition: all 0.2s;">取消</button>
+                <button type="button" id="fee-page-btn-submit" onclick="exitCustomSplitPage(true)" class="btn-confirm" style="flex: 1; padding: 14px; border-radius: 12px; border: none; background: linear-gradient(135deg, var(--primary-green) 0%, #20a085 100%); color: white; font-weight: 700; font-size: 15px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(59,208,175,0.25);">完成</button>
+            </div>
+
+        </div>
+    </div>
 
     <div class="bottom-blur-mask" id="bottom-blur-mask"></div>
     <nav class="bottom-nav" id="bottom-nav-block" style="display:none;">
@@ -621,6 +844,7 @@
         <div class="viewer-close-btn" onclick="closeImageViewer()">×</div>
         <img id="viewer-img" class="image-viewer-img" src="">
     </div>
+    
     <div class="modal-overlay" id="custom-modal">
         <div class="custom-modal">
             <div class="modal-spinner" id="modal-spinner"></div>
@@ -632,11 +856,22 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </div>
             </div>
-            <textarea id="modal-textarea" class="modal-input" style="display:none; resize:vertical; min-height:80px; text-align:left;"></textarea>
+            <div id="modal-textarea-wrapper" style="position: relative; width: 100%; display: inline-block;">
+                <textarea id="modal-textarea" class="modal-input" style="display:none; resize:vertical; min-height:80px; text-align:left;"></textarea>
+                <div id="mention-menu-modal" class="mention-menu" style="display:none; position:absolute; left:0; width:100%; max-height:160px; overflow-y:auto; background:white; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.15); z-index:999999;"></div>
+            </div>
             <div class="modal-btn-group" id="modal-btn-group">
                 <button class="btn-cancel" id="modal-btn-cancel" onclick="closeModal()">取消</button>
                 <button class="btn-confirm" id="modal-btn-confirm">確認</button>
             </div>
+        </div>
+    </div>
+
+    <div class="fee-floating-btn-wrap" style="position: fixed !important; z-index: 999999999 !important; pointer-events: auto !important;">
+        <div class="fee-floating-btn" 
+            onclick="if(typeof openAddFeePage === 'function') openAddFeePage();" 
+            style="cursor: pointer !important; pointer-events: auto !important; -webkit-user-select: none !important; user-select: none !important;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none !important;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         </div>
     </div>
 
@@ -645,7 +880,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js"></script>
-
     <script src="app.js" defer></script>
+
 </body>
 </html>
