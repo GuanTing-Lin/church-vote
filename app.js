@@ -91,7 +91,7 @@ let allMessages = []; let currentMsgPage = 1; const MSG_PER_PAGE = 10;
 function extractMembers(data) {
     if (!data) return [];
     
-    // 狀況 A：如果傳進來的是整包根目錄，且肚子裡有 members 欄位
+    // 狀況 A：如果肚子裡有 members 欄位
     if (data.members) {
         let raw = data.members;
         if (Array.isArray(raw)) return raw.filter(r => r !== null && r !== undefined);
@@ -102,19 +102,17 @@ function extractMembers(data) {
         }
     }
     
-    // 狀況 B：如果傳進來的是 members 節點本體（陣列型態）
+    // 狀況 B：如果傳進來的就是陣列本體
     if (Array.isArray(data)) {
         return data.filter(r => r !== null && r !== undefined);
     }
     
-    // 狀況 C：線上版變更廣播回傳的物件結構（相容任何 key 值型態）
+    // 狀況 C：線上真實環境物件（沒收 !isNaN 限制，只要是物件且含有成員特徵，通通放行）
     if (typeof data === 'object') {
         let arr = [];
-        // 🛡️ 剛性檢查：如果這個物件看起來就是單一成員，直接包成陣列丟回去
         if (data['LINE ID'] || data['LINEID'] || data['LINE 名稱'] || data['LINE名稱']) {
             return [data];
         }
-        // 遍歷所有節點，只要是物件且含有成員特徵，通通灌進去
         for (let key in data) {
             if (data[key] && typeof data[key] === 'object') {
                 arr.push(data[key]);
@@ -3276,8 +3274,10 @@ async function postMessage() {
 
 
 // =========================================================================
-// 🎯 [留言板全站即時接收大腦 ── 增量局部精密刷新神盾]
-// 💡 修正：別人在遠端按讚時，精準只重繪多出來的人頭，全網頁 100% 死鎖不動、絕不跳動！
+// 🎯 [留言板全站即時接收大腦 ── 規格對齊 ＆ 視覺尺寸還原完全體]
+// 💡 修正原理：
+//    1. 導入 lineID 大小寫全棲相容雷達，剛性打通線上版真名與頭貼轉譯，絕不漏查！
+//    2. 徹底沒收 40px 等行內寫死樣式，改用純淨 HTML 結構，將尺寸主導權完美還給 style.css！
 // =========================================================================
 db.ref('messages').on('value', snapshot => {
     const container = document.getElementById('msg-list-container');
@@ -3304,7 +3304,6 @@ db.ref('messages').on('value', snapshot => {
     }
 
     // 🚀 【情境識別核心大腦 ── 完美修正重整後第一次按讚跳動 Bug】
-    // 💡 解決原理：改用頂端首則留言的 MsgID 剛性比對，徹底阻斷因分頁數量差導致的誤判重繪！
     const firstCardDOM = container.querySelector('.msg-item');
     const currentTopDOMMsgId = firstCardDOM ? firstCardDOM.getAttribute('data-msg-id') : "";
     
@@ -3321,16 +3320,24 @@ db.ref('messages').on('value', snapshot => {
         const renderArray = [...msgArray].reverse();
 
         renderArray.forEach(msg => {
-            let uName = msg.Name || "未知組員";
-            let uPic = msg.AvatarUrl || "";
-            let initial = msg.AvatarText || (uName ? uName[0] : "?");
+            // 🛡️ 1. 剛性大小寫相容防線：相容線上版 Firebase 廣播回傳的所有 ID 格式
+            const id = msg.LineID || msg.lineID || msg.UserId || msg.userId || "";
+            
+            // 🛡️ 2. 優先查轉譯字典注滿真名與頭貼網址
+            let msgDisplayName = window.userNameMap[id] || msg.Name || "匿名組員";
+            let picUrl = window.userAvatarMap[id] || window.userAvatarMap[msgDisplayName] || msg.AvatarUrl || "";
+
+            let fallbackText = msg.AvatarText || (msgDisplayName ? msgDisplayName[0] : "?");
+            
+            // 🛡️ 3. 視覺復原：將 avatarHtml 還原為純淨的 CSS 類名對位，洗掉 100% 強制放大
+            let avatarHtml = picUrl 
+                ? `<img src="${picUrl}" class="msg-avatar-img" onerror="this.style.display='none'">
+                   <span class="msg-avatar-text">${fallbackText}</span>` 
+                : `<span class="msg-avatar-text">${fallbackText}</span>`;
+
             let timeStr = msg.Time || "";
             let rawContent = msg.Content || "";
             const key = msg._firebaseKey;
-
-            let avatarHtml = uPic 
-                ? `<img src="${uPic}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
-                : `<div style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg, var(--primary-orange), #ff8c00);color:white;font-weight:700;font-size:14px;border-radius:50%;">${initial}</div>`;
 
             let msgTextHtml = rawContent;
             msgTextHtml = msgTextHtml.replace(/@([^\s@\n，。？!,]+)/g, function(match, name) {
@@ -3350,12 +3357,14 @@ db.ref('messages').on('value', snapshot => {
             let likesText = `<div id="like-text-${key}" ${likesArray.length > 0 ? `onclick="showLikesDrawer('${key}')"` : ''} style="flex-grow: 1; display: flex; align-items: center; cursor: ${likesArray.length > 0 ? 'pointer' : 'default'}; text-align: left;">${likesTextInner}</div>`;
             let heartIconHtml = `<div id="like-btn-${key}" class="like-btn ${isLiked ? 'liked' : 'unliked'}" onclick="toggleLike('${key}')">${svgHeart}</div>`;
 
+            // 🛡️ 4. 視覺大歸位：移除外層寫死的 style="..." 寬高，完全交還給 style.css 掌控！
+            // 並將原先寫死的 \${uName} 改為翻譯好的 \${msgDisplayName}
             itemsHtml += `
                 <div class="msg-item fade-in" id="msg-item-node-${key}" data-msg-id="${msg.MsgID || ''}">
-                    <div class="msg-avatar" style="width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0;">${avatarHtml}</div>
-                    <div class="msg-body" style="flex:1;min-width:0;margin-left:12px;">
-                        <div class="msg-header" style="display:flex;justify-content:between;align-items:center;margin-bottom:4px;">
-                            <span class="msg-name" style="font-weight:700;font-size:14px;color:var(--text-main);">${uName}</span>
+                    <div class="msg-avatar">${avatarHtml}</div>
+                    <div class="msg-body">
+                        <div class="msg-header">
+                            <span class="msg-name" style="font-weight:700;font-size:14px;color:var(--text-main);">${msgDisplayName}</span>
                             <span class="msg-time" style="font-size:11px;color:var(--text-muted);margin-left:auto;">${timeStr} ${editBtnHtml}</span>
                         </div>
                         <div class="msg-text" style="font-size:14px;color:var(--text-main);line-height:1.5;white-space:pre-wrap;word-break:break-all;">${msgTextHtml}</div>
@@ -3370,7 +3379,6 @@ db.ref('messages').on('value', snapshot => {
         container.innerHTML = htmlStr = itemsHtml;
     } else {
         // 🌟 【增量局部精密刷新】：如果最新一則 ID 對得上，代表這趟廣播 100% 只是有人按讚！
-        // 我們依舊指哪打哪，只去重繪那一顆愛心的數據，留言板一像素都不准抖動！
         console.log("💖 [點讚廣播連動] 執行精準局部微刷，全頁面死鎖不動。");
         msgArray.forEach(msg => {
             if (typeof updateSingleMessageUI === 'function') updateSingleMessageUI(msg);
