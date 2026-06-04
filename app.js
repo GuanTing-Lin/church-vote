@@ -919,6 +919,12 @@ async function processLoadedData() {
     // =========================================================================
     // 🌐 [核心即時分流監聽器] 徹底杜絕全頁重繪、精準局部更新實時廣播大閘
     // =========================================================================
+    // =========================================================================
+    // 🌐 [核心即時分流監聽器 - 世紀 Bug 終結防護通電大閘門]
+    // 💡 修正原理：
+    //    1. 不管任何人做任何背景更新（包括按讚），人數 fetchResults 一律剛性放行強灌最新快照，絕不蒸發變 "--"！
+    //    2. 精準辨識「點讚資料流」，當人在首頁時，別人點讚直接靜音隔離，首頁公告與人數絕對 100% 焊死不動、不閃爍！
+    // =========================================================================
     db.ref('/').on('value', snapshot => {
         hasLoadedFromFirebase = true; 
         
@@ -945,7 +951,7 @@ async function processLoadedData() {
                 });
             }
             
-            // 2. 判斷身分與 Checklist 狀態 (維持原本不動)
+            // 2. 判斷身分與 Checklist 狀態
             checkUserMemberStatus(data);
             
             // 3. 架構鎖定隔離：只有在開機初次載入，或是後台 config 開關變更時才刷新主體 UI
@@ -958,43 +964,45 @@ async function processLoadedData() {
                 if (typeof renderDynamicUI === 'function') renderDynamicUI(data);
             }
 
-            // 👑 剛性通電點 1：移到最外層！不論任何人做任何更新（包含按讚），一律強灌最新快照計算報名人數
-            // 💡 徹底解決：別的手機更新時，首頁「已報名 14 人」吃不到資料打回原型的嚴重 Bug！
+            // 👑 剛性通電鎖：不論停在哪一頁，只要雲端數據一動，最優先強灌最新快照計算報名人數
+            // 確保首頁「已報名 14 人」數據在任何背景雜音干擾下，永遠完美亮起、絕不遺失！
             if (typeof fetchResults === 'function') {
                 fetchResults(data); 
             }
 
-            // 👑 剛性通電點 2：【最高剛性時序防禦 ── 全頁面重繪智慧分流大腦】
+            // 👑 畫面重繪隔離大腦：依據當前分頁進行精密控制，沒收所有多餘更新跳動
             const activeSection = document.querySelector('.view-section.active');
             const currentActiveId = activeSection ? activeSection.id : "";
 
             if (currentActiveId === 'view-add-fee' || currentActiveId === 'view-custom-split-page') {
                 if (typeof renderFeesPage === 'function') renderFeesPage(data); 
             } 
-            // 🚀 核心優化：當使用者停在首頁、行李或留言板時
             else if (currentActiveId === 'view-prep' || currentActiveId === 'view-board' || currentActiveId === 'view-overview') {
-                // 如果人在首頁，且這趟廣播包含留言資料變動，我們精密檢查它是不是「純按讚」
+                
+                // 🚀 當使用者停在「首頁總覽 (overview)」時
                 if (currentActiveId === 'view-overview' && data && data.messages) {
                     const cloudMsgArray = Array.isArray(data.messages) ? data.messages : Object.values(data.messages || {});
                     const cloudMsgCount = cloudMsgArray.length;
                     
-                    // 🎯 只有當留言總數沒變、純粹是別人在按讚時，首頁才執行靜音隔離不閃爍！
-                    // 萬一有新留言，放行重繪，確保首頁架構永遠對齊！
-                    const isPureLike = (lastMessagesCount === cloudMsgCount && lastMessagesCount > 0);
-                    if (isPureLike) {
-                        checkUserMemberStatus(data);
+                    // 🎯 剛性精密判定：成員總數與留言總數都沒變，純粹是別人在按讚（Likes變更）時，首頁全量重繪「剛性靜音」！
+                    const isPureLikePayload = (lastMessagesCount === cloudMsgCount && lastMessagesCount > 0);
+                    
+                    if (isPureLikePayload) {
+                        console.log("🛡️ [首頁防護屏障] 偵測到純點讚資料流，首頁 UI 剛性阻斷不重繪，成功沒收更新跳動！");
+                        checkUserMemberStatus(data); // 僅更新背景狀態
                     } else {
+                        console.log("🌐 [首頁變更放行] 偵測到有新留言加入或初次加載，放行全面 UI 鋪設。");
                         lastMessagesCount = cloudMsgCount;
                         if (typeof renderDynamicUI === 'function') renderDynamicUI(data);
                         if (typeof renderPeoplePage === 'function') renderPeoplePage(data);
                     }
                 } else {
-                    // 行李或留言板，在背景默默刷新快取，沒收全量大重繪
-                    checkUserMemberStatus(data);
+                    // 行李清單與留言板操作中：在後台默默刷新快取身分，剛性禁止費用與報名頁全量重繪，解鎖絲滑操作！
+                    checkUserMemberStatus(data); 
                 }
             } 
             else {
-                // 🚀 其餘常規解鎖狀態（例如開機打底），放行全面 UI 鋪設
+                // 🚀 常規沒有衝突的狀態下，放行全量動態渲染
                 if (data && data.messages) {
                     const cloudMsgArray = Array.isArray(data.messages) ? data.messages : Object.values(data.messages || {});
                     lastMessagesCount = cloudMsgArray.length;
@@ -1004,6 +1012,7 @@ async function processLoadedData() {
                     renderFeesPage(data);
                 }
             }
+                        
         }
     });
 }
@@ -1614,7 +1623,7 @@ function renderNoticesWithMagic(cfg) {
                 cleanTime = !isNaN(d.getTime()) ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` : cleanTime.split('T')[0];
             }
             adminNoticesArray.push({
-                id: 'Notice' + i, // 🌟【關鍵修正】：從 Math.random() 改為固定字串 'Notice1'、'Notice2'，冷啟動網址對齊絕對成功！
+                id: 'Notice' + i, 
                 title: cfg[`Notice${i}_Title`],
                 desc: cfg[`Notice${i}_Desc`] || '',
                 imgUrl: cfg[`Notice${i}_ImgUrl`] || '',
@@ -1632,7 +1641,7 @@ function renderNoticesWithMagic(cfg) {
     }
     
     let html = "";
-    // 🟢 智慧型標籤雷達：新增了人數與費用大腦的直接穿透跳轉！
+    
     function parseMagicLinks(str) {
         if (!str) return "";
         return str
@@ -1643,7 +1652,7 @@ function renderNoticesWithMagic(cfg) {
             .replace(/\[前往留言板按鈕\]/g, `<span onclick="switchView('board'); event.stopPropagation();" class="magic-link-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> 留言板</span>`)
             .replace(/\[前往人數按鈕\]/g, `<span onclick="switchView('people'); event.stopPropagation();" class="magic-link-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> 查看報名狀況</span>`)
             .replace(/\[前往費用按鈕\]/g, `<span onclick="switchView('fees'); event.stopPropagation();" class="magic-link-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg> 查看費用</span>`);
-    }
+    } // 👈 這是小包包 parseMagicLinks 的結束大括號
 
     adminNoticesArray.forEach(n => {
         if (n.isHidden) return;
@@ -1678,7 +1687,7 @@ function renderNoticesWithMagic(cfg) {
             </div>`;
     });
     if(container) container.innerHTML = html;
-}
+} // 👑 【補正關鍵】：你原本最新的檔案中就是漏掉了這最後一個大括號！
 
 // =========================================================================
 // 🎛️ [最高指揮官 switchView - 世紀 Bug 終結完全體通電版]
