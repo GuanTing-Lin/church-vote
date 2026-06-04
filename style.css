@@ -276,7 +276,34 @@ body::before {
 
 .msg-item { display: flex; gap: 12px; padding: 16px 0; border-bottom: 1px solid rgba(0,0,0,0.05); animation: fadeIn 0.4s; }
 .msg-item:last-child { border-bottom: none; }
-.msg-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-orange), #ff8c00); display: flex; justify-content: center; align-items: center; color: white; font-weight: 700; font-size: 14px; flex-shrink: 0; overflow: hidden; box-shadow: none !important; }
+
+/* 👑 核心修正：外殼物理尺寸死鎖，改為透明底色，徹底消滅漏光橘色月牙 */
+.msg-avatar { 
+    width: 36px !important; 
+    height: 36px !important; 
+    min-width: 36px !important;
+    min-height: 36px !important;
+    max-width: 36px !important;
+    max-height: 36px !important;
+    border-radius: 50% !important; 
+    background: transparent !important; /* 🌟 核心：外殼改為透明，有圖時後面絕對不漏光 */
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    flex-shrink: 0 !important; /* 🚫 剛性防護：禁止被右側排版擠壓變形 */
+    overflow: hidden !important; 
+    box-shadow: none !important; 
+}
+
+/* 👑 新增：制空權鎖定，強迫 LINE 原始高解析度頭貼完美縮放，等比例填滿 36px 畫布 */
+.msg-avatar .msg-avatar-img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important; /* 🌟 核心：等比例縮放裁切，絕不拉伸變形 */
+    border-radius: 50% !important;
+    display: block !important;
+}
+
 .msg-body { flex-grow: 1; background: rgba(255,255,255,0.45); padding: 12px; border-radius: 0 14px 14px 14px; border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 2px 8px rgba(0,0,0,0.02), inset 0 1px 1px rgba(255,255,255,0.5); }
 .msg-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .msg-name { font-weight: 700; font-size: 14px; color: var(--text-main); }
@@ -1106,4 +1133,49 @@ body:has(#view-add-fee.active) {
 .fee-custom-dropdown-el-box .fee-dropdown-payer-row:last-child,
 #fee-voters-check-grid .fee-dropdown-member-row:last-child {
     border-bottom: none !important;
+}
+
+/* =========================================================================
+   📷【終極大頭貼排版復原神盾 ── 絕殺頭貼切片破版 Bug】
+   ========================================================================= */
+
+/* 1. 確保留言板左側頭貼內部的 img 元素 100% 壓縮吃滿 36px 外殼 */
+.msg-avatar .msg-avatar-img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important; /* 👑 核心：高質感等比例裁切，絕不變形拉伸 */
+    border-radius: 50% !important;
+    display: block !important;
+    position: relative !important;
+    z-index: 2 !important;
+}
+
+/* 2. 備援文字大頭貼（沒有頭貼時顯示的第一個字）標準置中 */
+.msg-avatar .msg-avatar-text {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    line-height: 1 !important;
+    text-align: center !important;
+}
+
+/* 3. 剛性加固外殼物理尺寸與防止 flex 擠壓破版 */
+.msg-avatar {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    max-width: 36px !important;
+    max-height: 36px !important;
+    border-radius: 50% !important;
+    overflow: hidden !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    flex-shrink: 0 !important; /* 🚫 絕對不允許被右邊的長文字擠壓變形 */
 }

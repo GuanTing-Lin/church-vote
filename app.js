@@ -1796,7 +1796,12 @@ function switchView(t) {
     }
 
     if (typeof refreshMessagesOnly === "function") refreshMessagesOnly(true); 
-    if (t === 'board') clearBadge();
+    if (t === 'board') {
+        clearBadge();
+        if (typeof renderMessagesPaginated === 'function') {
+            renderMessagesPaginated();
+        }
+    }
     
     if (t === 'result') {
         calculateAndRenderSettlement(); 
@@ -2853,6 +2858,10 @@ function showEmptyFeeContainer(container) {
 
 let isMessageListenerAttached = false;
 
+// =========================================================================
+// 🎯 👑【留言板核心重構 ── 徹底解決雙軌監聽打架與頭貼失蹤神盾】
+// =========================================================================
+
 function initMessageListeners() {
     if (isMessageListenerAttached) return;
     isMessageListenerAttached = true;
@@ -2879,25 +2888,19 @@ function initMessageListeners() {
 
         // =========================================================================
         // 🎯 👑 【通知設定核心修補 ── APP 外部紅點 ＆ 留言板未讀圈圈通電巨集】
-        // 💡 解決：修正開機與留言按讚時通知未觸發的破綻，強制雙軌紅色數字點 100% 滿血回歸！
         // =========================================================================
-        
-        // 🚀 連線回歸第一發：不等 LIFF 非同步驗證，開機立刻強制重算一次，將留言板紅色數字圈圈點亮！
         if (typeof updateBadgeCount === 'function') {
             updateBadgeCount();
         }
 
-        // 🚀 連線回歸第二發（時序大對齊）：由於雲端已讀 LastReadId 拉回需要時間，
-        // 我們給予一記黃金緩衝，等雲端已讀記號與當前 currentUser.id 到齊的瞬間，
-        // 再次精密微調，100% 保證手機桌面 APP 圖標的紅色點點（setAppBadge）數字絕對跟全站對齊跳對！
         setTimeout(() => {
-            console.log("❄️ [通知雷達] 雲端已讀 ID 緩衝對齊，正式點亮 APP 外部紅點與留言板紅色計數圈圈！");
+            console.log("❄️ [通知雷達] 雲端已讀 ID 緩衝對齊，正式點亮 APP 外部紅點！");
             if (typeof updateBadgeCount === 'function') {
                 updateBadgeCount();
             }
         }, 650);
 
-        // 2. 監聽後續全新留言的即時增量（精密修正通知不跳 Bug）
+        // 2. 監聽後續全新留言的即時增量
         msgRef.on('child_added', (snapshot) => {
             const key = snapshot.key;
             const msg = snapshot.val();
@@ -2908,17 +2911,9 @@ function initMessageListeners() {
             if (!exists) {
                 allMessages.unshift(msg); // 新留言塞入最頂端
                 
-                // 📢 局部畫面彩蛋更新：只有當使用者目前正好「打開留言板」時，才就地把新卡片塞進 HTML
-                const container = document.getElementById('msg-list-container');
-                if (container) {
-                    const emptyText = container.querySelector('.empty-msg');
-                    if (emptyText) emptyText.remove();
-                    container.insertAdjacentHTML('afterbegin', generateSingleMessageHTML(msg));
-                }
+                // 📢 智慧安全分流：有新留言時，直接呼叫安全重繪大腦，杜絕手動 insertHtml 造成的字典真空！
+                renderMessagesPaginated();
                 
-                // 👑 剛性通電核心：大膽搬到大括號最外層！
-                // 不管組員的手機此刻是在首頁、在記帳、還是螢幕全黑，只要有人發新留言，
-                // 背景大腦無條件 100% 實時發射，把內外未讀紅色點點通知全部亮起來！
                 updateBadgeCount();
                 
                 const viewBoard = document.getElementById('view-board');
@@ -2936,6 +2931,8 @@ function initMessageListeners() {
             msg._firebaseKey = key;
             const idx = allMessages.findIndex(m => m._firebaseKey === key);
             if (idx > -1) allMessages[idx] = msg;
+            
+            // 🎯 精密同步：不管是自己點讚還是別人點讚，資料回傳時一律通知單一卡片局部微刷，絕不閃爍
             updateSingleMessageUI(msg);
         });
 
@@ -2946,7 +2943,6 @@ function initMessageListeners() {
             const dom = document.getElementById(`msg-item-node-${key}`);
             if (dom) dom.remove();
             
-            // 刪除留言時也同步扣除未讀數
             updateBadgeCount();
             
             const viewBoard = document.getElementById('view-board');
@@ -2960,15 +2956,119 @@ function initMessageListeners() {
 function renderMessagesPaginated() {
     const container = document.getElementById('msg-list-container');
     if (!container) return;
+    
+    // 自衛隔離：如果是我自己正在點愛心，前台樂觀 UI 已經處理好，直接放行防止愛心閃爍
+    if (window.myOwnLikeClickActive === true) return;
+
     let htmlStr = "";
     const msgsToShow = allMessages.slice(0, currentMsgPage * MSG_PER_PAGE);
+    
     if (msgsToShow.length === 0) { 
         container.innerHTML = `<p class="empty-msg" style="text-align:center; color:#718096; font-size:14px; margin: 20px 0;">目前沒有留言，來搶頭香吧！</p>`; 
         return; 
     }
-    msgsToShow.forEach(msg => { htmlStr += generateSingleMessageHTML(msg); });
+
+    msgsToShow.forEach(msg => {
+        const key = msg._firebaseKey;
+        const timeStr = msg.Time || "剛剛"; 
+        
+        // 🛡️ 1. 剛性格式大小寫全棲相容雷達
+        const id = (msg.LineID || msg.lineID || msg.UserId || msg.userId || "").trim();
+        const rawName = (msg.Name || "").trim();
+        
+        let msgDisplayName = "匿名組員";
+        let picUrl = "";
+
+        // 🚀 A 軌道：如果拿得到精準的 LINE 長 ID，直接去全域字典精確查表
+        if (id && window.userNameMap[id]) {
+            msgDisplayName = window.userNameMap[id];
+            picUrl = window.userAvatarMap[id] || "";
+        } 
+        // 🚀 B 軌道（線上頭貼復活代碼）：反向遍歷字典，用真名查出此人的長 ID 抓取真實大頭貼
+        else if (rawName) {
+            msgDisplayName = rawName;
+            const foundUid = Object.keys(window.userNameMap).find(k => window.userNameMap[k] === rawName);
+            if (foundUid) {
+                picUrl = window.userAvatarMap[foundUid] || "";
+            }
+        }
+
+        if (!picUrl) {
+            picUrl = msg.AvatarUrl || "";
+        }
+
+        // =========================================================================
+        // 🎯【HTML 結構徹底淨化】：有圖就只有圖，沒圖就只有字，從根本消滅圖層重疊！
+        // =========================================================================
+        let avatarHtml = "";
+
+        if (picUrl && picUrl.trim() !== "") {
+            // 🚀 狀態 A：既然有大頭貼，肚子裡 100% 只有一張圖片，底層絕不墊任何文字備援
+            avatarHtml = `<img src="${picUrl.trim()}" class="msg-avatar-img">`;
+        } else {
+            // 🚀 狀態 B：完全沒有頭貼，此時才動態套用內聯的橘色漸層圓底，並塞入第一個字
+            let fallbackText = msg.AvatarText || (msgDisplayName ? msgDisplayName[0] : "?");
+            avatarHtml = `
+                <div class="msg-avatar-fallback-fluid" style="width:100%; height:100%; border-radius:50%; background:linear-gradient(135deg, var(--primary-orange), #ff8c00); color:white; display:flex; justify-content:center; align-items:center; font-size:14px; font-weight:700; line-height:1; text-align:center;">
+                    ${fallbackText}
+                </div>
+            `;
+        }
+
+        let isMyMessage = (id && id === currentUser.id) || (msg.Name === currentUser.name || msgDisplayName === currentUser.name);
+        let editBtnHtml = isMyMessage ? `<span class="msg-edit-link" onclick="openEditMessage('${key}')" style="font-size:11px;color:var(--primary-blue);margin-left:8px;cursor:pointer;">編輯</span>` : "";
+        let isEditedHtml = (msg.IsEdited === "V" || msg.IsEdited === true || String(msg.IsEdited) === "true") 
+            ? `<span id="msg-edited-${key}" style="font-size:11px; color:#a0aec0; margin-left:6px; font-weight: 500;">(已編輯)</span>` 
+            : `<span id="msg-edited-${key}" style="display:none; font-size:11px; color:#a0aec0; margin-left:6px; font-weight: 500;">(已編輯)</span>`;                
+
+        let likesArray = [];
+        try {
+            if (typeof msg.Likes === 'string') likesArray = JSON.parse(msg.Likes || "[]");
+            else if (Array.isArray(msg.Likes)) likesArray = msg.Likes;
+        } catch(e) {}
+        
+        let isLiked = likesArray.includes(currentUser.id) || likesArray.includes(currentUser.name);
+        let likesTextInner = getLikesIgStyle(likesArray);
+        let likesText = `<div id="like-text-${key}" ${likesArray.length > 0 ? `onclick="showLikesDrawer('${key}')"` : ''} style="flex-grow: 1; display: flex; align-items: center; cursor: ${likesArray.length > 0 ? 'pointer' : 'default'}; text-align: left;">${likesTextInner}</div>`;
+        let heartIconHtml = `<div id="like-btn-${key}" class="like-btn ${isLiked ? 'liked' : 'unliked'}" onclick="toggleLike('${key}')">${svgHeart}</div>`;
+
+        // @提及語意過濾
+        let msgTextHtml = msg.Content || "";
+        let allMemberNames = Object.values(window.userNameMap || {});
+        allMemberNames.sort((a, b) => b.length - a.length);
+
+        allMemberNames.forEach(name => {
+            if (!name) return;
+            const mentionStr = "@" + name;
+            if (msgTextHtml.includes(mentionStr)) {
+                const regex = new RegExp(mentionStr, 'g');
+                msgTextHtml = msgTextHtml.replace(regex, `<span class="mention-token-tag" onclick="handleMentionClick('${name}')">@${name}</span>`);
+            }
+        });
+
+        htmlStr += `
+            <div class="msg-item fade-in" id="msg-item-node-${key}" data-msg-id="${msg.MsgID || ''}">
+                <div class="msg-avatar">${avatarHtml}</div>
+                <div class="msg-body">
+                    <div class="msg-header">
+                        <span class="msg-name" style="font-weight:700;font-size:14px;color:var(--text-main);">${msgDisplayName}</span>
+                        <div class="msg-header-right">
+                            <span class="msg-time">${timeStr}</span>
+                            ${editBtnHtml}
+                            ${isEditedHtml}
+                        </div>
+                    </div>
+                    <div class="msg-text" style="font-size:14px;color:var(--text-main);line-height:1.5;white-space:pre-wrap;word-break:break-all;">${msgTextHtml}</div>
+                    <div style="display: flex; justify-content: flex-end; align-items: center; margin-top: 8px; gap: 8px;">
+                        ${likesText}
+                        ${heartIconHtml}
+                    </div>
+                </div>
+            </div>`;
+    });
+
     if (allMessages.length > msgsToShow.length) { 
-        htmlStr += `<button id="load-more-btn" class="btn-primary" style="background: rgba(255,255,255,0.3); color: var(--text-main); margin-top: 15px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.5), 0 4px 15px rgba(0,0,0,0.02); border: 1px solid rgba(255,255,255,0.5);" onclick="loadMoreMessages()">載入較舊留言</button>`; 
+        htmlStr += `<button id="load-more-btn" class="btn-primary" style="background: rgba(255,255,255,0.3); color: var(--text-main); margin-top: 15px; box-shadow: inset 0 1px 1px rgba(255,255,255,0.5);" onclick="loadMoreMessages()">載入較舊留言</button>`; 
     }
     container.innerHTML = htmlStr;
 }
@@ -2979,44 +3079,65 @@ function loadMoreMessages() {
 }
 
 // =========================================================================
-// 💬 [單一函數修補 ── 留言板主卡片大頭貼與真名轉譯完全體]
-// 💡 修正：相容 Firebase 廣播回傳的所有 ID 大小寫格式，100% 絕殺 U4b8d864 長串亂碼 ID 外漏！
+// 💬 [主核心修補 ── 留言板主卡片大頭貼與真名轉譯完全體神盾]
+// 💡 解決：修正用真名查長 ID 字典查不到、以及大小寫相容導致頭貼失蹤的 Bug
 // =========================================================================
 function generateSingleMessageHTML(msg) {
     const key = msg._firebaseKey;
     let timeStr = msg.Time || "剛剛"; 
     
-    // 🛡️ 剛性大小寫相容雷達：確保不管後台吐大寫還是小寫，100% 穩穩抓到 LINE 長 ID
-    const id = msg.LineID || msg.lineID || msg.UserId || msg.userId || "";
+    // 🛡️ 剛性格式大小寫全棲相容雷達
+    const id = (msg.LineID || msg.lineID || msg.UserId || msg.userId || "").trim();
+    const rawName = (msg.Name || "").trim();
 
-    // 🌟 優先從全域累積記憶字典中，撈取真組員的名字與頭貼網址
-    let msgDisplayName = window.userNameMap[id] || msg.Name || "匿名組員";
-    let picUrl = window.userAvatarMap[id] || window.userAvatarMap[msgDisplayName] || msg.AvatarUrl || "";
+    let msgDisplayName = "匿名組員";
+    let picUrl = "";
+
+    // 🚀 A 軌道：如果拿得到精準的 LINE 長 ID，直接去字典精確查表
+    if (id && window.userNameMap[id]) {
+        msgDisplayName = window.userNameMap[id];
+        picUrl = window.userAvatarMap[id] || "";
+    } 
+    // 🚀 B 軌道（線上復活關鍵）：如果只有寫死名字字串，反向去字典倒查出此人的長 ID 抓取真實頭貼
+    else if (rawName) {
+        msgDisplayName = rawName;
+        const foundUid = Object.keys(window.userNameMap).find(k => window.userNameMap[k] === rawName);
+        if (foundUid) {
+            picUrl = window.userAvatarMap[foundUid] || "";
+        }
+    }
+
+    // 🚀 C 軌道：萬一雲端字典什麼都沒對上，退火吃 Firebase 當下寫入的歷史大頭貼
+    if (!picUrl) {
+        picUrl = msg.AvatarUrl || "";
+    }
 
     let fallbackText = msg.AvatarText || (msgDisplayName ? msgDisplayName[0] : "?");
+    
+    // 🎨 視覺尺寸大歸位：移除行內寫死的 40px 等硬傷寬高，100% 交給 style.css 掌控！
     let avatarHtml = picUrl 
-        ? `<div style="position:relative; width:100%; height:100%; display:flex; justify-content:center; align-items:center;">
-                <span style="position:absolute; font-size:14px; font-weight:700;">${fallbackText}</span>
-                <img src="${picUrl}" style="position:absolute; width:100%; height:100%; object-fit:cover; border-radius:50%; z-index:1;" onerror="this.style.display='none'">
-            </div>` 
-        : `<div style="width:100%;height:100%;display:flex;justify-content:center;align-items:center;">${fallbackText}</div>`;
+        ? `<img src="${picUrl}" class="msg-avatar-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+           <span class="msg-avatar-text" style="display:none;">${fallbackText}</span>` 
+        : `<span class="msg-avatar-text">${fallbackText}</span>`;
         
     let isMyMessage = (id && id === currentUser.id) || (msg.Name === currentUser.name || msgDisplayName === currentUser.name);
     let likesArray = [];
     try {
         if (typeof msg.Likes === 'string') likesArray = JSON.parse(msg.Likes || "[]");
-        else if (Array.isArray(msg.Likes)) likesArray = likesArray;
+        else if (Array.isArray(msg.Likes)) likesArray = msg.Likes;
     } catch(e) {}
+    
     let isLiked = likesArray.includes(currentUser.id) || likesArray.includes(currentUser.name);
     let editBtnHtml = isMyMessage ? `<span class="msg-edit-link" onclick="openEditMessage('${key}')" style="font-size:11px;color:var(--primary-blue);margin-left:8px;cursor:pointer;">編輯</span>` : "";
-    let isEditedHtml = (msg.IsEdited === "V" || msg.IsEdited === true || msg.IsEdited === "true") 
+    let isEditedHtml = (msg.IsEdited === "V" || msg.IsEdited === true || String(msg.IsEdited) === "true") 
         ? `<span id="msg-edited-${key}" style="font-size:11px; color:#a0aec0; margin-left:6px; font-weight: 500;">(已編輯)</span>` 
         : `<span id="msg-edited-${key}" style="display:none; font-size:11px; color:#a0aec0; margin-left:6px; font-weight: 500;">(已編輯)</span>`;                
+    
     let likesTextInner = getLikesIgStyle(likesArray);
     let likesText = `<div id="like-text-${key}" ${likesArray.length > 0 ? `onclick="showLikesDrawer('${key}')"` : ''} style="flex-grow: 1; display: flex; align-items: center; cursor: ${likesArray.length > 0 ? 'pointer' : 'default'}; text-align: left;">${likesTextInner}</div>`;
     let heartIconHtml = `<div id="like-btn-${key}" class="like-btn ${isLiked ? 'liked' : 'unliked'}" onclick="toggleLike('${key}')">${svgHeart}</div>`;
 
-    // 🌐【智慧英文雙字過濾雷達】
+    // @提及語意過濾
     let msgTextHtml = msg.Content || "";
     let allMemberNames = Object.values(window.userNameMap || {});
     allMemberNames.sort((a, b) => b.length - a.length);
@@ -3035,14 +3156,14 @@ function generateSingleMessageHTML(msg) {
             <div class="msg-avatar">${avatarHtml}</div>
             <div class="msg-body">
                 <div class="msg-header">
-                    <span class="msg-name">${msgDisplayName}</span>
+                    <span class="msg-name" style="font-weight:700;font-size:14px;color:var(--text-main);">${msgDisplayName}</span>
                     <div class="msg-header-right">
                         <span class="msg-time">${timeStr}</span>
                         ${editBtnHtml}
                         ${isEditedHtml}
                     </div>
                 </div>
-                <div id="msg-content-${key}" class="msg-text" style="margin-bottom:12px;" data-raw="${encodeURIComponent(msg.Content)}">${msgTextHtml}</div>
+                <div class="msg-text" style="font-size:14px;color:var(--text-main);line-height:1.5;white-space:pre-wrap;word-break:break-all;">${msgTextHtml}</div>
                 <div style="display: flex; justify-content: flex-end; align-items: center; margin-top: 8px; gap: 8px;">
                     ${likesText}
                     ${heartIconHtml}
@@ -3266,127 +3387,6 @@ async function postMessage() {
         }) 
     }).catch(e => console.error("Sheets 留言同步失敗:", e));
 }
-
-// =========================================================================
-// 🎯 👑【留言板全站即時接收大腦 ── 終極不跳動、100% 姓名頭貼回歸神盾】
-// =========================================================================
-db.ref('messages').on('value', snapshot => {
-    const container = document.getElementById('msg-list-container');
-    if (!container) return;
-    
-    if (window.myOwnLikeClickActive === true) {
-        console.log("🛡️ [點讚自衛系統] 阻斷全頁重繪，保衛愛心動畫！");
-        return;
-    }
-
-    if (!document.getElementById('view-board').classList.contains('active')) {
-        return;
-    }
-
-    const msgData = snapshot.val() || {};
-    const msgArray = [];
-    
-    if (Array.isArray(msgData)) {
-        msgData.forEach((msg, idx) => { if (msg) msgArray.push({ ...msg, _firebaseKey: idx }); });
-    } else {
-        for (let key in msgData) { if (msgData[key]) msgArray.push({ ...msgData[key], _firebaseKey: key }); }
-    }
-
-    const firstCardDOM = container.querySelector('.msg-item');
-    const currentTopDOMMsgId = firstCardDOM ? firstCardDOM.getAttribute('data-msg-id') : "";
-    const latestCloudMsgId = msgArray.length > 0 ? msgArray[msgArray.length - 1].MsgID : "";
-    const isRealNewMessageIn = (currentTopDOMMsgId === "" || currentTopDOMMsgId !== latestCloudMsgId);
-
-    if (isRealNewMessageIn) {
-        console.log("📝 [留言板] 偵測到有全新留言加入/刪除，執行全量自然鋪設。");
-        let itemsHtml = "";
-        const renderArray = [...msgArray].reverse();
-
-        renderArray.forEach(msg => {
-            const key = msg._firebaseKey;
-            
-            // 🛡️ 1. 剛性格式大小寫全棲相容雷達
-            const id = (msg.LineID || msg.lineID || msg.UserId || msg.userId || "").trim();
-            const rawName = (msg.Name || "").trim();
-            
-            // 🛡️ 2. 修正變數名稱錯位：統一剛性定義 msgDisplayName 與 picUrl
-            let msgDisplayName = "匿名組員";
-            let picUrl = "";
-
-            // 🚀 A 軌道：如果拿得到精準的 LINE 長 ID，直接去字典精確查表
-            if (id && window.userNameMap[id]) {
-                msgDisplayName = window.userNameMap[id];
-                picUrl = window.userAvatarMap[id] || "";
-            } 
-            // 🚀 B 軌道：如果只有真名字串，反向遍歷字典找出此人的長 ID 抓取大頭貼
-            else if (rawName) {
-                msgDisplayName = rawName;
-                const foundUid = Object.keys(window.userNameMap).find(k => window.userNameMap[k] === rawName);
-                if (foundUid) {
-                    picUrl = window.userAvatarMap[foundUid] || "";
-                }
-            }
-
-            if (!picUrl) {
-                picUrl = msg.AvatarUrl || "";
-            }
-
-            let fallbackText = msg.AvatarText || (msgDisplayName ? msgDisplayName[0] : "?");
-            
-            // 🛡️ 3. 視覺尺寸大還原：洗掉 HTML 寫死的 40px，完全交還給 style.css 掌控
-            let avatarHtml = picUrl 
-                ? `<img src="${picUrl}" class="msg-avatar-img" onerror="this.style.display='none'">
-                   <span class="msg-avatar-text" style="display:none;">${fallbackText}</span>` 
-                : `<span class="msg-avatar-text">${fallbackText}</span>`;
-
-            let timeStr = msg.Time || "";
-            let rawContent = msg.Content || "";
-
-            let msgTextHtml = rawContent;
-            msgTextHtml = msgTextHtml.replace(/@([^\s@\n，。？!,]+)/g, function(match, name) {
-                return `<span class="mention-token-tag" onclick="handleMentionClick('${name}')">${match}</span>`;
-            });
-
-            let likesArray = [];
-            try {
-                if (typeof msg.Likes === 'string') likesArray = JSON.parse(msg.Likes || "[]");
-                else if (Array.isArray(msg.Likes)) likesArray = msg.Likes;
-            } catch(e) {}
-            
-            let isLiked = likesArray.includes(currentUser.id) || likesArray.includes(currentUser.name);
-            let isMyMessage = id === currentUser.id || rawName === currentUser.name;
-            let editBtnHtml = isMyMessage ? `<span class="msg-edit-link" onclick="openEditMessage('${key}')" style="font-size:11px;color:var(--primary-blue);margin-left:8px;cursor:pointer;">編輯</span>` : "";
-            
-            // 🚀 呼叫愛心精算：此時字典已注滿，絕不噴出亂碼
-            let likesTextInner = getLikesIgStyle(likesArray);
-            let likesText = `<div id="like-text-${key}" ${likesArray.length > 0 ? `onclick="showLikesDrawer('${key}')"` : ''} style="flex-grow: 1; display: flex; align-items: center; cursor: ${likesArray.length > 0 ? 'pointer' : 'default'}; text-align: left;">${likesTextInner}</div>`;
-            let heartIconHtml = `<div id="like-btn-${key}" class="like-btn ${isLiked ? 'liked' : 'unliked'}" onclick="toggleLike('${key}')">${svgHeart}</div>`;
-
-            itemsHtml += `
-                <div class="msg-item fade-in" id="msg-item-node-${key}" data-msg-id="${msg.MsgID || ''}">
-                    <div class="msg-avatar">${avatarHtml}</div>
-                    <div class="msg-body">
-                        <div class="msg-header">
-                            <span class="msg-name" style="font-weight:700;font-size:14px;color:var(--text-main);">${msgDisplayName}</span>
-                            <span class="msg-time" style="font-size:11px;color:var(--text-muted);margin-left:auto;">${timeStr} ${editBtnHtml}</span>
-                        </div>
-                        <div class="msg-text" style="font-size:14px;color:var(--text-main);line-height:1.5;white-space:pre-wrap;word-break:break-all;">${msgTextHtml}</div>
-                        <div style="display: flex; justify-content: flex-end; align-items: center; margin-top: 8px; gap: 8px;">
-                            ${likesText}
-                            ${heartIconHtml}
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        container.innerHTML = itemsHtml;
-    } else {
-        console.log("💖 [點讚廣播連動] 執行精準局部微刷，全頁面死鎖不動。");
-        msgArray.forEach(msg => {
-            if (typeof updateSingleMessageUI === 'function') updateSingleMessageUI(msg);
-        });
-    }
-});
 
 
 function pushSingleNotice(noticeId, btn) {
