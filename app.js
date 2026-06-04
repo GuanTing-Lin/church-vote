@@ -2967,19 +2967,19 @@ function loadMoreMessages() {
 }
 
 // =========================================================================
-// 🎯 [留言板單則渲染大腦 - 英文空格名與大頭貼防污染完全體]
-// 💡 修正：
-//    1. 解決英文名字中間空格被切斷（例如 @Tim Lin）的問題。
-//    2. 確保 msg.Content 乾淨不被 HTML 污染，徹底救回消失的大頭貼！
+// 💬 [單一函數修補 ── 留言板主卡片大頭貼與真名轉譯完全體]
+// 💡 修正：相容 Firebase 廣播回傳的所有 ID 大小寫格式，100% 絕殺 U4b8d864 長串亂碼 ID 外漏！
 // =========================================================================
 function generateSingleMessageHTML(msg) {
     const key = msg._firebaseKey;
     let timeStr = msg.Time || "剛剛"; 
-    const id = msg.LineID || msg.UserId;
+    
+    // 🛡️ 剛性大小寫相容雷達：確保不管後台吐大寫還是小寫，100% 穩穩抓到 LINE 長 ID
+    const id = msg.LineID || msg.lineID || msg.UserId || msg.userId || "";
 
-    // 🌟 優先從 members 字典撈取最新的名字與頭貼網址
-    let msgDisplayName = window.userNameMap[id] || msg.Name || "匿名";
-    let picUrl = window.userAvatarMap[id] || window.userAvatarMap[msgDisplayName] || msg.AvatarUrl;
+    // 🌟 優先從全域累積記憶字典中，撈取真組員的名字與頭貼網址
+    let msgDisplayName = window.userNameMap[id] || msg.Name || "匿名組員";
+    let picUrl = window.userAvatarMap[id] || window.userAvatarMap[msgDisplayName] || msg.AvatarUrl || "";
 
     let fallbackText = msg.AvatarText || (msgDisplayName ? msgDisplayName[0] : "?");
     let avatarHtml = picUrl 
@@ -2993,10 +2993,10 @@ function generateSingleMessageHTML(msg) {
     let likesArray = [];
     try {
         if (typeof msg.Likes === 'string') likesArray = JSON.parse(msg.Likes || "[]");
-        else if (Array.isArray(msg.Likes)) likesArray = msg.Likes;
+        else if (Array.isArray(msg.Likes)) likesArray = likesArray;
     } catch(e) {}
     let isLiked = likesArray.includes(currentUser.id) || likesArray.includes(currentUser.name);
-    let editBtnHtml = isMyMessage ? `<span class="msg-edit-link" onclick="openEditMessage('${key}')">編輯</span>` : "";
+    let editBtnHtml = isMyMessage ? `<span class="msg-edit-link" onclick="openEditMessage('${key}')" style="font-size:11px;color:var(--primary-blue);margin-left:8px;cursor:pointer;">編輯</span>` : "";
     let isEditedHtml = (msg.IsEdited === "V" || msg.IsEdited === true || msg.IsEdited === "true") 
         ? `<span id="msg-edited-${key}" style="font-size:11px; color:#a0aec0; margin-left:6px; font-weight: 500;">(已編輯)</span>` 
         : `<span id="msg-edited-${key}" style="display:none; font-size:11px; color:#a0aec0; margin-left:6px; font-weight: 500;">(已編輯)</span>`;                
