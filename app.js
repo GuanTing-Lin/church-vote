@@ -5040,11 +5040,23 @@ async function executeLivePaymentLogSubmit(fromId, fromName, toId, toName, amoun
     };
 
     try {
+        
         // 直連回寫雲端
         await db.ref(`fees/settledLogs/${logId}`).set(settlementPayload);
         
-        // 🟢 精準全自動跳轉回費用明細頁面
-        setTimeout(() => { switchView('fees'); }, 100);
+        if (cachedPollData) {
+            if (!cachedPollData.fees) cachedPollData.fees = {};
+            if (!cachedPollData.fees.settledLogs) cachedPollData.fees.settledLogs = {};
+            // 剛性打針注入
+            cachedPollData.fees.settledLogs[logId] = settlementPayload;
+        }
+        
+        // 🟢 完美的 0 延遲全自動跳轉回費用明細頁面，此時卡片 100% 秒速現身！
+        setTimeout(() => { 
+            switchView('fees'); 
+            // 換頁成功後，立刻強迫用最新記憶體重繪一次
+            if (typeof renderFeesPage === 'function') renderFeesPage(cachedPollData);
+        }, 50); // 延遲甚至可以從 100ms 縮短到極速 50ms！
         
     } catch(err) {
         alert("核銷失敗：" + err.message);
