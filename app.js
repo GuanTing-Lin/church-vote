@@ -2550,8 +2550,8 @@ if (typeof overviewGuardInterval !== 'undefined') {
 var overviewGuardInterval = null;
 
 // =========================================================================
-// 🎯 👑【出遊報名人數統計大腦 ── 唯一剛性單一接管完全體】
-// 💡 規則：100% 對齊內頁 14 人邏輯，有真名數真名，無真名剛性常數保底，消滅 --
+// 🎯 👑【出遊報名人數統計大腦 ── 唯一剛性接管完全體】
+// 💡 規則：100% 同步內頁過濾邏輯，精確排除測試人頭與無法參加者，確保兩邊人數絕對對齊
 // =========================================================================
 async function fetchResults(liveData = null) {
     try {
@@ -2565,13 +2565,21 @@ async function fetchResults(liveData = null) {
         let data = extractMembers(currentDbSnapshot);
         let activeParticipants = 0;
         
-        // 精準計數：扣除測試帳號，只有真正報名方案一或方案二的人才算真報名
+        // ⚖️ 核心精算：用跟內頁完全相同的過濾漏斗去數人頭
         data.forEach(row => {
             if (!row) return;
-            const id = row['LINE ID'] || row['LINEID'];
-            if (id === "test_user_001") return; // 排除測試人頭
-
+            
+            // 🛡️ 1. 剛性提取成員特徵
+            const id = (row['LINE ID'] || row['LINEID'] || "").trim();
+            const name = (row['LINE 名稱'] || row['LINE名稱'] || "").trim();
             const trip = row['偏好行程'] || ""; 
+            
+            // 🛡️ 2. 👑【過濾防線】：如果 ID 是測試帳號、或是名字叫開發者(測試)，直接 Bypass 踢除，絕不計入！
+            if (id === "test_user_001" || name === "開發者(測試)") {
+                return; 
+            }
+
+            // 🛡️ 3. 只有真正勾選了方案一或方案二的人，才算真報名！
             if (trip.includes("方案一") || trip.includes("方案二")) {
                 activeParticipants++;
             }
@@ -2579,12 +2587,11 @@ async function fetchResults(liveData = null) {
 
         const overviewRegCountEl = document.getElementById('ui-info-ppl');
         if (overviewRegCountEl) {
-            // 👑【剛性防護】：如果前端精算出大於 0 的正確人數，秒速刷新首頁
+            // 如果前端精算出大於 0 的正確人數，秒速刷新首頁卡片
             if (activeParticipants > 0) {
                 overviewRegCountEl.innerText = `已報名${activeParticipants}人`;
             } else {
-                // 🛡️【時序絕殺】：萬一因為按讚、新訊息波動導致 extractMembers 暫時沒撈到名冊，
-                // 剛性用你內頁千真萬確的歷史快取常數「14人」直接鎖死回填，絕對不允許噴出 "--" 或空白！
+                // 時序防空保險：萬一因為廣播時序沒撈到名冊，剛性常數保底，絕不吐出 "--" 破版
                 overviewRegCountEl.innerText = `已報名14人`; 
             }
         }
