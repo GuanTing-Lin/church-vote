@@ -730,6 +730,26 @@ function initMentionLogic() {
     });
 }
 
+// =========================================================================
+// 🎯【全站輸入框失焦神盾 ── 強制手機螢幕 0 延遲滾動歸位】
+// 💡 解決：當組員在手機上把鍵盤打勾關閉後，強迫 PWA 網頁一微秒內強制向頂端歸零對齊
+// =========================================================================
+document.addEventListener('focusout', function(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        console.log("⌨️ 偵測到手機輸入框失去焦點（鍵盤收合），啟動視窗防卡死重算機制...");
+        
+        // 🚀 雙軌強壓：強制控制網頁滾動軸回彈到最頂端，一秒擊碎 WebKit 的真空盲區殘留！
+        window.scrollTo(0, Math.max(0, document.documentElement.scrollTop - 1));
+        
+        setTimeout(() => {
+            window.scrollTo(0, 0); // 再次剛性導回 (0,0)
+            
+            // 🔄 聯手加固：鍵盤收起後，順便重新精算一次首頁人數與分頁視圖
+            if (typeof fetchResults === 'function') fetchResults(cachedPollData);
+        }, 30);
+    }
+});
+
 function selectMentionCore(name, textarea, menu) {
     if (!name || !textarea) return;
     const val = textarea.value;

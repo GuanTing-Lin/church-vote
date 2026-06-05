@@ -1096,12 +1096,20 @@ body:has(#view-custom-split-page.active) .top-nav {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04), inset 0 1px 2px rgba(0, 0, 0, 0.05) !important;
 }
 
-
-
-/* 2. 🎯 終極消滅滑動盲區：當使用者人在記帳頁面時，強行沒收整張網頁的滾動權限 */
+/* =========================================================================
+   👑【全站記帳頁面 ── 虛擬鍵盤收合防卡死神盾】
+   💡 修正：解鎖 body 的 overflow: hidden，改用滾動緩衝消除 iOS 鍵盤盲區殘留
+   ========================================================================= */
 body:has(#view-add-fee.active) {
-    height: 100vh !important;
-    overflow: hidden !important; /* 🚫 剛性禁止任何上下滑動，整張網頁穩如泰山 */
+    height: 100% !important; /* 👑 釋放高寬：交給手機系統自由處理鍵盤拉伸 */
+    overflow: auto !important; /* 👑 改為 auto：允許微幅的系統級排版回彈校正 */
+}
+
+#view-add-fee {
+    height: auto !important; /* 釋放剛性高度 */
+    min-height: calc(100vh - 60px) !important; /* 確保不失真 */
+    padding-bottom: 220px !important; /* 🎯 剛性補償：預留大量底部安全墊，徹底消滅導覽列遮擋，按鈕絕不穿透 */
+    box-sizing: border-box !important;
 }
 
 #view-add-fee {
