@@ -65,6 +65,20 @@ body::before {
         opacity: 1; 
     } 
 }
+/* =========================================================================
+   👑【進階分帳頁面 ── 專屬全時空置中定錨動畫】
+   💡 修正：與 picker-board 徹底分家，專屬軌道 100% 鎖死置中，消滅手機版偏右閃爍！
+   ========================================================================= */
+@keyframes feePagePopIn { 
+    from { 
+        transform: translate(-50%, 12px) scale(0.95) !important; /* 🌟 剛性混合：用標準 translate 一步到位 */
+        opacity: 0; 
+    } 
+    to { 
+        transform: translate(-50%, 0) scale(1) !important; /* 🌟 剛性混合：完美定死在正中央 */
+        opacity: 1; 
+    } 
+}
 .modal-spinner { width: 44px; height: 44px; margin: 0 auto 16px; border: 3px solid rgba(59, 208, 175, 0.15); border-top: 3px solid var(--primary-green); border-radius: 50%; animation: spin 0.8s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite; display: none; }
 .spinner { width: 36px; height: 36px; border: 3px solid rgba(255,255,255,0.5); border-top: 3px solid var(--primary-green); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 12px; }
 .pulse-text { animation: pulse 1.5s infinite ease-in-out; }
@@ -903,8 +917,7 @@ body:has(#view-custom-split-page.active) .top-nav {
     position: fixed !important;
     top: 0 !important;
     left: 50% !important;
-    /* 這裡維持不變，它會完美對齊我們剛改好的新動畫軌道 */
-    transform: translateX(-50%) !important; 
+    /* 👑 修正：移除容易造成優先權斷層的單獨 transform，改由下方專屬動畫全時剛性鎖死！ */
     width: 100vw !important;
     max-width: 600px !important; 
     height: 100vh !important;
@@ -912,10 +925,13 @@ body:has(#view-custom-split-page.active) .top-nav {
     background: rgba(255, 255, 255, 0.15) !important; 
     backdrop-filter: var(--glass-blur) !important;
     -webkit-backdrop-filter: var(--glass-blur) !important;
-    overflow-x: hidden !important; /* 👑 新增：剛性沒收橫向溢出盲區，防止卡片偏位滑動 */
+    overflow-x: hidden !important; 
     overflow-y: hidden !important; 
     padding: 24px 16px calc(8px + env(safe-area-inset-bottom)) 16px !important;
     box-sizing: border-box !important;
+    
+    /* 👑 核心修復：改用專屬的 feePagePopIn，並強制將 forwards 與置中死鎖在同一個時序軸！ */
+    animation: feePagePopIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
 }
 
 /* =========================================================================
