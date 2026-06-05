@@ -66,16 +66,16 @@ body::before {
     } 
 }
 /* =========================================================================
-   👑【進階分帳頁面 ── 專屬全時空置中定錨動畫】
-   💡 修正：與 picker-board 徹底分家，專屬軌道 100% 鎖死置中，消滅手機版偏右閃爍！
+   👑【進階分帳頁面 ── 絕對零漂移定錨動畫】
+   💡 修正：捨棄 translate(-50%)，改用物理四方貼邊鎖定，100% 絕殺手機版右偏閃爍！
    ========================================================================= */
 @keyframes feePagePopIn { 
     from { 
-        transform: translate(-50%, 12px) scale(0.95) !important; /* 🌟 剛性混合：用標準 translate 一步到位 */
+        transform: scale(0.95) translateY(12px) !important; /* 🌟 淨化：肚子裡只管縮放與升降 */
         opacity: 0; 
     } 
     to { 
-        transform: translate(-50%, 0) scale(1) !important; /* 🌟 剛性混合：完美定死在正中央 */
+        transform: scale(1) translateY(0) !important; /* 🌟 淨化：完美落地 */
         opacity: 1; 
     } 
 }
@@ -916,8 +916,12 @@ body:has(#view-custom-split-page.active) .top-nav {
     display: block !important;
     position: fixed !important;
     top: 0 !important;
-    left: 50% !important;
-    /* 👑 修正：移除容易造成優先權斷層的單獨 transform，改由下方專屬動畫全時剛性鎖死！ */
+    
+    /* 👑 核心修復：改用四方等比貼邊，強迫 RWD 容器死鎖在手機大廳中央，絕不認錯中線！ */
+    left: 0 !important;
+    right: 0 !important;
+    margin: 0 auto !important; 
+    
     width: 100vw !important;
     max-width: 600px !important; 
     height: 100vh !important;
@@ -930,7 +934,7 @@ body:has(#view-custom-split-page.active) .top-nav {
     padding: 24px 16px calc(8px + env(safe-area-inset-bottom)) 16px !important;
     box-sizing: border-box !important;
     
-    /* 👑 核心修復：改用專屬的 feePagePopIn，並強制將 forwards 與置中死鎖在同一個時序軸！ */
+    /* 👑 核心修復：調用我們剛剛淨化完畢的專屬動畫 */
     animation: feePagePopIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
 }
 
