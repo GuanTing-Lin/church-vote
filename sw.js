@@ -25,26 +25,27 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
     console.log("📥 [背景推播] 收到標準 FCM 封包，開始處理紅點與跳窗:", payload);
 
-    // 1. 🎯【外面 APP 數字連線】：修正 Service Worker 環境，使用 self.navigator 剛性點亮桌面紅點
-    let unreadCount = 1;
+    let unreadCount = 0; // 👑 還原規劃：預設就是 0
     if (payload.data && payload.data.badge) {
         unreadCount = parseInt(payload.data.badge, 10);
     } else if (payload.notification && payload.notification.badge) {
         unreadCount = parseInt(payload.notification.badge, 10);
     }
     
-    // 👑 修正死穴：在 SW 肚子裡必須使用 self.navigator 才能操控桌面實體紅點！
-    if (self.navigator && 'setAppBadge' in self.navigator) {
-        self.navigator.setAppBadge(unreadCount).catch(() => {});
+    // 👑【紅點解鎖閘門】：如果是大於 0，正常亮起數字；如果是 0，優雅呼叫 clearAppBadge 清除，絕不卡死！
+    if (self.navigator) {
+        if (unreadCount > 0 && 'setAppBadge' in self.navigator) {
+            self.navigator.setAppBadge(unreadCount).catch(() => {});
+        } else if (unreadCount <= 0 && 'clearAppBadge' in self.navigator) {
+            self.navigator.clearAppBadge().catch(() => {});
+        }
     }
 
-    // 2. 🎯【防止重複跳兩次通知】：維持 Firebase SDK 自行跳窗的優良防護
     if (payload.notification) {
         console.log("🛑 Firebase SDK 預設已會處理跳窗，SW 僅默默更新外面數字。");
         return; 
     }
 
-    // 3. 純資料封包備援跳窗
     const notificationTitle = "留言板有新訊息";
     const notificationOptions = {
         body: payload.data ? payload.data.body : "趕快點擊 App 查看最新留言！",
@@ -66,7 +67,7 @@ self.addEventListener('push', function(event) {
         if (pushData && pushData.badge) {
             const badgeCount = parseInt(pushData.badge, 10);
             if (self.navigator && 'setAppBadge' in self.navigator) {
-                event.waitUntil(self.navigator.setAppBadge(badgeCount).catch(() => {}));
+                event.waitUntil(self.navigator.setAppBadge(setAppBadge).catch(() => {}));
             }
         }
     } catch (e) {}

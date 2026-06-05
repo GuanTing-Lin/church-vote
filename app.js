@@ -232,8 +232,13 @@ function updateBadgeCount() {
         // 防呆：萬一記錄的 ID 在雲端被刪了，歸零
         if (!found) unreadCount = 0;
     } else {
-        // 如果完全沒有雲端已讀紀錄，或者是全新帳號，顯示 0
-        unreadCount = 0;
+        if (targetMessagesSource.length === 0) {
+            // 資料還沒來，先按兵不動，不強行歸零
+            return; 
+        } else {
+            // 確確實實是全新帳號，或者全部讀完了
+            unreadCount = 0;
+        }
     }
 
     // 🌐 1. 鋪設前台留言板標籤紅色圈圈 (index.html) - 保持通暢
