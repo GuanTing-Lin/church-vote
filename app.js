@@ -948,6 +948,10 @@ async function processLoadedData() {
         });
     }
 
+    // =========================================================================
+    // 🎯 👑【Firebase 雲端全域即時分流監聽器 ── 終極純淨化版】
+    // 💡 規則：解鎖內頁名單死鎖，完美保留原本健康的記帳與分頁重繪分流
+    // =========================================================================
     db.ref('/').on('value', snapshot => {
         hasLoadedFromFirebase = true; 
         
@@ -968,8 +972,6 @@ async function processLoadedData() {
             // 2. 👑 線上開機防爆核心：如果當前廣播沒帶成員（例如純留言更新），且目前字典是空的
             if ((!membersArray || membersArray.length === 0) && Object.keys(window.userNameMap).length === 0) {
                 console.log("🛡️ [防護警報] 發現線上版開機時序錯位（字典真空），立刻穿透雲端強制回填名單...");
-                
-                // 直接利用你一開機就建立的唯讀或即時路徑，去把 members 節點撈出來強制灌滿字典
                 if (data.members) {
                     membersArray = extractMembers(data.members);
                 }
@@ -990,7 +992,7 @@ async function processLoadedData() {
                 });
             }
             
-            // 2. 判斷身分與 Checklist 狀態 (以下一併完美維持你原本的所有重繪分流不動)
+            // 2. 判斷身分與 Checklist 狀態
             checkUserMemberStatus(data);
             
             const currentConfigStr = JSON.stringify(data.config || {});
@@ -1002,13 +1004,20 @@ async function processLoadedData() {
                 if (typeof renderDynamicUI === 'function') renderDynamicUI(data);
             }
 
+            // 👑【首頁人數接管】：執行首頁人數精算
             if (typeof fetchResults === 'function') {
                 fetchResults(data); 
+            }
+
+            // 👑【全時名單同步神盾】：移除舊有的三處 RWD 攔截死鎖，只要資料一動，100% 實時重繪內頁名單！
+            if (typeof renderPeoplePage === 'function') {
+                renderPeoplePage(data);
             }
 
             const activeSection = document.querySelector('.view-section.active');
             const currentActiveId = activeSection ? activeSection.id : "";
 
+            // 🚀 以下進入純淨版 RWD 頁面換頁渲染分流（已砍掉打架的 renderPeoplePage 舊包袱）
             if (currentActiveId === 'view-add-fee' || currentActiveId === 'view-custom-split-page') {
                 if (typeof renderFeesPage === 'function') renderFeesPage(data); 
             } 
@@ -1023,7 +1032,7 @@ async function processLoadedData() {
                     } else {
                         lastMessagesCount = cloudMsgCount;
                         if (typeof renderDynamicUI === 'function') renderDynamicUI(data);
-                        if (typeof renderPeoplePage === 'function') renderPeoplePage(data);
+                        // ❌ 原本卡死在這裡的舊 renderPeoplePage 已經被安全融解到最外層了！
                     }
                 } else {
                     checkUserMemberStatus(data); 
@@ -1034,7 +1043,7 @@ async function processLoadedData() {
                     const cloudMsgArray = Array.isArray(data.messages) ? data.messages : Object.values(data.messages || {});
                     lastMessagesCount = cloudMsgArray.length;
                 }
-                if (typeof renderPeoplePage === 'function') renderPeoplePage(data);
+                // ❌ 原本卡死在這裡的舊 renderPeoplePage 已經被安全融解到最外層了！
                 if (currentActiveId === 'view-fees' && typeof renderFeesPage === 'function') {
                     renderFeesPage(data);
                 }
