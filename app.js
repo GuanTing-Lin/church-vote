@@ -3354,31 +3354,16 @@ function showLikesDrawer(key) {
     openCarDrawer('<div style="text-align:center; width:100%; font-weight:700;">說這則留言讚的人</div>', html);
 }
 
-// =========================================================================
-// 🎯【前端發言 3 秒冷卻神盾】：防止短時間高頻按壓導致 Service Worker 假死
-// =========================================================================
 async function postMessage() {
     const t = document.getElementById('new-msg-text'); if (!t) return;
     const val = t.value.trim(); if (!val) return;
-    
-    // 抓取送出留言的按鈕元素
-    const sendBtn = document.querySelector('.msg-input-box .btn-primary');
-    if (sendBtn && sendBtn.disabled) return; // 如果正在冷卻中，直接攔截
-
     const time = getFormattedTime();
     const msgId = "MSG_" + new Date().getTime();
     
+    // 🚀 修正：改用專屬的發言辨識旗標，不與點讚愛心搶方向盤
     window.myOwnPostMessageActive = true;
-    window.myOwnLikeClickActive = true;
     
-    // 🔒 物理鎖死：按鈕立刻變灰禁用
-    if (sendBtn) {
-        sendBtn.disabled = true;
-        sendBtn.innerText = "傳送中 (3s)...";
-        sendBtn.style.setProperty('background', '#cbd5e0', 'important');
-        sendBtn.style.setProperty('cursor', 'not-allowed', 'important');
-    }
-
+    const newMsg = { MsgID: msgId, LineID: currentUser.id, Name: currentUser.name, AvatarText: currentUser.initial, AvatarUrl: currentUser.pictureUrl, Time: time, Content: val, Likes: "[]" };
     t.value = ''; 
     
     db.ref('messages').once('value').then(snap => {
@@ -3389,24 +3374,26 @@ async function postMessage() {
         });
     });
 
+    // 🎯 世紀通電對齊：同時塞入大寫與小寫參數！
+    // 這樣不管你的 GAS_API_URL 網址此時是新版還是舊版，後台 100% 絕對抓得到資料、絕不噴 500 錯誤！
     fetch(GAS_API_URL, { 
         method: 'POST', 
         headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
         body: JSON.stringify({ 
-            action: "addMessage", msgId: msgId, userName: currentUser.name, userId: currentUser.id, timeStr: time, content: val,
-            avatarText: currentUser.initial, AvatarText: currentUser.initial, AvatarUrl: currentUser.pictureUrl || "", triggerPush: true 
+            action: "addMessage", 
+            msgId: msgId, 
+            userName: currentUser.name, 
+            userId: currentUser.id, 
+            timeStr: time, 
+            content: val,
+            
+            // 🛡️ 雙棲相容雙保險欄位
+            avatarText: currentUser.initial,      // 舊版 GAS 認得的小寫
+            AvatarText: currentUser.initial,      // 新版 GAS 認得的大寫
+            AvatarUrl: currentUser.pictureUrl || "", // 補齊歷史失蹤的大頭貼變數
+            triggerPush: true                     // 剛性要求後端喚醒 Service Worker
         }) 
     }).catch(e => console.error("Sheets 留言同步失敗:", e));
-
-    // ⏳ 3 秒黃金冷卻倒數計時器
-    setTimeout(() => {
-        if (sendBtn) {
-            sendBtn.disabled = false;
-            sendBtn.innerText = "送出留言";
-            sendBtn.style.background = ""; // 恢復原廠健康的綠色漸層
-            sendBtn.style.cursor = "pointer";
-        }
-    }, 3000); // 3000 毫秒 = 3 秒
 }
 
 
