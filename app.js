@@ -332,6 +332,41 @@ function requestPushPermission(fromToggle = false) {
 }
 
 // =========================================================================
+// 👑【FCM Token 背景電擊甦醒神盾 ── 全自動通知防斷線機制】
+// 💡 規則：100% 靜音默默執行！不跳出任何彈窗，開機時自動向 Google 對齊最新 Token，防止通知失效
+// =========================================================================
+function silentlyRefreshPushToken() {
+    // 🛡️ 保險 A：如果裝置不支援通知，或者使用者根本沒在系統內允許通知權限，直接退場
+    if (!('Notification' in window) || !firebase.messaging.isSupported() || Notification.permission !== 'granted') {
+        return;
+    }
+
+    // 🚀 進入背景靜音連線巡邏
+    navigator.serviceWorker.ready.then((registration) => {
+        const messaging = firebase.messaging();
+        messaging.getToken({ 
+            vapidKey: 'BNtbU-i7ale_MCnwVr_lgCjQCHxugB1IffWBtjgCyQQo1GP03bqca2NQAYYkUYS0vUE4YmW8ncHuX4dyJ0OMS7U',
+            serviceWorkerRegistration: registration 
+        }).then((currentToken) => {
+            if (currentToken && currentUser && currentUser.id) {
+                const myLocalToken = localStorage.getItem('myDeviceFCMToken');
+                
+                // 💡 智慧識別：只有當 Google 發給我的新 Token 跟本地快取不同、或者 Firebase 上的不同時，才執行回寫
+                if (currentToken !== myLocalToken) {
+                    console.log("⚡ [通知雷達] 偵測到本機過期或全新的 Token，背景無縫覆蓋寫入資料庫...");
+                    localStorage.setItem('myDeviceFCMToken', currentToken);
+                    db.ref('pushTokens/' + currentUser.id).set(currentToken);
+                } else {
+                    console.log("🤖 [通知雷達] 經對齊，當前裝置的 Token 狀態十分健康，不需重寫。");
+                }
+            }
+        }).catch((err) => {
+            console.log("⏳ [通知雷達] 背景 Token 對齊暫時遇到網路波動，下趟喚醒再試：", err);
+        });
+    });
+}
+
+// =========================================================================
 // 🎯 [單一函數修補 ── getLikesIgStyle 卡片面按讚人名轉譯大腦]
 // 💡 修正原理：調整轉譯時序，先完整轉譯人名再判斷字串長度，徹底降維打擊 U4b8d864 亂碼！
 // =========================================================================
@@ -867,7 +902,11 @@ window.onload = async function() {
                 })
         }).catch(e => console.log("測試帳號同步失敗"));
 
+        // 【第一處修改】：本機測試環境加載完畢後，執行 Token 背景自動防護
         await processLoadedData();
+        if (typeof silentlyRefreshPushToken === 'function') {
+            silentlyRefreshPushToken();
+        }
         return;
     } 
                 
@@ -898,7 +937,11 @@ window.onload = async function() {
                     if (p.pictureUrl) document.getElementById('user-avatar').innerHTML = `<img src="${p.pictureUrl}" style="width:100%;height:100%;object-fit:cover;">`;
                     else document.getElementById('user-avatar').innerText = currentUser.initial;
                     
+                    // 【第二處修改】：手機 LINE 線上環境加載完畢後，同步執行 Token 背景自動防護
                     await processLoadedData();
+                    if (typeof silentlyRefreshPushToken === 'function') {
+                        silentlyRefreshPushToken();
+                    }
                 } else { liff.login(); }
             } catch (err) { 
                 console.error('LIFF 失敗', err);
@@ -4088,8 +4131,13 @@ function openEditFeePage(feeId) {
 
     // 🎯 修正：點開舊卡片編輯時，讓外層下拉選單不論「單人」或「多人」都能完美亮起橘色 ● 付款人 標記
     activeMembers.forEach(m => {
-        const uid = m['LINE ID'] || m['LINEID'];
-        const uName = m['LINE 名稱'] || m['LINE名稱'] || "未命名";
+        const uid = (m['LINE ID'] || m['LINEID'] || "").trim();
+        const uName = (m['LINE 名稱'] || m['LINE名稱'] || "未命名").trim();
+        
+        // 🛡️ 👑【上線安全防線】：剛性沒收測試帳號權限，就地蒸發不殘留 DOM
+        if (uid === "test_user_001" || uName === "開發者(測試)") {
+            return;
+        }
         
         let voterPic = window.userAvatarMap[uid] || "";
         let voterInitial = uName ? uName[0] : "?";
@@ -5135,23 +5183,11 @@ async function toggleSettlementLock(checkbox) {
 }
 
 // =========================================================================
-// 💰 [通用型雙棲大腦]：一鍵切換「誰先付錢」與「如何分攤」核心連動架構
-// =========================================================================
-
-// 狀態引信：'payer' 代表誰先付錢頁面，'voter' 代表如何分攤頁面
-window.currentSplitMode = 'voter'; 
-window.customPayersCache = null; // 儲存混合付款人的金額
-// =========================================================================
 // 🌐 [雙棲智慧通用大腦 - 終極完全體] 包含轉場、勾勾切換與真隨機防漏發牌演算法
 // =========================================================================
 
 window.currentSplitMode = 'voter'; 
 window.customPayersCache = null; 
-
-// =========================================================================
-// 🌐 [如何分攤 - 智慧通用三模大腦] 
-// 對齊 LightSplit：手動輸入(深黑) + 智慧均分(灰色Placeholder) + 未選剔除(全列反灰)
-// =========================================================================
 
 // =========================================================================
 // 🌐 [如何分攤 / 誰先付錢 - 滿血修復通電版大腦]
@@ -5184,8 +5220,13 @@ function goToCustomSplitPage(mode = 'voter') {
 
     let rowsHtml = "";
     activeMembers.forEach((m) => {
-        const uid = m['LINE ID'] || m['LINEID'];
-        const uName = m['LINE 名稱'] || m['LINE名稱'] || "未命名";
+        const uid = (m['LINE ID'] || m['LINEID'] || "").trim();
+        const uName = (m['LINE 名稱'] || m['LINE名稱'] || "未命名").trim();
+        
+        // 🛡️ 👑【上線外殼防線】：獨立分帳內頁同步就地蒸發測試人頭，乾淨俐落！
+        if (uid === "test_user_001" || uName === "開發者(測試)") {
+            return;
+        }
         
         let voterPic = window.userAvatarMap[uid] || "";
         let voterInitial = uName ? uName[0] : "?";
