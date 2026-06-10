@@ -4296,8 +4296,16 @@ function openAddFeePage() {
     });
 
     activeMembers.forEach(m => {
-        const uid = m['LINE ID'] || m['LINEID'];
-        const uName = m['LINE 名稱'] || m['LINE名稱'] || "未命名";
+        const uid = (m['LINE ID'] || m['LINEID'] || "").trim();
+        const uName = (m['LINE 名稱'] || m['LINE名稱'] || "未命名").trim();
+        
+        // 🛡️ 👑【環境智慧分流防線】：只有當「非本地環境（線上環境）」時，才剛性封鎖測試帳號！
+        // 這樣可以完美確保你自己在 localhost 電腦開發時看得見、用得著，推上網頁後組員絕對看不到！
+        if (!isLocalEnv) {
+            if (uid === "test_user_001" || uName === "開發者(測試)") {
+                return; // 線上就地蒸發
+            }
+        }
         
         let voterPic = window.userAvatarMap[uid] || "";
         let voterInitial = uName ? uName[0] : "?";
@@ -4305,7 +4313,7 @@ function openAddFeePage() {
             ? `<img src="${voterPic}" style="width:24px; height:24px; object-fit:cover; border-radius:50%; flex-shrink:0;">`
             : `<div style="width:24px; height:24px; border-radius:50%; background:linear-gradient(135deg, var(--primary-orange), #ff8c00); color:white; display:flex; justify-content:center; align-items:center; font-size:11px; font-weight:700; flex-shrink:0;">${voterInitial}</div>`;
 
-        // 誰先付錢單選列表
+        // 誰先付錢單選列表 (預設帶入本人 isMe 特權)
         const isMe = uid === currentUser.id;
         payerDropdownHtml += `
             <div class="fee-dropdown-payer-row ${isMe ? 'selected-payer' : ''}" data-uid="${uid}" data-name="${uName}" onclick="selectFeePayerCore(this, event)">
@@ -4316,7 +4324,6 @@ function openAddFeePage() {
         `;
 
         // 如何分攤多選打勾列表 (預設全選 active)
-        /* 💡 核心修復：100% 對齊修改頁面的 DOM 結構，補齊 data-checked="1"，消除時序誤差 */
         votersGridHtml += `
             <div class="fee-dropdown-member-row active" data-uid="${uid}" onclick="syncDropdownMemberClick(this, event)">
                 <div class="fee-custom-checkbox" data-checked="1"></div>
