@@ -915,6 +915,19 @@ window.onload = async function() {
             clearInterval(checkLiff);
             try {
                 await liff.init({ liffId: LIFF_ID });
+                
+                const isLineBrowser = /Line/i.test(navigator.userAgent);
+                const urlParams = new URLSearchParams(window.location.search);
+                
+                if (isLineBrowser && !urlParams.get('openExternalBrowser')) {
+                    console.log("📱 偵測到 LINE 內置瀏覽器，啟動免帳密外部跳轉通道...");
+                    liff.openWindow({
+                        url: window.location.href + (window.location.search ? '&' : '?') + 'openExternalBrowser=1',
+                        external: true
+                    });
+                    return; // 剛性攔截：讓 LINE 內建視窗安靜關閉，不往下走重覆登入
+                }
+
                 if (liff.isLoggedIn()) {
                     const p = await liff.getProfile();
                     currentUser = { name: p.displayName, id: p.userId, pictureUrl: p.pictureUrl, initial: p.displayName[0] };
