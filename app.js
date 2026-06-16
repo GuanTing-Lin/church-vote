@@ -1800,10 +1800,56 @@ function renderNoticesWithMagic(cfg) {
 } // 👑 【補上結束大括號】：後半段所有被掐斷的 PWA、FCM 監聽程式碼瞬間滿血接通！
 
 // =========================================================================
-// 🎛️ [最高指揮官 switchView - 世紀 Bug 終結完全體通電版]
-// 100% 剛性解鎖主殼，完美對位返回鍵與綠色浮動按鈕，絕不破版！
+// 🎯 👑【最高指揮官換頁核心 ── 退場防呆滿血融合版】
+// 💡 修正：完美保留你原廠的所有訪客鎖、首頁刷新與費用隱藏邏輯，並在最前端掛載防退場彈窗！
 // =========================================================================
 function switchView(t) {
+    // 🛡️ 1. 【核心新增：公告退場防呆手煞車攔截器】
+    // 🔍 實時核對：我們目前是不是正在「公告管理後台」，而且使用者想要切換去其他地方？
+    const currentActiveSection = document.querySelector('.view-section.active');
+    const currentViewId = currentActiveSection ? currentActiveSection.id : "";
+    
+    if (currentViewId === 'view-admin-notices' && t !== 'admin-notices' && window.isNoticePageDirty === true) {
+        if (navigator.vibrate) navigator.vibrate(50); // 輕微震動提示
+        
+        // 喚醒自訂的模態視窗（Modal）來充當防呆警告
+        document.getElementById('modal-title').innerText = "內容尚未儲存！";
+        const descEl = document.getElementById('modal-desc');
+        if (descEl) {
+            descEl.innerText = "未儲存的內容將會遺失\n確定要直接離開嗎？";
+            descEl.style.display = 'block';
+        }
+        
+        // 隱藏其他不相關的彈窗輸入框欄位
+        if (document.getElementById('modal-input-wrapper')) document.getElementById('modal-input-wrapper').style.display = 'none';
+        if (document.getElementById('modal-textarea')) document.getElementById('modal-textarea').style.display = 'none';
+        
+        // 配置「留在本頁」與「確定離開」的按鈕行為
+        const btnCancel = document.getElementById('modal-btn-cancel');
+        const btnConfirm = document.getElementById('modal-btn-confirm');
+        if (btnCancel) {
+            btnCancel.style.display = 'block';
+            btnCancel.innerText = "留在本頁";
+            btnCancel.onclick = function() { closeModal(); }; // 留下來，關閉彈窗
+        }
+        if (btnConfirm) {
+            btnConfirm.style.display = 'block';
+            btnConfirm.innerText = "確定離開";
+            btnConfirm.onclick = function() {
+                window.isNoticePageDirty = false; // 🔓 強制沒收髒資料宣告，放行解鎖
+                closeModal();
+                switchView(t); // 重新放行呼叫換頁，這次就會安全滑過去了
+            };
+        }
+        
+        if (document.getElementById('modal-btn-group')) document.getElementById('modal-btn-group').style.display = 'flex';
+        if (document.getElementById('custom-modal')) document.getElementById('custom-modal').style.display = 'flex';
+        return; // 🛑 剛性沒收換頁指令，將畫面死死扣在後台頁面，不往下執行換頁！
+    }
+
+    // =========================================================================
+    // 2. 【以下為你原廠健康的萬行代碼，100% 完璧保留不動】
+    // =========================================================================
     const topNav = document.querySelector('.top-nav');
     const mainAppEl = document.getElementById('app'); 
     
@@ -2062,13 +2108,49 @@ function handleAdminLogin() {
     });
 }
 
+// =========================================================================
+// 🎯 👑【管理員後台公告 ── 全域退場髒資料防線偵測雷達】
+// =========================================================================
+window.isNoticePageDirty = false; // 全域追蹤變數
+
+function initAdminNoticeDirtyTracker() {
+    const container = document.getElementById('admin-notice-list-container');
+    if (!container) return;
+    
+    // 監聽內層所有的打字與變更
+    container.addEventListener('input', (e) => {
+        if (e.target.classList.contains('admin-n-title') || e.target.classList.contains('admin-n-desc') || e.target.classList.contains('admin-n-img')) {
+            window.isNoticePageDirty = true;
+            console.log("⚠️ 偵測到管理員修改了公告內容，已啟用退場防呆手煞車...");
+        }
+    });
+    
+    container.addEventListener('change', (e) => {
+        if (e.target.classList.contains('admin-n-type') || e.target.classList.contains('admin-n-visible')) {
+            window.isNoticePageDirty = true;
+            console.log("⚠️ 偵測到管理員變更了公告狀態/標籤，已啟用退場防呆手煞車...");
+        }
+    });
+}
+
+// 修正：每次點擊「開啟公告管理」的當下，順手初始化這個雷達，並歸零防呆狀態！
 function openAdminNotices() {
     let html = "";
     adminNoticesArray.forEach((n) => { html += generateNoticeInputHTML(n); });
     document.getElementById('admin-notice-list-container').innerHTML = html;
+    
+    // 🚀【新加的防呆核心】：一進來網頁時是乾淨的，並在 0.1 秒後掛載監聽雷達
+    window.isNoticePageDirty = false; 
+    setTimeout(() => { initAdminNoticeDirtyTracker(); }, 100);
+    
     switchView('admin-notices'); 
     initAdminDragAndDrop();
 }
+
+// 歷史相容引信
+function initAdminNoticeTrackerFix() { setTimeout(() => { initAdminNoticeDirtyTracker(); }, 100); }
+
+
 
 function generateNoticeInputHTML(notice = {id:'', title:'', desc:'', imgUrl:'', time:'', type:'', isHidden: false}) {
     const today = new Date();
@@ -2150,7 +2232,18 @@ function insertMagicTag(btnElement, tag) {
 
 function addAdminNoticeField() { 
     const container = document.getElementById('admin-notice-list-container'); 
-    container.insertAdjacentHTML('beforeend', generateNoticeInputHTML()); 
+    if (container) {
+        // 1. 讓全新空白卡片直接誕生在最頂部
+        container.insertAdjacentHTML('afterbegin', generateNoticeInputHTML()); 
+        
+        // 🚀 2. 核心加固：點擊的當下，強迫整張網頁的滾動軸以絲滑速度（smooth）直接扯回地表最頂端！
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+        
+        console.log("📥 已新增空白公告至最頂端，並自動校正視窗捲動軸歸零。");
+    }
 }
 
 function removeAdminNoticeField(btn) { btn.closest('.admin-notice-block').remove(); }
@@ -2160,68 +2253,87 @@ function initAdminDragAndDrop() {
     if (window.Sortable) { new Sortable(container, { handle: '.drag-handle', animation: 150, ghostClass: 'dragging' }); }
 }
 
+// =========================================================================
+// 🎯 👑【儲存公告核心大腦 ── 終極無損 100% 單次點擊儲存神盾】
+// 💡 修正：全面解除與 Itinerary 錯位的防呆攔截，點擊第一次當場就地儲存並重置髒資料！
+// =========================================================================
 async function saveAdminNotices() {
     let tempNotices = [];
-    let hasError = false; // 防呆旗標
+    let hasError = false; 
     
-    // 每次儲存前，先清除之前可能殘留的紅框警告樣式
+    // 清除所有紅色警告樣式
     document.querySelectorAll('.admin-n-title').forEach(el => {
         el.style.border = "1px solid rgba(0,0,0,0.15)";
         el.style.boxShadow = "none";
     });
 
-    // 檢查每一個公告區塊
     const blocks = document.querySelectorAll('.admin-notice-block');
     for (let block of blocks) {
         const titleInput = block.querySelector('.admin-n-title');
-        const title = titleInput.value.trim();
+        const title = titleInput ? titleInput.value.trim() : "";
         
-        // 防呆：如果標題是空的
-        if (!title) {
+        // 只有真的完全空白才擋，其餘一律放行
+        if (titleInput && title === "") {
             hasError = true;
-            // 讓輸入框變成紅色警告狀態
             titleInput.style.border = "2px solid #ff4d4f";
             titleInput.style.boxShadow = "0 0 8px rgba(255, 77, 79, 0.25)";
-            
-            // 平滑滾動到出錯的那個公告區塊，並把畫面置中
             block.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            // 滾動完後，自動將游標對焦進去讓使用者立刻打字 (延遲一下等捲動完)
-            setTimeout(() => titleInput.focus(), 600);
-            
-            break; // 只要找到一個沒填的，就立刻中斷檢查迴圈
+            setTimeout(() => titleInput.focus(), 300);
+            break; 
         }
 
-        // 若檢查通過，把資料裝起來
         const id = block.getAttribute('data-id'); 
         const type = block.querySelector('.admin-n-type').value;
-        let rawDateInput = block.querySelector('.admin-n-time').value.replace(/\[PIN\]/g, '').replace(/\[NEW\]/g, '').trim();
+        const timeInputEl = block.querySelector('.admin-n-time');
+        let rawDateInput = timeInputEl ? timeInputEl.value.replace(/\[PIN\]/g, '').replace(/\[NEW\]/g, '').trim() : "";
+        
         const timeRaw = rawDateInput; 
         const time = type + timeRaw; 
         const desc = block.querySelector('.admin-n-desc').value.trim();
         const imgUrl = block.querySelector('.admin-n-img').value.trim();
         const isHidden = !block.querySelector('.admin-n-visible').checked; 
         
-        tempNotices.push({ id, title, desc, imgUrl, timeRaw, time, type, isHidden });
+        if (title) {
+            tempNotices.push({ id, title, desc, imgUrl, timeRaw, time, type, isHidden });
+        }
     }
-    if (hasError) return; 
-    // ================== 防呆通過，開始正式寫入 ==================
-    const btn = document.getElementById('btn-save-notices');
-    btn.innerText = "資料儲存中..."; btn.disabled = true;
     
-    let pinnedNotices = tempNotices.filter(n => n.type === '[PIN]');
-    let normalNotices = tempNotices.filter(n => n.type !== '[PIN]');
-    pinnedNotices.sort((a, b) => { return new Date(b.timeRaw.replace(/-/g, '/')).getTime() - new Date(a.timeRaw.replace(/-/g, '/')).getTime(); });
-    let newNotices = [...pinnedNotices, ...normalNotices];
+    if (hasError) return; 
+
+    const btn = document.getElementById('btn-save-notices');
+    if (btn) { btn.innerText = "資料儲存中..."; btn.disabled = true; }
     
     showCustomAlert("資料儲存中", "資料正在寫入資料庫...", false);
     
+    let pinnedNotices = tempNotices.filter(n => n.type === '[PIN]');
+    let normalNotices = tempNotices.filter(n => n.type !== '[PIN]');
+    
+    pinnedNotices.sort((a, b) => { 
+        return new Date(b.timeRaw.replace(/-/g, '/')).getTime() - new Date(a.timeRaw.replace(/-/g, '/')).getTime(); 
+    });
+    let newNotices = [...pinnedNotices, ...normalNotices];
+    
+    // 👑 關鍵覆蓋：立馬重置前後台快取，解除推播按鈕的 Dirty 警報！
+    adminNoticesArray = JSON.parse(JSON.stringify(newNotices));
+    if (cachedPollData && cachedPollData.config) {
+        cachedPollData.config.NoticesData = JSON.stringify(newNotices);
+    }
+
+    // 👑 沒收退場防呆：既然都要儲存退出了，就地重置髒資料宣告，防止彈出警示！
+    window.isNoticePageDirty = false;
+
+    // 寫入 Firebase
     db.ref('config/NoticesData').set(JSON.stringify(newNotices)).then(() => {
         closeModal();
         switchView('overview');
-        btn.innerText = "儲存所有變更"; btn.disabled = false;
+        if (btn) { btn.innerText = "儲存所有變更"; btn.disabled = false; }
+    }).catch(err => {
+        closeModal();
+        showCustomAlert("儲存失敗", "請檢查網路連線：" + err.message);
+        if (btn) { btn.innerText = "儲存所有變更"; btn.disabled = false; }
     });
 }
+
 // 🌟 1. 轉換器：將任何舊時間轉成純 24 小時制
 function convertTo24Hour(timeStr) {
     if (!timeStr) return "08:00";
@@ -3501,25 +3613,55 @@ async function postMessage() {
 }
 
 
+// =========================================================================
+// 🎯 👑【單一公告推播指揮官 ── 專屬內容髒資料檢查防線】
+// 💡 規則：只有在點擊此推播按鈕時，才動態精算標題內容有沒有被修改過！
+// =========================================================================
 function pushSingleNotice(noticeId, btn) {
     const blocks = document.querySelectorAll('.admin-notice-block');
-    let isDirty = false;
+    let isCurrentNoticeDirty = false;
+    
+    // 🔍 動態精算：只在點擊推播的這一個瞬間，去核對目前輸入框跟全域已儲存快照的差異
     for (let block of blocks) {
         if (block.getAttribute('data-id') === noticeId) {
             const titleEl = block.querySelector('.admin-n-title');
             const descEl = block.querySelector('.admin-n-desc');
             const currentTitle = titleEl ? titleEl.value.trim() : "";
             const currentDesc = descEl ? descEl.value.trim() : "";
+            
+            // 去比對我們開機或儲存成功時留在記憶體裡的原始數據
             const original = adminNoticesArray.find(n => n.id === noticeId);
-            if (!original || original.title !== currentTitle || original.desc !== currentDesc) isDirty = true;
+            
+            // 💡 核心識別：如果查無此公告（代表是新按加出來的），或者字被改過了
+            if (!original || original.title !== currentTitle || original.desc !== currentDesc) {
+                isCurrentNoticeDirty = true;
+            }
             break;
         }
     }
-    if (isDirty) { showCustomAlert("提示", "您修改了公告內容！\n請先「儲存所有變更」，才能發送最新通知。"); return; }
+    
+    // 🚨 只有推播會被這個警報攔截！常規儲存點擊絕對不會被干擾！
+    if (isCurrentNoticeDirty) { 
+        showCustomAlert("提示", "您修改了公告內容！\n請先點擊底部的「儲存所有變更」，才能發送最新推播通知喔。"); 
+        return; 
+    }
+    
     const targetNotice = adminNoticesArray.find(n => n.id === noticeId);
     if (!targetNotice) return;
+    
     btn.innerText = "發送中..."; btn.disabled = true;
-    fetch(GAS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: "pushNoticeBroadcast", title: targetNotice.title, content: targetNotice.desc, noticeId: noticeId }) }).then(res => res.text()).then(resText => { showCustomAlert("發送成功", "公告已順利推播！"); }).catch(err => { showCustomAlert("錯誤", "發送失敗：" + err.message); }).finally(() => { btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform: translateY(-0.5px);"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg> 推播公告`; btn.disabled = false; });
+    fetch(GAS_API_URL, { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+        body: JSON.stringify({ action: "pushNoticeBroadcast", title: targetNotice.title, content: targetNotice.desc, noticeId: noticeId }) 
+    }).then(res => res.text()).then(resText => { 
+        showCustomAlert("發送成功", "公告已順利推播！"); 
+    }).catch(err => { 
+        showCustomAlert("錯誤", "發送失敗：" + err.message); 
+    }).finally(() => { 
+        btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform: translateY(-0.5px);"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg> 推播公告`; 
+        btn.disabled = false; 
+    });
 }
 
 function handleMessageDeepLink(msgId) {
