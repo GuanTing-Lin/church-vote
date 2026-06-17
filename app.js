@@ -766,25 +766,24 @@ function initMentionLogic() {
 }
 
 // =========================================================================
-// 🎯 👑【全站輸入框失焦神盾 ── 公告+行程後台雙強聯防完全體】
-// 💡 修正：當管理員人在後台編輯「公告」或「行程」時，失焦絕對不允許亂滾動拉扯畫面！
+// 🎯 👑【全站輸入框失焦神盾 ── 公告 + 行程後台雙強聯防安全完全體】
 // =========================================================================
 document.addEventListener('focusout', function(e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
         console.log("⌨️ 偵測到手機輸入框失去焦點，啟動平滑歸位防死鎖機制...");
         
-        // 🚀 僅保留安全的微調滾動，徹底移除會吞掉儲存點擊的全域重繪！
+        // 🚀 僅保留最安全的手機原生微調滾動，徹底移除會吞掉儲存點擊、引發當機的重繪！
         window.scrollTo(0, Math.max(0, document.documentElement.scrollTop - 1));
         
         setTimeout(() => {
-            // 🔒 剛性隔離白名單：
-            // 如果管理員目前人在「編輯公告(admin-notices)」或「編輯行程(admin-itinerary)」，全數禁止將視窗強制歸零！
+            // 🔒 剛性隔離白名單防線：
+            // 如果管理員目前人在「編輯公告(admin-notices)」或「編輯行程(admin-itinerary)」，全數禁止將視窗強制拉扯歸零！
             const activeSec = document.querySelector('.view-section.active');
             const currentActiveId = activeSec ? activeSec.id : "";
             
             const protectedViews = [
                 'view-admin-notices', 
-                'view-admin-itinerary', // 精準鎖定你的行程後台 ID
+                'view-admin-itinerary', // 🎯 精準鎖定行程編輯後台分頁
                 'view-add-fee'
             ];
             
@@ -1035,8 +1034,8 @@ async function processLoadedData() {
     }
 
     // =========================================================================
-    // 🎯 👑【Firebase 雲端全域即時分流監聽器 ── 終極純淨化版】
-    // 💡 規則：解鎖內頁名單死鎖，完美保留原本健康的記帳與分頁重繪分流
+    // 🎯 👑【Firebase 雲端全域即時分流監聽器 ── 雙棲大小寫相容純淨版】
+    // 💡 修正：徹底移除資料結構 console.log 監看，維持最輕量、體感 0 延遲的即時重繪！
     // =========================================================================
     db.ref('/').on('value', snapshot => {
         hasLoadedFromFirebase = true; 
@@ -1057,7 +1056,6 @@ async function processLoadedData() {
 
             // 2. 👑 線上開機防爆核心：如果當前廣播沒帶成員（例如純留言更新），且目前字典是空的
             if ((!membersArray || membersArray.length === 0) && Object.keys(window.userNameMap).length === 0) {
-                console.log("🛡️ [防護警報] 發現線上版開機時序錯位（字典真空），立刻穿透雲端強制回填名單...");
                 if (data.members) {
                     membersArray = extractMembers(data.members);
                 }
@@ -1078,6 +1076,37 @@ async function processLoadedData() {
                 });
             }
             
+            // 🛡️ 雙軌相容隔離防線：如果主路徑沒有，去備援路徑強撈
+            if (!data.itinerary && data.config && data.config.ItineraryData) {
+                try {
+                    cachedPollData.itinerary = JSON.parse(data.config.ItineraryData);
+                } catch(e) {
+                    cachedPollData.itinerary = [];
+                }
+            }
+            
+            // =========================================================================
+            // 🛡️ 👑【大小寫剛性過濾過濾網】── 沒收小寫造成的讀取真空，100% 打通前台！
+            // =========================================================================
+            if (cachedPollData.itinerary && Array.isArray(cachedPollData.itinerary)) {
+                cachedPollData.itinerary = cachedPollData.itinerary.map(item => {
+                    if (!item) return item;
+                    return {
+                        id: item.id || item.id || "",
+                        Day: item.Day || item.day || "Day 1",
+                        Time: item.Time || item.time || "08:00",
+                        Title: item.Title || item.title || "",
+                        Desc: item.Desc || item.desc || "",
+                        Link: item.Link || item.link || ""
+                    };
+                });
+            }
+            
+            // 🚀 重繪前台詳細行程時間軸 (乾淨無 log 版本)
+            if (typeof renderItineraryTimeline === 'function') {
+                renderItineraryTimeline(cachedPollData);
+            }
+            
             // 2. 判斷身分與 Checklist 狀態
             checkUserMemberStatus(data);
             
@@ -1095,7 +1124,7 @@ async function processLoadedData() {
                 fetchResults(data); 
             }
 
-            // 👑【全時名單同步神盾】：移除舊有的三處 RWD 攔截死鎖，只要資料一動，100% 實時重繪內頁名單！
+            // 👑 {全時名單同步神盾}
             if (typeof renderPeoplePage === 'function') {
                 renderPeoplePage(data);
             }
@@ -1103,7 +1132,7 @@ async function processLoadedData() {
             const activeSection = document.querySelector('.view-section.active');
             const currentActiveId = activeSection ? activeSection.id : "";
 
-            // 🚀 以下進入純淨版 RWD 頁面換頁渲染分流（已砍掉打架的 renderPeoplePage 舊包袱）
+            // 🚀 以下進入純淨版 RWD 頁面換頁渲染分流
             if (currentActiveId === 'view-add-fee' || currentActiveId === 'view-custom-split-page') {
                 if (typeof renderFeesPage === 'function') renderFeesPage(data); 
             } 
@@ -1118,7 +1147,6 @@ async function processLoadedData() {
                     } else {
                         lastMessagesCount = cloudMsgCount;
                         if (typeof renderDynamicUI === 'function') renderDynamicUI(data);
-                        // ❌ 原本卡死在這裡的舊 renderPeoplePage 已經被安全融解到最外層了！
                     }
                 } else {
                     checkUserMemberStatus(data); 
@@ -1129,13 +1157,13 @@ async function processLoadedData() {
                     const cloudMsgArray = Array.isArray(data.messages) ? data.messages : Object.values(data.messages || {});
                     lastMessagesCount = cloudMsgArray.length;
                 }
-                // ❌ 原本卡死在這裡的舊 renderPeoplePage 已經被安全融解到最外層了！
                 if (currentActiveId === 'view-fees' && typeof renderFeesPage === 'function') {
                     renderFeesPage(data);
                 }
             }
         }
     });
+    
 }
 
 let hasUpdatedMetadata = false; // 🌟 全域防護旗標，確保每趟連線只更新一次時間，不造成監聽無窮迴圈
@@ -2179,13 +2207,8 @@ function openAdminNotices() {
     adminNoticesArray.forEach((n) => { html += generateNoticeInputHTML(n); });
     document.getElementById('admin-notice-list-container').innerHTML = html;
     
-    // 進入頁面時初始化為乾淨狀態
+    // 進入頁面時初始化為乾淨狀態，不做任何額外的 addEventListener
     window.isNoticePageDirty = false; 
-    
-    // 調用外部獨立的靜音雷達，絕不允許在這裡面疊加二次監聽，徹底解決「點選任何欄位畫面都閃回最上方」！
-    if (typeof initAdminNoticeDirtyTracker === 'function') {
-        initAdminNoticeDirtyTracker();
-    }
     
     switchView('admin-notices'); 
     initAdminDragAndDrop();
@@ -2301,82 +2324,100 @@ function initAdminDragAndDrop() {
 }
 
 // =========================================================================
-// 🎯 👑【儲存公告核心大腦 ── 暴力覆蓋直接儲存版】
-// 💡 修正：第一時間剛性解除 Dirty 旗標，絕不引發 focusout 與 switchView 的回彈干擾！
+// 🎯 👑【詳細行程儲存核心 ── 雙軌同步覆蓋完全體】
+// 💡 修正：100% 留存此版，刪除舊版！大寫格式與 Firebase 完美對位，一次點擊直接跳頁更新！
 // =========================================================================
-async function saveAdminNotices(e) {
+function saveAdminItinerary(e) {
     if (e) {
         e.preventDefault();
         e.stopPropagation();
     }
 
-    // 🔒 強迫失焦：立刻讓當前正在編輯的藍色框框回填最新數據
+    // 🔒 物理絕殺：如果當前有任何行程欄位正在聚焦藍框，強迫它在 0 毫秒內立刻失焦！
+    // 提前把打字數值回填 HTML 節點，不給 focusout 監聽器任何卡時序、吞點擊的機會！
     if (document.activeElement && typeof document.activeElement.blur === 'function') {
         document.activeElement.blur();
     }
 
-    let tempNotices = [];
-    
-    // 👑 最高指令：直接就地將防溜走手煞車關閉！
-    // 這樣下方的 switchView 就不會產生誤判，保證點擊「第一次」直接完美存檔跳頁！
-    window.isNoticePageDirty = false;
+    let tempItin = [];
+    let hasError = false;
 
-    const blocks = document.querySelectorAll('.admin-notice-block');
-    for (let block of blocks) {
-        const titleInput = block.querySelector('.admin-n-title');
+    document.querySelectorAll('.itin-edit-title').forEach(el => {
+        el.style.border = "1px solid rgba(0,0,0,0.15)";
+    });
+
+    const rows = document.querySelectorAll('.admin-itin-item-row');
+    for (let row of rows) {
+        const titleInput = row.querySelector('.itin-edit-title');
         const title = titleInput ? titleInput.value.trim() : "";
-        const id = block.getAttribute('data-id'); 
+
+        if (titleInput && title === "") {
+            hasError = true;
+            titleInput.style.border = "2px solid #ff4d4f";
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => titleInput.focus(), 300);
+            break;
+        }
+
+        const id = row.getAttribute('data-id') || Math.random().toString(36).substring(2, 6);
         
-        const typeEl = block.querySelector('.admin-n-type');
-        const type = typeEl ? typeEl.value : "[NEW]";
+        const timeEl = row.querySelector('.itin-edit-time');
+        const time = timeEl ? timeEl.value.trim() : "08:00";
         
-        const timeInputEl = block.querySelector('.admin-n-time');
-        let rawDateInput = timeInputEl && timeInputEl.value ? timeInputEl.value.replace(/\[PIN\]/g, '').replace(/\[NEW\]/g, '').trim() : new Date().toISOString().split('T')[0];
-        
-        const timeRaw = rawDateInput; 
-        const time = type + timeRaw; 
-        
-        const descEl = block.querySelector('.admin-n-desc');
+        const descEl = row.querySelector('.itin-edit-desc');
         const desc = descEl ? descEl.value.trim() : "";
         
-        const imgUrlEl = block.querySelector('.admin-n-img');
-        const imgUrl = imgUrlEl ? imgUrlEl.value.trim() : "";
-        
-        const visibleEl = block.querySelector('.admin-n-visible');
-        const isHidden = visibleEl ? !visibleEl.checked : false; 
-        
+        const linkEl = row.querySelector('.itin-edit-link');
+        const link = linkEl ? linkEl.value.trim() : "";
+
+        const dayBlock = row.closest('.admin-day-block');
+        const day = dayBlock ? dayBlock.getAttribute('data-day') : "Day 1";
+
         if (title) {
-            tempNotices.push({ id, title, desc, imgUrl, timeRaw, time, type, isHidden });
+            // 👑【原廠大寫剛性防線】：完全符合你原廠大寫的 Day, Time, Title, Desc, Link 格式！
+            tempItin.push({ 
+                id: id, 
+                Day: day, 
+                Time: time, 
+                Title: title, 
+                Desc: desc, 
+                Link: link 
+            });
         }
     }
 
-    const btn = document.getElementById('btn-save-notices');
+    if (hasError) return;
+
+    const btn = document.getElementById('btn-save-itinerary');
     if (btn) { btn.innerText = "資料儲存中..."; btn.disabled = true; }
+
+    showCustomAlert("資料儲存中", "詳細行程正在寫入資料庫...", false);
+
+    window.isNoticePageDirty = false; // 解鎖換頁手煞車
     
-    showCustomAlert("資料儲存中", "資料正在寫入資料庫...", false);
-    
-    let pinnedNotices = tempNotices.filter(n => n.type === '[PIN]');
-    let normalNotices = tempNotices.filter(n => n.type !== '[PIN]');
-    
-    pinnedNotices.sort((a, b) => { 
-        return new Date(b.timeRaw.replace(/-/g, '/')).getTime() - new Date(a.timeRaw.replace(/-/g, '/')).getTime(); 
-    });
-    let newNotices = [...pinnedNotices, ...normalNotices];
-    
-    adminNoticesArray = JSON.parse(JSON.stringify(newNotices));
-    if (cachedPollData && cachedPollData.config) {
-        cachedPollData.config.NoticesData = JSON.stringify(newNotices);
+    // 即時回填全域快取
+    if (cachedPollData) {
+        cachedPollData.itinerary = tempItin;
+        if (!cachedPollData.config) cachedPollData.config = {};
+        cachedPollData.config.ItineraryData = JSON.stringify(tempItin);
     }
 
-    // 寫入 Firebase
-    db.ref('config/NoticesData').set(JSON.stringify(newNotices)).then(() => {
+    // 🚀【雙軌同步覆蓋發射】
+    db.ref('itinerary').set(tempItin);
+    db.ref('config/ItineraryData').set(JSON.stringify(tempItin)).then(() => {
         closeModal();
-        switchView('overview'); // 放行跳轉回首頁
-        if (btn) { btn.innerText = "儲存所有變更"; btn.disabled = false; }
+        
+        // 觸發即時重繪
+        if (typeof renderItineraryTimeline === 'function') {
+            renderItineraryTimeline(cachedPollData);
+        }
+        
+        switchView('itinerary'); // 存檔成功，綠燈直接放行，滑順回航前台分頁
+        if (btn) { btn.innerText = "儲存行程變更"; btn.disabled = false; }
     }).catch(err => {
         closeModal();
         showCustomAlert("儲存失敗", "請檢查網路連線：" + err.message);
-        if (btn) { btn.innerText = "儲存所有變更"; btn.disabled = false; }
+        if (btn) { btn.innerText = "儲存行程變更"; btn.disabled = false; }
     });
 }
 
@@ -2399,23 +2440,24 @@ function convertTo24Hour(timeStr) {
 }
 
 // 🌟 2. 產生單一條行程項目的 HTML
-function generateEventRowHTML(item = {Time:'', Title:'', Desc:'', Link:''}) {
-            let time24 = convertTo24Hour(item.Time);
-            return `
-                <div class="admin-itin-item-row">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <div style="display: flex; align-items: center; gap: 4px;">
-                            <span class="itin-drag-handle">☰</span>
-                            <input type="time" class="itin-edit-time" value="${time24}">
-                        </div>
-                        <button class="admin-delete-btn" onclick="this.closest('.admin-itin-item-row').remove()">刪除</button>
-                    </div>
-                    <input type="text" class="itin-edit-title" placeholder="行程名稱 (必填)" value="${item.Title || ''}">
-                    <textarea class="itin-edit-desc" placeholder="詳細內容...">${item.Desc || ''}</textarea>
-                    <input type="text" class="itin-edit-link" placeholder="Google Maps 連結 (選填)" value="${item.Link || ''}">
+function generateEventRowHTML(item = {time:'', title:'', desc:'', link:''}) {
+    // 這裡改為讀取小寫屬性，直接對接你資料庫的結構
+    let time24 = convertTo24Hour(item.time || item.Time); 
+    return `
+        <div class="admin-itin-item-row" data-id="${item.id || ''}">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <span class="itin-drag-handle">☰</span>
+                    <input type="time" class="itin-edit-time" value="${time24}">
                 </div>
-            `;
-        }
+                <button class="admin-delete-btn" onclick="this.closest('.admin-itin-item-row').remove()">刪除</button>
+            </div>
+            <input type="text" class="itin-edit-title" placeholder="行程名稱 (必填)" value="${item.title || item.Title || ''}">
+            <textarea class="itin-edit-desc" placeholder="詳細內容...">${item.desc || item.Desc || ''}</textarea>
+            <input type="text" class="itin-edit-link" placeholder="Google Maps 連結 (選填)" value="${item.link || item.Link || ''}">
+        </div>
+    `;
+}
 
 // 🌟 3. 產生一整天框框的大外殼
 function generateDayCardHTML(dayKey, displayTitle, eventsHtml) {
@@ -2433,12 +2475,29 @@ function generateDayCardHTML(dayKey, displayTitle, eventsHtml) {
 // 🌟 4. 打開行程編輯器
 function openAdminItinerary() {
     const container = document.getElementById('admin-itin-list-container');
-    let data = cachedPollData.itinerary || [];
+    if (!container) return;
+
+    // 🛡️ 鋼性多軌搜查線：優先抓 itinerary，沒有就抓 config.ItineraryData
+    let data = [];
+    if (cachedPollData) {
+        if (cachedPollData.itinerary) {
+            data = cachedPollData.itinerary;
+        } else if (cachedPollData.config && cachedPollData.config.ItineraryData) {
+            try {
+                data = JSON.parse(cachedPollData.config.ItineraryData);
+            } catch(e) { data = []; }
+        }
+    }
+    
+    // 萬一真的是完全沒資料的新帳號，給一則預設項目打底
+    if (!Array.isArray(data) || data.length === 0) {
+        data = [{ Time: '08:00', Title: '', Desc: '', Link: '', Day: 'Day 1' }];
+    }
     
     let grouped = { "Day 1": [], "Day 2": [] };
-    
     data.forEach(item => {
-        let d = item.Day || "";
+        if (!item) return;
+        let d = item.Day || "Day 1";
         if (d === "Day 2" || d.includes("28") || d.includes("Day 2")) {
             grouped["Day 2"].push(item);
         } else {
@@ -2460,6 +2519,10 @@ function openAdminItinerary() {
     });
     
     container.innerHTML = html;
+    
+    // 進來時宣告乾淨狀態
+    window.isNoticePageDirty = false;
+    
     switchView('admin-itinerary');
     initItinerarySortable();
 }
@@ -2480,83 +2543,7 @@ function addEventToDay(btn) {
 }
 
 
-// =========================================================================
-// 🎯 👑【儲存詳細行程大腦 ── 0延遲暴力直接儲存、完美回航前台分頁完全體】
-// 💡 修正：100% 複製公告儲存的成功方程式，Focus 藍框狀態下直接點擊儲存，一次就存檔跳頁！
-// =========================================================================
-async function saveAdminItinerary(e) {
-    // 🛡️ 雙重防火牆：如果事件存在，立刻沒收並阻斷所有原生的表單重新整理、蓋台跳躍動作！
-    if (e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
 
-    // 👑【Focus 競爭絕殺引信】：如果當前有任何行程欄位正在聚焦藍框打字，強迫它在 0 毫秒內立刻失焦（Blur）！
-    // 提前把打字數值回填 HTML，不給 focusout 監聽器任何卡時序、吞點擊的機會！
-    if (document.activeElement && typeof document.activeElement.blur === 'function') {
-        document.activeElement.blur();
-    }
-
-    let tempItin = [];
-    let hasError = false;
-
-    // 清除可能殘留的行程紅框警告
-    document.querySelectorAll('.itin-edit-title').forEach(el => {
-        el.style.border = "1px solid rgba(0,0,0,0.15)";
-    });
-
-    const rows = document.querySelectorAll('.admin-itin-item-row');
-    for (let row of rows) {
-        const titleInput = row.querySelector('.itin-edit-title');
-        const title = titleInput ? titleInput.value.trim() : "";
-
-        // 行程專屬防呆：只有在行程標題完全空白時才阻斷
-        if (titleInput && title === "") {
-            hasError = true;
-            titleInput.style.border = "2px solid #ff4d4f";
-            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            setTimeout(() => titleInput.focus(), 300);
-            break;
-        }
-
-        const id = row.getAttribute('data-id');
-        const time = row.querySelector('.itin-edit-time').value.trim();
-        const desc = row.querySelector('.itin-edit-desc').value.trim();
-        const link = row.querySelector('.itin-edit-link').value.trim();
-
-        if (title) {
-            tempItin.push({ id, time, title, desc, link });
-        }
-    }
-
-    if (hasError) return;
-
-    const btn = document.getElementById('btn-save-itinerary');
-    if (btn) { btn.innerText = "資料儲存中..."; btn.disabled = true; }
-
-    showCustomAlert("資料儲存中", "詳細行程正在寫入資料庫...", false);
-
-    // 👑【核心解鎖】：宣告全域公告與行程此時都是乾淨退出，防止換頁手煞車誤啟動
-    window.isNoticePageDirty = false;
-    if (cachedPollData && cachedPollData.config) {
-        // 同步更新全域 Config 記憶體快照
-        cachedPollData.config.ItineraryData = JSON.stringify(tempItin);
-    }
-
-    // 寫入 Firebase
-    db.ref('config/ItineraryData').set(JSON.stringify(tempItin)).then(() => {
-        closeModal();
-        
-        // 🚀 核心看這裡：存檔成功後，100% 順暢帶領使用者回到前台的「詳細行程」分頁視圖！
-        switchView('itinerary'); 
-        
-        if (btn) { btn.innerText = "儲存行程變更"; btn.disabled = false; }
-    }).catch(err => {
-        closeModal();
-        showCustomAlert("儲存失敗", "請檢查網路連線：" + err.message);
-        if (btn) { btn.innerText = "儲存行程變更"; btn.disabled = false; }
-    });
-}
 
 function renderChecklist() {
     const container = document.getElementById('prep-checklist-container');
@@ -5797,3 +5784,52 @@ function exitCustomSplitPage(isSave = false) {
 }
 
 function calculatePageCustomSplitTotals() { pageCustomSplitTotals(); }
+
+// =========================================================================
+// 🎯 👑【前台詳細行程時間軸 ── 即時重繪渲染完全體（純淨版）】
+// 💡 規則：必須剛性保留！負責處理前台詳細行程分頁的 HTML 鋪設，已拔除 console.log
+// =========================================================================
+function renderItineraryTimeline(data) {
+    const wrapper = document.getElementById('ui-timeline-wrapper');
+    if (!wrapper || !data || !data.itinerary || data.itinerary.length === 0) return;
+
+    let itinHtml = ""; 
+    let currentDay = "";
+    
+    data.itinerary.forEach(item => {
+        if (!item) return; 
+        
+        // 🛡️ 雙向大小寫寬容相容雷達
+        let itemDay = item.Day || item.day || "Day 1";
+        let itemTime = item.Time || item.time || "";
+        let itemTitle = item.Title || item.title || "";
+        let itemDesc = item.Desc || item.desc || "";
+        let itemLink = item.Link || item.link || "";
+
+        if (itemDay !== currentDay) { 
+            if (currentDay !== "") itinHtml += `</div></div>`; 
+            currentDay = itemDay; 
+            let displayDay = currentDay === "Day 2" ? "Day 2 - 06/28(日)" : "Day 1 - 06/27(六)";
+            itinHtml += `<div class="card"><h3 style="margin-top:0; color:var(--primary-orange); border-bottom:1px solid rgba(255,255,255,0.3); padding-bottom:12px; font-size: 16px;">${displayDay}</h3><div class="timeline">`; 
+        }
+        
+        let timeStr = itemTime;
+        if (timeStr && !timeStr.includes('午')) { 
+            const parts = timeStr.split(':');
+            if (parts.length >= 2) {
+                let h = parseInt(parts[0], 10);
+                if (!isNaN(h)) {
+                    let ampm = h >= 12 ? '下午' : '上午';
+                    h = h % 12 || 12; 
+                    timeStr = `${ampm} ${h}:${parts[1]}`;
+                }
+            }
+        }
+
+        let linkStr = itemLink ? `<br><a href="${itemLink}" target="_blank" style="display:inline-block; margin-top:8px; color:var(--primary-blue); text-decoration:none; font-size:12px; font-weight:700; background:rgba(0,123,255,0.08); padding:4px 12px; border-radius:12px; transition:0.2s;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:2px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>導航至 Google Map</a>` : "";
+        itinHtml += `<div class="timeline-item"><div class="time-badge">${timeStr}</div><div class="event-title">${itemTitle}</div><div class="event-desc">${itemDesc}${linkStr}</div></div>`;
+    });
+    
+    if (currentDay !== "") itinHtml += `</div></div>`; 
+    wrapper.innerHTML = itinHtml;
+}
