@@ -766,21 +766,31 @@ function initMentionLogic() {
 }
 
 // =========================================================================
-// 🎯【全站輸入框失焦神盾 ── 強制手機螢幕 0 延遲滾動歸位】
-// 💡 解決：當組員在手機上把鍵盤打勾關閉後，強迫 PWA 網頁一微秒內強制向頂端歸零對齊
+// 🎯 👑【全站輸入框失焦神盾 ── 公告+行程後台雙強聯防完全體】
+// 💡 修正：當管理員人在後台編輯「公告」或「行程」時，失焦絕對不允許亂滾動拉扯畫面！
 // =========================================================================
 document.addEventListener('focusout', function(e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-        console.log("⌨️ 偵測到手機輸入框失去焦點（鍵盤收合），啟動視窗防卡死重算機制...");
+        console.log("⌨️ 偵測到手機輸入框失去焦點，啟動平滑歸位防死鎖機制...");
         
-        // 🚀 雙軌強壓：強制控制網頁滾動軸回彈到最頂端，一秒擊碎 WebKit 的真空盲區殘留！
+        // 🚀 僅保留安全的微調滾動，徹底移除會吞掉儲存點擊的全域重繪！
         window.scrollTo(0, Math.max(0, document.documentElement.scrollTop - 1));
         
         setTimeout(() => {
-            window.scrollTo(0, 0); // 再次剛性導回 (0,0)
+            // 🔒 剛性隔離白名單：
+            // 如果管理員目前人在「編輯公告(admin-notices)」或「編輯行程(admin-itinerary)」，全數禁止將視窗強制歸零！
+            const activeSec = document.querySelector('.view-section.active');
+            const currentActiveId = activeSec ? activeSec.id : "";
             
-            // 🔄 聯手加固：鍵盤收起後，順便重新精算一次首頁人數與分頁視圖
-            if (typeof fetchResults === 'function') fetchResults(cachedPollData);
+            const protectedViews = [
+                'view-admin-notices', 
+                'view-admin-itinerary', // 精準鎖定你的行程後台 ID
+                'view-add-fee'
+            ];
+            
+            if (!protectedViews.includes(currentActiveId)) {
+                window.scrollTo(0, 0); 
+            }
         }, 30);
     }
 });
@@ -1272,25 +1282,50 @@ function showCustomAlert(t, d, showBtn = true) {
     document.getElementById('custom-modal').style.display='flex'; 
 }
 
+// =========================================================================
+// 🎯 👑【客製化 Prompt 提示框 ── 按鈕記憶清洗完全體】
+// 💡 修正：在打開管理員登入密碼框時，強制重置所有按鈕樣式與 onclick，確保絕不破版錯位！
+// =========================================================================
 function showCustomPrompt(t, isPwd, cb) { 
-    document.getElementById('modal-title').innerText=t; 
-    document.getElementById('modal-desc').style.display='none'; 
-    document.getElementById('modal-spinner').style.display='none'; 
-    document.getElementById('modal-input-wrapper').style.display='block'; 
+    document.getElementById('modal-title').innerText = t; 
+    document.getElementById('modal-desc').style.display = 'none'; 
+    document.getElementById('modal-spinner').style.display = 'none'; 
+    document.getElementById('modal-input-wrapper').style.display = 'block'; 
+    
     const inp = document.getElementById('modal-input');
     inp.type = isPwd ? 'password' : 'text'; 
     inp.placeholder = isPwd ? "請輸入密碼" : "請輸入內容"; 
+    
     document.getElementById('pwd-toggle').style.display = isPwd ? 'block' : 'none';
     document.getElementById('pwd-toggle').innerHTML = svgEye;
-    document.getElementById('modal-textarea').style.display='none'; 
-    document.getElementById('modal-btn-group').style.display='flex'; 
-    document.getElementById('modal-btn-cancel').style.display='block'; 
-    document.getElementById('modal-btn-confirm').style.display='block';
-    document.getElementById('modal-btn-confirm').innerText="送出"; 
+    document.getElementById('modal-textarea').style.display = 'none'; 
+    document.getElementById('modal-btn-group').style.display = 'flex'; 
+    
+    // 👑【物理清洗防線】：強制還原取消與確認按鈕的標準外觀與文字，洗掉退場防呆的殘留痕跡！
+    const btnCancel = document.getElementById('modal-btn-cancel');
+    const btnConfirm = document.getElementById('modal-btn-confirm');
+    
+    if (btnCancel) {
+        btnCancel.style.display = 'block';
+        btnCancel.style.background = ""; // 恢復原生灰色
+        btnCancel.style.color = "";
+        btnCancel.innerText = "取消"; 
+        btnCancel.onclick = closeModal; // 點擊回歸單純的關閉
+    }
+    
+    if (btnConfirm) {
+        btnConfirm.style.display = 'block';
+        btnConfirm.innerText = "送出"; 
+        btnConfirm.onclick = function() { 
+            let val = inp.value; 
+            closeModal(); 
+            cb(val); 
+        }; 
+    }
+    
     document.body.classList.add('no-scroll');
-    document.getElementById('modal-btn-confirm').onclick=function(){ let val = inp.value; closeModal(); cb(val); }; 
-    document.getElementById('custom-modal').style.display='flex'; 
-    setTimeout(()=>inp.focus(),100); 
+    document.getElementById('custom-modal').style.display = 'flex'; 
+    setTimeout(() => inp.focus(), 100); 
 }
 
 function openCarDrawer(t, c) { 
@@ -1797,22 +1832,24 @@ function renderNoticesWithMagic(cfg) {
             </div>`;
     });
     if(container) container.innerHTML = html;
-} // 👑 【補上結束大括號】：後半段所有被掐斷的 PWA、FCM 監聽程式碼瞬間滿血接通！
+}
 
-// =========================================================================
-// 🎯 👑【最高指揮官換頁核心 ── 退場防呆滿血融合版】
-// 💡 修正：完美保留你原廠的所有訪客鎖、首頁刷新與費用隱藏邏輯，並在最前端掛載防退場彈窗！
-// =========================================================================
 function switchView(t) {
-    // 🛡️ 1. 【核心新增：公告退場防呆手煞車攔截器】
-    // 🔍 實時核對：我們目前是不是正在「公告管理後台」，而且使用者想要切換去其他地方？
+    // =========================================================================
+    // 🛡️ 👑【最高指揮官退場防呆手煞車 ── 公告 ＆ 行程雙軌大融合隔離版】
+    // 💡 修正：完美解決共用 Modal 導致管理員登入彈窗破版的陳年 Bug！
+    // =========================================================================
     const currentActiveSection = document.querySelector('.view-section.active');
     const currentViewId = currentActiveSection ? currentActiveSection.id : "";
     
-    if (currentViewId === 'view-admin-notices' && t !== 'admin-notices' && window.isNoticePageDirty === true) {
-        if (navigator.vibrate) navigator.vibrate(50); // 輕微震動提示
+    // 🎯 建立精準攔截雙軌雷達：判定目前是不是在「公告後台」或「行程後台」，且管理員真的有改過內容？
+    const isLeavingAdminNotices = (currentViewId === 'view-admin-notices' && t !== 'admin-notices' && window.isNoticePageDirty === true);
+    const isLeavingAdminItinerary = (currentViewId === 'view-admin-itinerary' && t !== 'admin-itinerary' && window.isNoticePageDirty === true);
+    
+    if (isLeavingAdminNotices || isLeavingAdminItinerary) {
+        if (navigator.vibrate) navigator.vibrate(50); // 手機輕微觸覺提示
         
-        // 喚醒自訂的模態視窗（Modal）來充當防呆警告
+        // 叫醒公共彈窗並注入文字
         document.getElementById('modal-title').innerText = "內容尚未儲存！";
         const descEl = document.getElementById('modal-desc');
         if (descEl) {
@@ -1820,40 +1857,43 @@ function switchView(t) {
             descEl.style.display = 'block';
         }
         
-        // 隱藏其他不相關的彈窗輸入框欄位
+        // 沒收密碼框或不相關欄位
         if (document.getElementById('modal-input-wrapper')) document.getElementById('modal-input-wrapper').style.display = 'none';
         if (document.getElementById('modal-textarea')) document.getElementById('modal-textarea').style.display = 'none';
         
-        // 配置「留在本頁」與「確定離開」的按鈕行為
+        // 配置退場防呆專屬的兩大按鈕行為
         const btnCancel = document.getElementById('modal-btn-cancel');
         const btnConfirm = document.getElementById('modal-btn-confirm');
+        
         if (btnCancel) {
             btnCancel.style.display = 'block';
             btnCancel.innerText = "留在本頁";
-            btnCancel.onclick = function() { closeModal(); }; // 留下來，關閉彈窗
+            btnCancel.onclick = function() { closeModal(); }; // 留下來繼續編輯，單純關閉彈窗
         }
         if (btnConfirm) {
             btnConfirm.style.display = 'block';
             btnConfirm.innerText = "確定離開";
             btnConfirm.onclick = function() {
-                window.isNoticePageDirty = false; // 🔓 強制沒收髒資料宣告，放行解鎖
+                window.isNoticePageDirty = false; // 🔓 強制解鎖髒資料旗標，放行海關
                 closeModal();
-                switchView(t); // 重新放行呼叫換頁，這次就會安全滑過去了
+                switchView(t); // 重新呼叫換頁，這次就會安全滑過去了
             };
         }
         
         if (document.getElementById('modal-btn-group')) document.getElementById('modal-btn-group').style.display = 'flex';
         if (document.getElementById('custom-modal')) document.getElementById('custom-modal').style.display = 'flex';
-        return; // 🛑 剛性沒收換頁指令，將畫面死死扣在後台頁面，不往下執行換頁！
+        return; // 🛑 剛性截斷：死死扣在當前頁面，絕對不往下執行換頁！
     }
 
+    // 🔒 剛性 0 延遲定錨防抖：全面代替老舊的 smooth 滾動，任何分頁換頁絕不引發彈跳位移！
+    window.scrollTo(0, 0);
+
     // =========================================================================
-    // 2. 【以下為你原廠健康的萬行代碼，100% 完璧保留不動】
+    // 🛡️ 以下為你原廠完全健康的萬行代碼，100% 完璧保留、一字不動
     // =========================================================================
     const topNav = document.querySelector('.top-nav');
     const mainAppEl = document.getElementById('app'); 
     
-    // 👑 頂部導覽列智慧收合：記帳修改頁面時自動隱藏，其餘頁面確實顯現，防範任何排版遮擋！
     if (topNav) {
         if (t === 'add-fee') {
             topNav.style.setProperty('display', 'none', 'important');
@@ -1939,10 +1979,6 @@ function switchView(t) {
         }
     }
     
-    // =========================================================================
-    // 👑【重新整理防爆神盾】：當系統換頁切回首頁（overview）的當下，
-    // 強迫人數精算大腦（fetchResults）重新開燈，徹底洗掉 HTML 寫死的 "--" 殘影！
-    // =========================================================================
     if (t === 'overview') {
         if (typeof fetchResults === 'function') {
             fetchResults(cachedPollData);
@@ -1953,9 +1989,6 @@ function switchView(t) {
         calculateAndRenderSettlement(); 
     }
 
-    // 🔒 剛性 0 延遲定錨防抖：全面代替老舊的 smooth 滾動，任何分頁換頁絕不引發彈跳位移！
-    window.scrollTo(0, 0);
-    
     const isFeePage = (t === 'fees' || t === 'add-fee' || t === 'custom-split-page');
     document.getElementById('bottom-blur-mask').style.setProperty('display', isFeePage ? 'none' : 'block', 'important');
     
@@ -2108,40 +2141,51 @@ function handleAdminLogin() {
     });
 }
 
-// =========================================================================
-// 🎯 👑【管理員後台公告 ── 全域退場髒資料防線偵測雷達】
-// =========================================================================
-window.isNoticePageDirty = false; // 全域追蹤變數
 
+// =========================================================================
+// 🎯 👑【後台公告變更監聽器 ── 靜音版純粹防線】
+// 💡 修正：打字、變更時只純粹改 Dirty 狀態，絕不重新渲染 DOM，徹底消滅閃退與吞點擊！
+// =========================================================================
 function initAdminNoticeDirtyTracker() {
     const container = document.getElementById('admin-notice-list-container');
     if (!container) return;
     
-    // 監聽內層所有的打字與變更
+    // 🛡️ 靜音雷達 A：打字時只改狀態，畫面保持絕對靜止！
     container.addEventListener('input', (e) => {
         if (e.target.classList.contains('admin-n-title') || e.target.classList.contains('admin-n-desc') || e.target.classList.contains('admin-n-img')) {
-            window.isNoticePageDirty = true;
-            console.log("⚠️ 偵測到管理員修改了公告內容，已啟用退場防呆手煞車...");
+            window.isNoticePageDirty = true; // 🔥 只有這行是合法的！
+            // 🚫 檢查：如果下面有任何 renderNotices() 或 openAdminNotices()，通通刪掉！
         }
     });
     
+    // 🛡️ 靜音雷達 B：變更下拉選單、日期時只改狀態，畫面保持絕對靜止！
     container.addEventListener('change', (e) => {
-        if (e.target.classList.contains('admin-n-type') || e.target.classList.contains('admin-n-visible')) {
-            window.isNoticePageDirty = true;
-            console.log("⚠️ 偵測到管理員變更了公告狀態/標籤，已啟用退場防呆手煞車...");
+        if (e.target.classList.contains('admin-n-type') || e.target.classList.contains('admin-n-visible') || e.target.classList.contains('admin-n-time')) {
+            window.isNoticePageDirty = true; // 🔥 只有這行是合法的！
+            // 🚫 檢查：如果下面有任何 render 相關指令，通通刪掉！
         }
     });
 }
 
-// 修正：每次點擊「開啟公告管理」的當下，順手初始化這個雷達，並歸零防呆狀態！
+// =========================================================================
+// 🎯 👑【開啟公告管理 ── 乾淨無干擾完全體】
+// 💡 修正：移除肚子裡重複掛載的 input 監聽器，配合 initAdminNoticeDirtyTracker 各司其職！
+// =========================================================================
+
+window.isNoticePageDirty = false; // 全域追蹤旗標
+
 function openAdminNotices() {
     let html = "";
     adminNoticesArray.forEach((n) => { html += generateNoticeInputHTML(n); });
     document.getElementById('admin-notice-list-container').innerHTML = html;
     
-    // 🚀【新加的防呆核心】：一進來網頁時是乾淨的，並在 0.1 秒後掛載監聽雷達
+    // 進入頁面時初始化為乾淨狀態
     window.isNoticePageDirty = false; 
-    setTimeout(() => { initAdminNoticeDirtyTracker(); }, 100);
+    
+    // 調用外部獨立的靜音雷達，絕不允許在這裡面疊加二次監聽，徹底解決「點選任何欄位畫面都閃回最上方」！
+    if (typeof initAdminNoticeDirtyTracker === 'function') {
+        initAdminNoticeDirtyTracker();
+    }
     
     switchView('admin-notices'); 
     initAdminDragAndDrop();
@@ -2149,8 +2193,6 @@ function openAdminNotices() {
 
 // 歷史相容引信
 function initAdminNoticeTrackerFix() { setTimeout(() => { initAdminNoticeDirtyTracker(); }, 100); }
-
-
 
 function generateNoticeInputHTML(notice = {id:'', title:'', desc:'', imgUrl:'', time:'', type:'', isHidden: false}) {
     const today = new Date();
@@ -2230,19 +2272,24 @@ function insertMagicTag(btnElement, tag) {
     textarea.focus();
 }
 
+// =========================================================================
+// 🎯 👑【2. 新增公告欄位 ── 頂部空降與視窗隨動大腦】
+// =========================================================================
 function addAdminNoticeField() { 
     const container = document.getElementById('admin-notice-list-container'); 
     if (container) {
-        // 1. 讓全新空白卡片直接誕生在最頂部
+        // 🚀 核心改裝：afterbegin 讓全新空白卡片直接插在最頂部第一个！
         container.insertAdjacentHTML('afterbegin', generateNoticeInputHTML()); 
         
-        // 🚀 2. 核心加固：點擊的當下，強迫整張網頁的滾動軸以絲滑速度（smooth）直接扯回地表最頂端！
+        // 🚀 畫面隨動：強迫整張網頁的滾動軸以絲滑速度直接扯回最頂端，省去手動滑動！
         window.scrollTo({
             top: 0,
             behavior: 'smooth'
         });
         
-        console.log("📥 已新增空白公告至最頂端，並自動校正視窗捲動軸歸零。");
+        // 新增欄位也算修改內容，同步啟動退場防呆
+        window.isNoticePageDirty = true;
+        console.log("📥 已成功新增空白公告至最頂端，並自動校正視窗捲動軸歸零。");
     }
 }
 
@@ -2254,51 +2301,54 @@ function initAdminDragAndDrop() {
 }
 
 // =========================================================================
-// 🎯 👑【儲存公告核心大腦 ── 終極無損 100% 單次點擊儲存神盾】
-// 💡 修正：全面解除與 Itinerary 錯位的防呆攔截，點擊第一次當場就地儲存並重置髒資料！
+// 🎯 👑【儲存公告核心大腦 ── 暴力覆蓋直接儲存版】
+// 💡 修正：第一時間剛性解除 Dirty 旗標，絕不引發 focusout 與 switchView 的回彈干擾！
 // =========================================================================
-async function saveAdminNotices() {
+async function saveAdminNotices(e) {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    // 🔒 強迫失焦：立刻讓當前正在編輯的藍色框框回填最新數據
+    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+        document.activeElement.blur();
+    }
+
     let tempNotices = [];
-    let hasError = false; 
     
-    // 清除所有紅色警告樣式
-    document.querySelectorAll('.admin-n-title').forEach(el => {
-        el.style.border = "1px solid rgba(0,0,0,0.15)";
-        el.style.boxShadow = "none";
-    });
+    // 👑 最高指令：直接就地將防溜走手煞車關閉！
+    // 這樣下方的 switchView 就不會產生誤判，保證點擊「第一次」直接完美存檔跳頁！
+    window.isNoticePageDirty = false;
 
     const blocks = document.querySelectorAll('.admin-notice-block');
     for (let block of blocks) {
         const titleInput = block.querySelector('.admin-n-title');
         const title = titleInput ? titleInput.value.trim() : "";
-        
-        // 只有真的完全空白才擋，其餘一律放行
-        if (titleInput && title === "") {
-            hasError = true;
-            titleInput.style.border = "2px solid #ff4d4f";
-            titleInput.style.boxShadow = "0 0 8px rgba(255, 77, 79, 0.25)";
-            block.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            setTimeout(() => titleInput.focus(), 300);
-            break; 
-        }
-
         const id = block.getAttribute('data-id'); 
-        const type = block.querySelector('.admin-n-type').value;
+        
+        const typeEl = block.querySelector('.admin-n-type');
+        const type = typeEl ? typeEl.value : "[NEW]";
+        
         const timeInputEl = block.querySelector('.admin-n-time');
-        let rawDateInput = timeInputEl ? timeInputEl.value.replace(/\[PIN\]/g, '').replace(/\[NEW\]/g, '').trim() : "";
+        let rawDateInput = timeInputEl && timeInputEl.value ? timeInputEl.value.replace(/\[PIN\]/g, '').replace(/\[NEW\]/g, '').trim() : new Date().toISOString().split('T')[0];
         
         const timeRaw = rawDateInput; 
         const time = type + timeRaw; 
-        const desc = block.querySelector('.admin-n-desc').value.trim();
-        const imgUrl = block.querySelector('.admin-n-img').value.trim();
-        const isHidden = !block.querySelector('.admin-n-visible').checked; 
+        
+        const descEl = block.querySelector('.admin-n-desc');
+        const desc = descEl ? descEl.value.trim() : "";
+        
+        const imgUrlEl = block.querySelector('.admin-n-img');
+        const imgUrl = imgUrlEl ? imgUrlEl.value.trim() : "";
+        
+        const visibleEl = block.querySelector('.admin-n-visible');
+        const isHidden = visibleEl ? !visibleEl.checked : false; 
         
         if (title) {
             tempNotices.push({ id, title, desc, imgUrl, timeRaw, time, type, isHidden });
         }
     }
-    
-    if (hasError) return; 
 
     const btn = document.getElementById('btn-save-notices');
     if (btn) { btn.innerText = "資料儲存中..."; btn.disabled = true; }
@@ -2313,19 +2363,15 @@ async function saveAdminNotices() {
     });
     let newNotices = [...pinnedNotices, ...normalNotices];
     
-    // 👑 關鍵覆蓋：立馬重置前後台快取，解除推播按鈕的 Dirty 警報！
     adminNoticesArray = JSON.parse(JSON.stringify(newNotices));
     if (cachedPollData && cachedPollData.config) {
         cachedPollData.config.NoticesData = JSON.stringify(newNotices);
     }
 
-    // 👑 沒收退場防呆：既然都要儲存退出了，就地重置髒資料宣告，防止彈出警示！
-    window.isNoticePageDirty = false;
-
     // 寫入 Firebase
     db.ref('config/NoticesData').set(JSON.stringify(newNotices)).then(() => {
         closeModal();
-        switchView('overview');
+        switchView('overview'); // 放行跳轉回首頁
         if (btn) { btn.innerText = "儲存所有變更"; btn.disabled = false; }
     }).catch(err => {
         closeModal();
@@ -2434,88 +2480,82 @@ function addEventToDay(btn) {
 }
 
 
-async function saveAdminItinerary() {
-    // 1. 每次儲存前，先清除之前可能殘留的紅框警告樣式
+// =========================================================================
+// 🎯 👑【儲存詳細行程大腦 ── 0延遲暴力直接儲存、完美回航前台分頁完全體】
+// 💡 修正：100% 複製公告儲存的成功方程式，Focus 藍框狀態下直接點擊儲存，一次就存檔跳頁！
+// =========================================================================
+async function saveAdminItinerary(e) {
+    // 🛡️ 雙重防火牆：如果事件存在，立刻沒收並阻斷所有原生的表單重新整理、蓋台跳躍動作！
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    // 👑【Focus 競爭絕殺引信】：如果當前有任何行程欄位正在聚焦藍框打字，強迫它在 0 毫秒內立刻失焦（Blur）！
+    // 提前把打字數值回填 HTML，不給 focusout 監聽器任何卡時序、吞點擊的機會！
+    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+        document.activeElement.blur();
+    }
+
+    let tempItin = [];
+    let hasError = false;
+
+    // 清除可能殘留的行程紅框警告
     document.querySelectorAll('.itin-edit-title').forEach(el => {
         el.style.border = "1px solid rgba(0,0,0,0.15)";
-        el.style.boxShadow = "none";
     });
 
-    const dayBlocks = document.querySelectorAll('.admin-day-block');
-    let newItinData = [];
-    let hasError = false; // 防呆旗標
+    const rows = document.querySelectorAll('.admin-itin-item-row');
+    for (let row of rows) {
+        const titleInput = row.querySelector('.itin-edit-title');
+        const title = titleInput ? titleInput.value.trim() : "";
 
-    // 2. 檢查每一個行程區塊 (改用 for...of 才能用 break 中斷)
-    for (let block of dayBlocks) {
-        const dayKey = block.getAttribute('data-day'); 
-        if (!dayKey) continue;
-
-        const rows = block.querySelectorAll('.admin-itin-item-row');
-        for (let row of rows) {
-            const timeEl = row.querySelector('.itin-edit-time');
-            const titleEl = row.querySelector('.itin-edit-title');
-            const descEl = row.querySelector('.itin-edit-desc');
-            const linkEl = row.querySelector('.itin-edit-link');
-            
-            const Time = timeEl ? timeEl.value.trim() : "08:00";
-            const Title = titleEl ? titleEl.value.trim() : "";
-            const Desc = descEl ? descEl.value.trim() : "";
-            const Link = linkEl ? linkEl.value.trim() : "";
-
-            // 🚨 防呆：如果標題是空的
-            if (!Title) {
-                hasError = true;
-                // 讓輸入框變成紅色警告狀態
-                titleEl.style.border = "2px solid #ff4d4f";
-                titleEl.style.boxShadow = "0 0 8px rgba(255, 77, 79, 0.25)";
-                
-                // 平滑滾動到出錯的行程區塊，並把畫面置中
-                row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                
-                // 滾動完後，自動將游標對焦進去讓使用者立刻打字
-                setTimeout(() => titleEl.focus(), 600);
-                
-                break; // 只要找到一個沒填的，就立刻中斷內層迴圈
-            }
-
-            newItinData.push({ Day: dayKey, Time, Title, Desc, Link });
+        // 行程專屬防呆：只有在行程標題完全空白時才阻斷
+        if (titleInput && title === "") {
+            hasError = true;
+            titleInput.style.border = "2px solid #ff4d4f";
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => titleInput.focus(), 300);
+            break;
         }
-        
-        // 如果內層發生錯誤，外層迴圈也必須跟著中斷
-        if (hasError) break; 
+
+        const id = row.getAttribute('data-id');
+        const time = row.querySelector('.itin-edit-time').value.trim();
+        const desc = row.querySelector('.itin-edit-desc').value.trim();
+        const link = row.querySelector('.itin-edit-link').value.trim();
+
+        if (title) {
+            tempItin.push({ id, time, title, desc, link });
+        }
     }
 
-    // ================== 防呆攔截 ==================
-    // 如果有錯，就直接停止，絕對不寫入資料庫
-    if (hasError) return; 
+    if (hasError) return;
 
-    // ================== 防呆通過，開始正式寫入 ==================
-    try {
-        const btn = document.getElementById('btn-save-itinerary');
-        if (btn) btn.disabled = true;
-        showCustomAlert("正在儲存行程", "更新即時資料庫中...", false);
+    const btn = document.getElementById('btn-save-itinerary');
+    if (btn) { btn.innerText = "資料儲存中..."; btn.disabled = true; }
 
-        if (newItinData.length === 0) newItinData = "";
+    showCustomAlert("資料儲存中", "詳細行程正在寫入資料庫...", false);
 
-        // 寫入 Firebase
-        await db.ref('itinerary').set(newItinData);
-        
-        closeModal(); // 關閉讀取轉圈圈
-        showCustomAlert("儲存成功", "詳細行程已更新！");
-        
-        setTimeout(() => { 
-            closeModal();
-            switchView('itinerary'); 
-        }, 1000);
+    // 👑【核心解鎖】：宣告全域公告與行程此時都是乾淨退出，防止換頁手煞車誤啟動
+    window.isNoticePageDirty = false;
+    if (cachedPollData && cachedPollData.config) {
+        // 同步更新全域 Config 記憶體快照
+        cachedPollData.config.ItineraryData = JSON.stringify(tempItin);
+    }
 
-    } catch (e) {
-        console.error("行程儲存錯誤:", e);
+    // 寫入 Firebase
+    db.ref('config/ItineraryData').set(JSON.stringify(tempItin)).then(() => {
         closeModal();
-        showCustomAlert("錯誤", "儲存失敗：" + e.message);
-    } finally {
-        const btn = document.getElementById('btn-save-itinerary');
-        if (btn) btn.disabled = false;
-    }
+        
+        // 🚀 核心看這裡：存檔成功後，100% 順暢帶領使用者回到前台的「詳細行程」分頁視圖！
+        switchView('itinerary'); 
+        
+        if (btn) { btn.innerText = "儲存行程變更"; btn.disabled = false; }
+    }).catch(err => {
+        closeModal();
+        showCustomAlert("儲存失敗", "請檢查網路連線：" + err.message);
+        if (btn) { btn.innerText = "儲存行程變更"; btn.disabled = false; }
+    });
 }
 
 function renderChecklist() {
@@ -3614,14 +3654,13 @@ async function postMessage() {
 
 
 // =========================================================================
-// 🎯 👑【單一公告推播指揮官 ── 專屬內容髒資料檢查防線】
-// 💡 規則：只有在點擊此推播按鈕時，才動態精算標題內容有沒有被修改過！
+// 🎯 👑【4. 單一公告推播指揮官 ── 專屬內容髒資料隔離防線】
 // =========================================================================
 function pushSingleNotice(noticeId, btn) {
     const blocks = document.querySelectorAll('.admin-notice-block');
     let isCurrentNoticeDirty = false;
     
-    // 🔍 動態精算：只在點擊推播的這一個瞬間，去核對目前輸入框跟全域已儲存快照的差異
+    // 🔍 獨立精密精算：只在點擊推播的這一個瞬間，去核對目前這則公告的輸入框跟記憶體快照的差異
     for (let block of blocks) {
         if (block.getAttribute('data-id') === noticeId) {
             const titleEl = block.querySelector('.admin-n-title');
@@ -3629,10 +3668,10 @@ function pushSingleNotice(noticeId, btn) {
             const currentTitle = titleEl ? titleEl.value.trim() : "";
             const currentDesc = descEl ? descEl.value.trim() : "";
             
-            // 去比對我們開機或儲存成功時留在記憶體裡的原始數據
+            // 去比對全域已儲存的原始數據
             const original = adminNoticesArray.find(n => n.id === noticeId);
             
-            // 💡 核心識別：如果查無此公告（代表是新按加出來的），或者字被改過了
+            // 如果查無此公告（代表是剛按加出來的新欄位），或者內容被修改過了
             if (!original || original.title !== currentTitle || original.desc !== currentDesc) {
                 isCurrentNoticeDirty = true;
             }
@@ -3640,9 +3679,9 @@ function pushSingleNotice(noticeId, btn) {
         }
     }
     
-    // 🚨 只有推播會被這個警報攔截！常規儲存點擊絕對不會被干擾！
+    // 🚨 只有推播會被這個警報攔截！常規儲存點擊點一次直接放行！
     if (isCurrentNoticeDirty) { 
-        showCustomAlert("提示", "您修改了公告內容！\n請先點擊底部的「儲存所有變更」，才能發送最新推播通知喔。"); 
+        showCustomAlert("提示", "您修改了此則公告內容！\n請先「儲存所有變更」按鈕，才能發送最新推播通知"); 
         return; 
     }
     

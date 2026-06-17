@@ -51,7 +51,10 @@ body::before {
 
 @keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(40px, 60px) scale(1.1); } }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { 
+    from { opacity: 0; } 
+    to { opacity: 1; } 
+}
 @keyframes fadeInShort { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes feePopIn { 
     from { 
@@ -587,8 +590,6 @@ body:has(#view-add-fee.active) .bottom-blur-mask,
 body:has(#view-result.active) .bottom-blur-mask {
     display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important;
 }
-
-#view-add-fee { padding-bottom: 240px !important; }
 #view-add-fee .fee-form-card { padding-bottom: calc(45px + env(safe-area-inset-bottom)) !important; }
 
 .fee-form-card { background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.2) 100%) !important; border: 1px solid var(--glass-border) !important; padding: 20px !important; }
@@ -1106,18 +1107,10 @@ body:has(#view-add-fee.active) {
 }
 
 #view-add-fee {
-    height: auto !important; /* 釋放剛性高度 */
-    min-height: calc(100vh - 60px) !important; /* 確保不失真 */
-    padding-bottom: 220px !important; /* 🎯 剛性補償：預留大量底部安全墊，徹底消滅導覽列遮擋，按鈕絕不穿透 */
-    box-sizing: border-box !important;
-}
-
-#view-add-fee {
-    height: 100% !important;
-    padding-bottom: 0px !important;
-    margin-bottom: 0px !important;
-    overflow: hidden !important; /* 子外殼同步鎖死 */
-    box-sizing: border-box !important;
+    height: auto !important; 
+    min-height: calc(100vh - 60px) !important; 
+    padding-bottom: 220px !important; 
+    box-sizing: border-box !important; 
 }
 
 /* 3. 精細微調主玻璃卡片，讓它在按鈕下方完美貼邊收尾 */
