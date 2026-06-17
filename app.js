@@ -535,51 +535,71 @@ function openSettings() {
 } 
 
 // =========================================================================
-// 🔔 還原通知總開關：關閉通知時確實由 Firebase 節點移除 Token 訂閱
+// 🎯 👑【通知總開關 ── 徹底隔離密碼框・純淨按鈕版】
+// 💡 修正：還原最純粹的「取消」與「開啟」按鈕組合，絕不混淆！
 // =========================================================================
 function handlePushMasterToggle(checkbox) {
     const isTurningOn = checkbox.checked;
     
     if (isTurningOn) {
         if (Notification.permission === 'default') {
-            checkbox.checked = false; // 先把開關關回去，等他確認才打開
+            checkbox.checked = false; // 先把開關關回去，等用戶確認才打開
             
+            // 🧱 剛性重置公共彈窗外殼，確保輸入框、文字框絕對處於隱藏狀態！
+            document.getElementById('modal-input-wrapper').style.display = 'none';
+            document.getElementById('modal-textarea-wrapper').style.display = 'none';
+            if (document.getElementById('modal-spinner')) document.getElementById('modal-spinner').style.display = 'none';
+            
+            // 注入標準通知詢問文字
             document.getElementById('modal-title').innerText = "開啟推播通知？";
-            document.getElementById('modal-desc').innerText = "開啟通知，才不會錯過重要訊息喔！";
-            document.getElementById('modal-desc').style.display = 'block';
-            document.getElementById('modal-btn-group').style.display = 'flex';
+            const descEl = document.getElementById('modal-desc');
+            if (descEl) {
+                descEl.innerText = "開啟通知，才不會錯過小組的重要訊息喔！";
+                descEl.style.display = 'block';
+            }
             
+            // 👑【按鈕文字純淨化】: 剛性重設為「取消」與「開啟」
+            const btnCancel = document.getElementById('modal-btn-cancel');
             const btnConfirm = document.getElementById('modal-btn-confirm');
-            btnConfirm.innerText = "開啟";
-            btnConfirm.onclick = function() {
-                closeModal();
-                requestPushPermission(true); 
-            };
+            
+            if (btnCancel) {
+                btnCancel.style.display = 'block';
+                btnCancel.innerText = "取消"; // 修正：純淨還原為取消
+                btnCancel.onclick = function() { closeModal(); }; 
+            }
+            
+            if (btnConfirm) {
+                btnConfirm.style.display = 'block';
+                btnConfirm.innerText = "開啟"; // 修正：純淨還原為開啟
+                btnConfirm.onclick = function() {
+                    closeModal();
+                    requestPushPermission(true); // 🚀 真正去要求 Google FCM 權限
+                };
+            }
+            
+            if (document.getElementById('modal-btn-group')) document.getElementById('modal-btn-group').style.display = 'flex';
             document.getElementById('custom-modal').style.display = 'flex';
             
         } else if (Notification.permission === 'granted') {
             requestPushPermission(true);
         } else {
             checkbox.checked = false;
-            showCustomAlert("無法開啟", "您已封鎖通知，請前往系統設定解除封鎖。");
+            showCustomAlert("無法開啟", "您已封鎖通知，請前往手機瀏覽器系統設定解除封鎖。");
         }
     } else {
-        // 🎯【完美還原】：用戶想關閉通知時，徹底將 Firebase 雲端上的 Token 節點刪除移除！
+        // 用戶關閉通知時，默默移除雲端 Token (保持你原廠健康的優良規格)
         if (currentUser && currentUser.id) {
             const myLocalToken = localStorage.getItem('myDeviceFCMToken');
-            
-            // 先偷看一下雲端的 Token 是不是我的
             db.ref('pushTokens/' + currentUser.id).once('value', snap => {
                 if (snap.val() === myLocalToken) {
-                    // 💡 只有當雲端 Token 是我這台機器的，我才有資格刪除它！
                     db.ref('pushTokens/' + currentUser.id).remove()
                     .then(() => {
                         console.log("🗑️ 已關閉通知，Token 刪除成功");
                     }).catch(err => console.error("刪除 Token 失敗", err));
                 }
             });
-            
-            document.getElementById('push-sub-options').style.display = 'none';
+            const subOptions = document.getElementById('push-sub-options');
+            if (subOptions) subOptions.style.display = 'none';
         }
     }
 }
