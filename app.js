@@ -535,54 +535,21 @@ function openSettings() {
 } 
 
 // =========================================================================
-// 🎯 👑【通知總開關 ── 徹底隔離密碼框・純淨按鈕版】
-// 💡 修正：還原最純粹的「取消」與「開啟」按鈕組合，絕不混淆！
+// 🎯 👑【通知總開關 ── 移除重疊跳窗・直達系統原生詢問完全體】
+// 💡 修正：刪除自製的 custom-modal 詢問，點擊開關直接觸發瀏覽器權限索取！
 // =========================================================================
 function handlePushMasterToggle(checkbox) {
     const isTurningOn = checkbox.checked;
     
     if (isTurningOn) {
         if (Notification.permission === 'default') {
-            checkbox.checked = false; // 先把開關關回去，等用戶確認才打開
-            
-            // 🧱 剛性重置公共彈窗外殼，確保輸入框、文字框絕對處於隱藏狀態！
-            document.getElementById('modal-input-wrapper').style.display = 'none';
-            document.getElementById('modal-textarea-wrapper').style.display = 'none';
-            if (document.getElementById('modal-spinner')) document.getElementById('modal-spinner').style.display = 'none';
-            
-            // 注入標準通知詢問文字
-            document.getElementById('modal-title').innerText = "開啟推播通知？";
-            const descEl = document.getElementById('modal-desc');
-            if (descEl) {
-                descEl.innerText = "開啟通知，才不會錯過小組的重要訊息喔！";
-                descEl.style.display = 'block';
-            }
-            
-            // 👑【按鈕文字純淨化】: 剛性重設為「取消」與「開啟」
-            const btnCancel = document.getElementById('modal-btn-cancel');
-            const btnConfirm = document.getElementById('modal-btn-confirm');
-            
-            if (btnCancel) {
-                btnCancel.style.display = 'block';
-                btnCancel.innerText = "取消"; // 修正：純淨還原為取消
-                btnCancel.onclick = function() { closeModal(); }; 
-            }
-            
-            if (btnConfirm) {
-                btnConfirm.style.display = 'block';
-                btnConfirm.innerText = "開啟"; // 修正：純淨還原為開啟
-                btnConfirm.onclick = function() {
-                    closeModal();
-                    requestPushPermission(true); // 🚀 真正去要求 Google FCM 權限
-                };
-            }
-            
-            if (document.getElementById('modal-btn-group')) document.getElementById('modal-btn-group').style.display = 'flex';
-            document.getElementById('custom-modal').style.display = 'flex';
+            // 🚀【極簡直達】：不跳任何自製視窗，直接呼叫 Google FCM 與瀏覽器的權限大腦
+            requestPushPermission(true);
             
         } else if (Notification.permission === 'granted') {
             requestPushPermission(true);
         } else {
+            // 如果使用者之前已經在系統層面「封鎖」了通知，還是需要給予警示引導
             checkbox.checked = false;
             showCustomAlert("無法開啟", "您已封鎖通知，請前往手機瀏覽器系統設定解除封鎖。");
         }
