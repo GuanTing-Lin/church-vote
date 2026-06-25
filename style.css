@@ -1208,3 +1208,55 @@ body:has(#view-add-fee.active) {
     align-items: center !important;
     flex-shrink: 0 !important; /* 🚫 絕對不允許被右邊的長文字擠壓變形 */
 }
+
+/* =========================================================================
+   🌦️ 👑 【香草山旅遊指南 ── 獨家純 CSS 氣象動態向量動畫組件】
+   💡 註：移至此處統一控速。當出發當天或過後，將自動沒收 0 天，亮出此處的會下雨、會旋轉特效！
+   ========================================================================= */
+.weather-anim-box {
+    display: flex !important; 
+    justify-content: center !important; 
+    align-items: center !important;
+    width: 100% !important; 
+    height: 70px !important; 
+    margin: 5px 0 !important;
+    box-sizing: border-box !important;
+}
+.weather-icon-svg { 
+    width: 64px !important; 
+    height: 64px !important; 
+    display: block !important;
+}
+
+/* ☁️ 雲朵微幅上下漂浮動畫 */
+.anim-cloud {
+    animation: floatCloud 3.5s ease-in-out infinite !important;
+    fill: #a0aec0 !important; /* 質感高級灰 */
+}
+
+/* 🌧️ 三道雨滴依序下落動畫 */
+.anim-rain-1 { animation: rainDrop 1.2s ease-in infinite !important; fill: #3182ce !important; }
+.anim-rain-2 { animation: rainDrop 1.2s ease-in infinite 0.4s !important; fill: #3182ce !important; }
+.anim-rain-3 { animation: rainDrop 1.2s ease-in infinite 0.8s !important; fill: #3182ce !important; }
+
+/* ☀️ 金黃色太陽 360 度平滑慢速自轉 */
+.anim-sun {
+    transform-origin: 12px 12px !important; /* 精準鎖定太陽正圓心 */
+    animation: rotateSun 12s linear infinite !important;
+    fill: #f9a826 !important; /* 經典香草橘 */
+}
+
+/* 🎬 核心 Keyframes 卡槽 */
+@keyframes floatCloud {
+    0%, 100% { transform: translateY(0px) translateX(0px); }
+    50% { transform: translateY(-4px) translateX(2px); }
+}
+@keyframes rainDrop {
+    0% { transform: translateY(-6px); opacity: 0; }
+    30% { opacity: 1; }
+    100% { transform: translateY(10px); opacity: 0; }
+}
+@keyframes rotateSun {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

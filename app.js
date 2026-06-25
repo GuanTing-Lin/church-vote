@@ -1139,7 +1139,7 @@ async function processLoadedData() {
             
             if (isFirstLoad || currentConfigStr !== lastConfigStr) {
                 lastConfigStr = currentConfigStr;
-                console.log("🌐 [主架構渲染] 執行開機初次載入或後台變更 UI 鋪設");
+                //console.log("🌐 [主架構渲染] 執行開機初次載入或後台變更 UI 鋪設");
                 if (typeof renderDynamicUI === 'function') renderDynamicUI(data);
             }
 
@@ -2174,19 +2174,155 @@ function unlockMainApp() {
     }
 }
 
+// =========================================================================
+// 🎯 👑【首頁天數倒數大腦 ── 長效宜蘭五結氣象・生產環境上線完全體】
+// 💡 修正：沒收出遊後退回精彩回顧的限制！只要倒數歸零，永遠長效顯示五結鄉實時天氣！
+// =========================================================================
 function initDaysCountdown() {
-    // 🎯【修正】：不要在函式內部寫死 2026, 5, 27，改為直接對齊我們在 renderDynamicUI 幫你淨化算好的全域變數值！
     if (!countdownTargetDate) return;
+
+    // 🚀【生產環境時間線】：完全放行，精準抓取組員手機當下的實時時間
+    const nowTime = new Date().getTime(); 
     
-    const diffTime = countdownTargetDate - new Date().getTime();
+    const diffTime = countdownTargetDate - nowTime;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    // 確保不會出現負數 (如果日期過了就顯示 0)
-    const displayDays = Math.max(0, diffDays);
-    
-    const countdownEl = document.getElementById('days-countdown');
-    if (countdownEl) {
-        countdownEl.innerText = isNaN(displayDays) ? "--" : displayDays;
+    const labelTop = document.querySelector('.days-label'); 
+    const countdownEl = document.getElementById('days-countdown'); 
+    const labelBottom = countdownEl?.nextElementSibling; 
+
+    // ⏳ 判定是否已經抵達 6/27 出發當天（或過後）
+    if (diffDays <= 0) {
+        
+        // 📝 頂端與底端文字釘死，長效對齊氣象排版
+        if (labelTop) labelTop.innerText = "宜蘭五結鄉(民宿)";
+        if (labelBottom) labelBottom.innerHTML = ""; 
+
+        // 防重複渲染鎖定，避免 Firebase 廣播連續蓋台
+        if (countdownEl && countdownEl.querySelector('.weather-anim-box')) {
+            if (typeof fetchResults === 'function' && cachedPollData) {
+                fetchResults(cachedPollData);
+            }
+            return;
+        }
+
+        // 🚀【五結鄉 GPS 精準定位即時氣象雷達通道】
+        fetch('https://api.open-meteo.com/v1/forecast?latitude=24.68&longitude=121.79&current=temperature_2m,weather_code&timezone=Asia%2FTaipei')
+            .then(res => res.json())
+            .then(resData => {
+                if (!resData || !resData.current) return;
+                
+                const tempC = Math.round(resData.current.temperature_2m);
+                
+                // 🚀【全自動氣象智慧分流】：動態對齊 Open-Meteo 當下真實天氣特徵碼
+                const wCode = resData.current.weather_code; 
+
+                let isRain = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99].includes(wCode);
+                let isCloudy = [1, 2, 3, 45, 48].includes(wCode); 
+
+                let styleAndSvgHtml = "";
+
+                if (isRain) {
+                    // 🌧️ 【原廠高顏值大雨絲圖示】
+                    styleAndSvgHtml = `
+                        <style>
+                            @keyframes floatCloud { 0%, 100% { transform: translate3d(0,0,0); } 50% { transform: translate3d(2px,-4px,0); } }
+                            @keyframes rainDrop { 0% { transform: translate3d(0,-6px,0); opacity: 0; } 30% { opacity: 1; } 100% { transform: translate3d(-2px,10px,0); opacity: 0; } }
+                            .weather-lazy-svg { animation: weatherLazyShow 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.3s forwards; opacity: 0; }
+                            @keyframes weatherLazyShow { from { opacity: 0; } to { opacity: 1; } }
+                        </style>
+                        <svg class="weather-icon-svg weather-lazy-svg" viewBox="0 0 48 48" style="width: 64px; height: 64px; display: block; margin: 0 auto; will-change: transform;">
+                            <path d="M32 20a7 7 0 0 0-13.95-1.12 5 5 0 0 0-8.05 3.92 6 6 0 0 0 6 6h16a6 6 0 0 0 0-12z" style="animation: floatCloud 3.5s ease-in-out infinite; will-change: transform; fill: #a0aec0;"/>
+                            <line x1="17" y1="32" x2="15" y2="38" stroke-width="2.5" stroke-linecap="round" style="animation: rainDrop 1.2s ease-in infinite both; will-change: transform; stroke: #3182ce;"/>
+                            <line x1="23" y1="32" x2="21" y2="38" stroke-width="2.5" stroke-linecap="round" style="animation: rainDrop 1.2s ease-in infinite 0.4s both; will-change: transform; stroke: #3182ce;"/>
+                            <line x1="29" y1="32" x2="27" y2="38" stroke-width="2.5" stroke-linecap="round" style="animation: rainDrop 1.2s ease-in infinite 0.8s both; will-change: transform; stroke: #3182ce;"/>
+                        </svg>`;
+                } else if (isCloudy) {
+                    // 🌥️ 【原廠高顏值八角太陽多雲圖示】
+                    styleAndSvgHtml = `
+                        <style>
+                            @keyframes floatCloud { 0%, 100% { transform: translate3d(0,0,0); } 50% { transform: translate3d(2px,-4px,0); } }
+                            @keyframes rotateSun { 0% { transform: translate3d(0,0,0) rotate(0deg); } 100% { transform: translate3d(0,0,0) rotate(360deg); } }
+                            .weather-lazy-svg { animation: weatherLazyShow 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.3s forwards; opacity: 0; }
+                            @keyframes weatherLazyShow { from { opacity: 0; } to { opacity: 1; } }
+                        </style>
+                        <svg class="weather-icon-svg weather-lazy-svg" viewBox="0 0 48 48" style="width: 64px; height: 64px; display: block; margin: 0 auto; will-change: transform;">
+                            <g transform="translate(4, 4)" style="transform-origin: 12px 12px; animation: rotateSun 12s linear infinite both; will-change: transform; fill: #f9a826; stroke: #f9a826;">
+                                <circle cx="12" cy="12" r="5"/>
+                                <line x1="12" y1="3" x2="12" y2="1" stroke-width="2.5" stroke-linecap="round"/>
+                                <line x1="12" y1="21" x2="12" y2="23" stroke-width="2.5" stroke-linecap="round"/>
+                                <line x1="3" y1="12" x2="1" y2="12" stroke-width="2.5" stroke-linecap="round"/>
+                                <line x1="21" y1="12" x2="23" y2="12" stroke-width="2.5" stroke-linecap="round"/>
+                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke-width="2.5" stroke-linecap="round"/>
+                                <line x1="5.64" y1="18.36" x2="4.22" y2="19.78" stroke-width="2.5" stroke-linecap="round"/>
+                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke-width="2.5" stroke-linecap="round"/>
+                                <line x1="5.64" y1="5.64" x2="4.22" y2="4.22" stroke-width="2.5" stroke-linecap="round"/>
+                            </g>
+                            <path d="M34 24a6 6 0 0 0-11.95-.96 4 4 0 0 0-6.05 3.46 5 5 0 0 0 5 5h13a5 5 0 0 0 0-10z" style="animation: floatCloud 3.5s ease-in-out infinite both; will-change: transform; fill: #cbd5e0;"/>
+                        </svg>`;
+                } else {
+                    // ☀️ 【原廠高顏值純八角晴天太陽圖示】
+                    styleAndSvgHtml = `
+                        <style>
+                            @keyframes rotateSun { 0% { transform: translate3d(0,0,0) rotate(0deg); } 100% { transform: translate3d(0,0,0) rotate(360deg); } }
+                            .weather-lazy-svg { animation: weatherLazyShow 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.3s forwards; opacity: 0; }
+                            @keyframes weatherLazyShow { from { opacity: 0; } to { opacity: 1; } }
+                        </style>
+                        <svg class="weather-icon-svg weather-lazy-svg" viewBox="0 0 24 24" style="width: 64px; height: 64px; display: block; margin: 0 auto; will-change: transform;">
+                            <g style="transform-origin: 12px 12px; animation: rotateSun 12s linear infinite both; will-change: transform; fill: #f9a826; stroke: #f9a826;">
+                                <circle cx="12" cy="12" r="5"/>
+                                <line x1="12" y1="3" x2="12" y2="1" stroke-width="2.5" stroke-linecap="round"/>
+                                <line x1="12" y1="21" x2="12" y2="23" stroke-width="2.5" stroke-linecap="round"/>
+                                <line x1="3" y1="12" x2="1" y2="12" stroke-width="2.5" stroke-linecap="round"/>
+                                <line x1="21" y1="12" x2="23" y2="12" stroke-width="2.5" stroke-linecap="round"/>
+                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke-width="2.5" stroke-linecap="round"/>
+                                <line x1="5.64" y1="18.36" x2="4.22" y2="19.78" stroke-width="2.5" stroke-linecap="round"/>
+                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke-width="2.5" stroke-linecap="round"/>
+                                <line x1="5.64" y1="5.64" x2="4.22" y2="4.22" stroke-width="2.5" stroke-linecap="round"/>
+                            </g>
+                        </svg>`;
+                }
+
+                if (countdownEl) {
+                    // 👑 【高度自適應彈開外殼】
+                    countdownEl.innerHTML = `
+                        <style>
+                            .weather-lazy-box-flow { 
+                                animation: boxExpandFlow 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) 0.25s forwards; 
+                                height: 0px; opacity: 0; overflow: hidden;
+                            }
+                            @keyframes boxExpandFlow { from { height: 0px; opacity: 0; } to { height: 70px; opacity: 1; } }
+                        </style>
+                        <div class="weather-anim-box" style="width: 100%; height: auto; margin: 0; padding: 0; overflow: hidden;">
+                            <div class="weather-lazy-box-flow" style="width: 100%; display: flex; justify-content: center; align-items: center;">
+                                ${styleAndSvgHtml}
+                            </div>
+                        </div>
+                        <div style="font-size: 32px; font-weight: 900; color: var(--text-main); margin-top: 4px; display: block;">
+                            ${tempC}°C
+                        </div>
+                    `;
+                }
+
+                // 強制人數同步
+                if (typeof fetchResults === 'function' && cachedPollData) {
+                    fetchResults(cachedPollData);
+                }
+            })
+            .catch(err => {
+                console.log("氣象連線隔離保底:", err);
+                if (countdownEl) countdownEl.innerHTML = `<div style="font-size: 28px; font-weight:800;">28°C</div>`;
+                if (typeof fetchResults === 'function' && cachedPollData) fetchResults(cachedPollData);
+            });
+    } else {
+        // ⏳【出發前（當前階段）】：完全維持原本健康的綠色倒數數字
+        if (labelTop) labelTop.innerText = "距出發日還有";
+        if (countdownEl) {
+            countdownEl.innerText = isNaN(diffDays) ? "--" : diffDays;
+            countdownEl.style.fontSize = ""; 
+            countdownEl.style.color = "";    
+        }
+        if (labelBottom) labelBottom.innerText = "天";
     }
 }
 
@@ -2870,7 +3006,7 @@ async function fetchResults(liveData = null) {
             } else {
                 overviewRegCountEl.innerText = `已報名15人`; // 保底防線
             }
-            console.log(`🎯 [同步神盾] 內外頁人數完成對齊！當前出遊人數：${confirmedCount} 人`);
+            //console.log(`🎯 [同步神盾] 內外頁人數完成對齊！當前出遊人數：${confirmedCount} 人`);
         }
 
     } catch (error) { 
