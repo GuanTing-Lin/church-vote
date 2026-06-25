@@ -2204,6 +2204,9 @@ function openAdminNotices() {
 // 歷史相容引信
 function initAdminNoticeTrackerFix() { setTimeout(() => { initAdminNoticeDirtyTracker(); }, 100); }
 
+// =========================================================================
+// 🎯 👑【產生單一公告編輯欄位 HTML ── 絕不吐出 undefined 完全體】
+// =========================================================================
 function generateNoticeInputHTML(notice = {id:'', title:'', desc:'', imgUrl:'', time:'', type:'', isHidden: false}) {
     const today = new Date();
     const defaultDate = `${today.getFullYear()}-${(today.getMonth()+1).toString().padStart(2,'0')}-${today.getDate().toString().padStart(2,'0')}`;
@@ -2212,6 +2215,11 @@ function generateNoticeInputHTML(notice = {id:'', title:'', desc:'', imgUrl:'', 
     let rawTime = notice.time || '';
     let cleanTimeVal = rawTime.replace(/\[PIN\]/g, '').replace(/\[NEW\]/g, '').trim();
     let timeVal = cleanTimeVal ? cleanTimeVal.replace(/\//g, '-') : defaultDate;
+
+    // 🛡️ 剛性過濾防線：如果 notice.title 或 notice.desc 是空的或 undefined，強制轉為純淨空字串！
+    const displayTitle = notice.title || "";
+    const displayDesc = notice.desc || "";
+    const displayImgUrl = notice.imgUrl || "";
 
     return `<div class="admin-notice-block" data-id="${noticeId}" style="transition: opacity 0.3s; opacity: ${notice.isHidden ? '0.5' : '1'};">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
@@ -2234,7 +2242,7 @@ function generateNoticeInputHTML(notice = {id:'', title:'', desc:'', imgUrl:'', 
                 <button class="admin-delete-btn" style="position:static; margin:0; padding: 5px 10px;" onclick="removeAdminNoticeField(this)">刪除</button>
             </div>
         </div>
-        <input type="text" class="msg-textarea admin-n-title" placeholder="請輸入標題 (必填)" style="min-height:36px; margin-bottom:10px; background: rgba(255,255,255,0.9); transition: 0.3s;" value="${notice.title}">
+        <input type="text" class="msg-textarea admin-n-title" placeholder="請輸入標題 (必填)" style="min-height:36px; margin-bottom:10px; background: rgba(255,255,255,0.9); transition: 0.3s;" value="${displayTitle}">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
             <label style="font-size:12px; color:var(--text-muted); font-weight: 600;">公告日期</label>
             <select class="admin-n-type" style="padding: 3px 8px; border-radius: 8px; border: 1px solid #cbd5e0; font-size: 12px; font-weight: 700; color: #4a5568; outline: none; background: white;">
@@ -2250,21 +2258,21 @@ function generateNoticeInputHTML(notice = {id:'', title:'', desc:'', imgUrl:'', 
             <select onchange="if(this.value){ insertMagicTag(this, this.value); this.selectedIndex=0; }" 
                     style="padding: 3px 8px; border-radius: 8px; border: 1px solid #cbd5e0; font-size: 12px; font-weight: 700; color: #4a5568; background: white; outline: none; cursor: pointer; max-width: 140px;">
                 <option value="" disabled selected>+ 插入捷徑按鈕</option>
-                    <option value="[前往民宿按鈕]">民宿資訊</option>
-                    <option value="[前往分房按鈕]">分房名單</option>
-                    <option value="[前往人數按鈕]">報名狀況</option>
-                    <option value="[前往費用按鈕]">查看費用</option>
-                    <option value="[前往行程按鈕]">詳細行程</option>
-                    <option value="[前往物品按鈕]">攜帶物品</option>
-                    <option value="[前往留言板按鈕]">留言板</option>
-                    
+                <option value="[前往民宿按鈕]">民宿資訊</option>
+                <option value="[前往分房按鈕]">分房名單</option>
+                <option value="[前往人數按鈕]">報名狀況</option>
+                <option value="[前往費用按鈕]">查看費用</option>
+                <option value="[前往行程按鈕]">詳細行程</option>
+                <option value="[前往物品按鈕]">攜帶物品</option>
+                <option value="[前往留言板按鈕]">留言板</option>
             </select>
         </div>
-        <textarea class="msg-textarea admin-n-desc" style="background: rgba(255,255,255,0.9); margin-bottom:10px;">${notice.desc}</textarea>
+        <textarea class="msg-textarea admin-n-desc" placeholder="請輸入公告內文..." style="background: rgba(255,255,255,0.9); margin-bottom:10px;">${displayDesc}</textarea>
         <label style="font-size:12px; color:var(--text-muted); font-weight: 600;">圖片連結</label>
-        <textarea class="msg-textarea admin-n-img" placeholder="請貼上圖片網址(若有多張請換行)" style="min-height:72px; background: rgba(255,255,255,0.9); margin-bottom:0;">${notice.imgUrl || ''}</textarea>
+        <textarea class="msg-textarea admin-n-img" placeholder="請貼上圖片網址(若有多張請換行)" style="min-height:72px; background: rgba(255,255,255,0.9); margin-bottom:0;">${displayImgUrl}</textarea>
     </div>`;
 }
+
 // 自動將指令標籤插入到輸入框的游標位置
 function insertMagicTag(btnElement, tag) {
     const textarea = btnElement.closest('.admin-notice-block').querySelector('.admin-n-desc');
@@ -2283,23 +2291,16 @@ function insertMagicTag(btnElement, tag) {
 }
 
 // =========================================================================
-// 🎯 👑【2. 新增公告欄位 ── 頂部空降與視窗隨動大腦】
+// 🎯 👑【新增公告按鈕 ── 參數空裝防爆完全體】
 // =========================================================================
 function addAdminNoticeField() { 
     const container = document.getElementById('admin-notice-list-container'); 
     if (container) {
-        // 🚀 核心改裝：afterbegin 讓全新空白卡片直接插在最頂部第一个！
-        container.insertAdjacentHTML('afterbegin', generateNoticeInputHTML()); 
+        // 🧱 剛性注入 {} 空物件打底，確保 generateNoticeInputHTML 順暢執行不當機！
+        container.insertAdjacentHTML('afterbegin', generateNoticeInputHTML({})); 
         
-        // 🚀 畫面隨動：強迫整張網頁的滾動軸以絲滑速度直接扯回最頂端，省去手動滑動！
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
-        
-        // 新增欄位也算修改內容，同步啟動退場防呆
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         window.isNoticePageDirty = true;
-        console.log("📥 已成功新增空白公告至最頂端，並自動校正視窗捲動軸歸零。");
     }
 }
 
@@ -5819,4 +5820,111 @@ function renderItineraryTimeline(data) {
     
     if (currentDay !== "") itinHtml += `</div></div>`; 
     wrapper.innerHTML = itinHtml;
+}
+
+// =========================================================================
+// 🎯 👑【儲存首頁公告核心 ── 剛性空值檢查・紅框防呆完全體】
+// =========================================================================
+function saveAdminNotices(e) {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+        document.activeElement.blur();
+    }
+
+    let tempNotices = [];
+    let hasError = false;
+
+    // 清洗所有舊的紅框標記，恢復基本透明度邊框
+    document.querySelectorAll('.admin-n-title').forEach(el => {
+        el.style.border = "1px solid rgba(0,0,0,0.12)";
+    });
+
+    const blocks = document.querySelectorAll('.admin-notice-block');
+    for (let block of blocks) {
+        const titleInput = block.querySelector('.admin-n-title');
+        const title = titleInput ? titleInput.value.trim() : "";
+
+        // 🚨【原廠剛性防呆引信】：如果標題是空的，啟動封鎖並就地制裁！
+        if (titleInput && title === "") {
+            hasError = true;
+            titleInput.style.border = "2px solid #ff4d4f"; // 亮起紅色警告框
+            
+            // 平滑滾動讓該無效欄位直接在手機中央對齊亮出
+            block.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // 300 毫秒緩衝後，自動彈出鍵盤聚焦在該標題輸入框
+            setTimeout(() => titleInput.focus(), 300);
+            break; // 徹底中斷迴圈，拒絕送出
+        }
+
+        const id = block.getAttribute('data-id') || Math.random().toString(36).substring(2, 6); 
+        const typeEl = block.querySelector('.admin-n-type');
+        const type = typeEl ? typeEl.value : "[NEW]";
+        
+        const timeInputEl = block.querySelector('.admin-n-time');
+        let rawDateInput = timeInputEl && timeInputEl.value ? timeInputEl.value.replace(/\[PIN\]/g, '').replace(/\[NEW\]/g, '').trim() : new Date().toISOString().split('T')[0];
+        
+        const descEl = block.querySelector('.admin-n-desc');
+        const desc = descEl ? descEl.value.trim() : "";
+        
+        const imgUrlEl = block.querySelector('.admin-n-img');
+        const imgUrl = imgUrlEl ? imgUrlEl.value.trim() : "";
+        
+        const visibleEl = block.querySelector('.admin-n-visible');
+        const isHidden = visibleEl ? !visibleEl.checked : false; 
+        
+        if (title) {
+            tempNotices.push({ 
+                id: id, 
+                title: title, 
+                desc: desc, 
+                imgUrl: imgUrl, 
+                timeRaw: rawDateInput, 
+                time: type + rawDateInput, 
+                type: type, 
+                isHidden: isHidden 
+            });
+        }
+    }
+
+    // 🛑 發現防呆錯誤，攔截放行，不寫入 Firebase
+    if (hasError) return;
+
+    window.isNoticePageDirty = false; // 解鎖換頁防護
+
+    const btn = document.getElementById('btn-save-notices');
+    if (btn) { btn.innerText = "資料儲存中..."; btn.disabled = true; }
+    
+    showCustomAlert("資料儲存中", "資料正在寫入資料庫...", false);
+    
+    let pinnedNotices = tempNotices.filter(n => n.type === '[PIN]');
+    let normalNotices = tempNotices.filter(n => n.type !== '[PIN]');
+    
+    pinnedNotices.sort((a, b) => { 
+        return new Date(b.timeRaw.replace(/-/g, '/')).getTime() - new Date(a.timeRaw.replace(/-/g, '/')).getTime(); 
+    });
+    let newNotices = [...pinnedNotices, ...normalNotices];
+    
+    adminNoticesArray = JSON.parse(JSON.stringify(newNotices));
+    if (cachedPollData && cachedPollData.config) {
+        cachedPollData.config.NoticesData = JSON.stringify(newNotices);
+    }
+
+    // 🚀 安全推入雲端節點
+    db.ref('config/NoticesData').set(JSON.stringify(newNotices)).then(() => {
+        closeModal();
+        if (typeof renderDynamicUI === 'function') {
+            renderDynamicUI(cachedPollData);
+        }
+        switchView('overview'); 
+        if (btn) { btn.innerText = "儲存所有變更"; btn.disabled = false; }
+    }).catch(err => {
+        closeModal();
+        showCustomAlert("儲存失敗", "請檢查網路連線：" + err.message);
+        if (btn) { btn.innerText = "儲存所有變更"; btn.disabled = false; }
+    });
 }
