@@ -4346,7 +4346,7 @@ function renderFeesPage(data) {
             const log = node.payload;
             const logAmount = parseFloat(log.amount) || 0;
 
-            if (log.fromId === currentUser.id) totalMyActualCost -= logAmount; 
+            //if (log.fromId === currentUser.id) totalMyActualCost -= logAmount; 
             if (log.toId === currentUser.id) totalMyPayerSpend -= logAmount;
 
             let payerPic = window.userAvatarMap[log.fromId] || "";
