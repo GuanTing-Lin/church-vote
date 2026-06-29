@@ -4116,7 +4116,9 @@ function toggleAllFeeVoters() {
 }
 
 // =========================================================================
-// 🎯 🌟【費用大表核心大腦 - 消費與大頭貼核銷收據全融合穿插版】
+// 🎯 👑【費用大表核心大腦 ── 總花費獨立釘死・收據結清全連動完全體】
+// 💡 修正：1. 總花費只加總 AA，雷打不動完美維持在應付總額（例如 $3006），方便對帳！
+// 💡       2. 將轉帳收據 logs 完美引流至結算淨值（netBalance），轉帳完秒亮「帳目已結清」！
 // =========================================================================
 function renderFeesPage(data) {
     const container = document.getElementById('ui-fees-container');
@@ -4124,8 +4126,10 @@ function renderFeesPage(data) {
 
     container.innerHTML = "";
 
-    let totalMyActualCost = 0;   
-    let totalMyPayerSpend = 0;   
+    let totalMyActualCost = 0;   // 👑 丁死總花費欄位：只加總個人分攤，不扣除收據
+    let totalMyPayerSpend = 0;   // 我幫全團代墊的總額
+    let totalMyPaidReceipts = 0; // 🚀【新增】：我自己透過已完成轉帳付出去的收據總額
+    let totalMyReceivedReceipts = 0; // 🚀【新增】：別人轉帳給我、我已經收到的收據總額
     let itemsHtml = "";
 
     let masterTimelineArray = [];
@@ -4193,7 +4197,7 @@ function renderFeesPage(data) {
             `;
         }
 
-        // 型態 1：常規消費款項卡片 (🎯 完全體重構：支援多人付款文字同步 ＋ 平均/客製分攤動態映射)
+        // 型態 1：常規消費款項卡片
         if (node.dataType === "expense") {
             const item = node.payload;
             const feeId = item.feeId || item._key;
@@ -4210,22 +4214,17 @@ function renderFeesPage(data) {
             let myShare = 0; 
             let itemOthersOweMe = 0;
 
-            // 🟢 A. 實時付款人字串解碼雷達 (同步處理單人 vs 多人共同付款)
             let finalCardPayerText = `${payerName} 先付`;
             if (payerId === "MULTIPLE_PAYERS" && item.payers) {
-                // 核心連動：直接抓取後台資料庫紀錄的 payers 金鑰人數
                 const actualPayerCount = Object.keys(item.payers).length;
                 finalCardPayerText = `多人共同付款(已選${actualPayerCount}人) 先付`;
             }
 
-            // 🟢 B. 智慧演算法：精準計算本人的應付與應收金額
             if (voterCount > 0) {
                 if (voters[currentUser.id] !== undefined) {
                     if (typeof voters[currentUser.id] === 'number') {
-                        // 狀態一：進階客製化拆帳，直接抓取後台儲存的個人實質分攤金額
                         myShare = voters[currentUser.id];
                     } else {
-                        // 狀態二：傳統平均分攤 (true)，執行餘額防漏發牌演算法
                         const baseCost = Math.floor(totalAmount / voterCount);
                         const remainder = totalAmount - (baseCost * voterCount);
                         voterKeys.sort(); 
@@ -4244,7 +4243,6 @@ function renderFeesPage(data) {
                     }
                 }
                 
-                // 計算如果我是付款人，別人總共欠我多少錢
                 if (payerId === currentUser.id) {
                     let myOwnShareInVoters = 0;
                     if (voters[currentUser.id] !== undefined) {
@@ -4268,7 +4266,6 @@ function renderFeesPage(data) {
                     itemOthersOweMe = totalAmount - myOwnShareInVoters;
                 }
                 
-                // 💡 多人付款模式下的應收增強修正 (如果我是多人付款的其中之一)
                 if (payerId === "MULTIPLE_PAYERS" && item.payers && item.payers[currentUser.id] !== undefined) {
                     const myPaidAmt = parseFloat(item.payers[currentUser.id]) || 0;
                     itemOthersOweMe = myPaidAmt - myShare;
@@ -4277,14 +4274,12 @@ function renderFeesPage(data) {
 
             if (voters[currentUser.id] !== undefined) totalMyActualCost += myShare; 
             
-            // 累加付款總額
             if (payerId === currentUser.id) {
                 totalMyPayerSpend += totalAmount;
             } else if (payerId === "MULTIPLE_PAYERS" && item.payers && item.payers[currentUser.id] !== undefined) {
                 totalMyPayerSpend += parseFloat(item.payers[currentUser.id]) || 0;
             }
 
-            // 🟢 C. 動態大頭貼堆疊：實時從後台資料庫抓取有參與分攤的人頭
             let miniAvatarsHtml = "";
             voterKeys.slice(0, 4).forEach((uid, idx) => {
                 let uName = window.userNameMap[uid] || "團"; 
@@ -4296,7 +4291,6 @@ function renderFeesPage(data) {
             });
             if (voterCount > 4) miniAvatarsHtml += `<div class="fee-mini-avatar fee-avatar-more">+${voterCount - 4}</div>`;
 
-            // 🟢 D. 狀態標籤渲染
             let userStatusHtml = "";
             if (payerId === currentUser.id || (payerId === "MULTIPLE_PAYERS" && item.payers && item.payers[currentUser.id] !== undefined)) {
                 if (itemOthersOweMe >= 0) {
@@ -4310,7 +4304,6 @@ function renderFeesPage(data) {
                 userStatusHtml = `<div class="fee-item-user-status" style="color:var(--text-muted);">未參與分攤</div>`;
             }
 
-            // 🟢 E. 智慧分攤文字映射：自動識別「客製化金額」或「平均分攤每人 $X」
             const isCustomSplitItem = voterCount > 0 && Object.values(voters).some(v => typeof v === 'number');
             const displayCostReference = isCustomSplitItem ? "客製化金額" : `每人 $${voterCount > 0 ? Math.round(totalAmount / voterCount) : 0}`;
 
@@ -4346,8 +4339,9 @@ function renderFeesPage(data) {
             const log = node.payload;
             const logAmount = parseFloat(log.amount) || 0;
 
-            //if (log.fromId === currentUser.id) totalMyActualCost -= logAmount; 
-            if (log.toId === currentUser.id) totalMyPayerSpend -= logAmount;
+            // 👑 智慧分流引流：收據金額改存在獨立統計欄位中，絕不污染 totalMyActualCost
+            if (log.fromId === currentUser.id) totalMyPaidReceipts += logAmount; 
+            if (log.toId === currentUser.id) totalMyReceivedReceipts += logAmount;
 
             let payerPic = window.userAvatarMap[log.fromId] || "";
             let pInitial = log.fromName ? log.fromName[0] : "?";
@@ -4377,6 +4371,7 @@ function renderFeesPage(data) {
     if (itemsHtml === "") { showEmptyFeeContainer(container); return; }
     container.innerHTML = itemsHtml;
 
+    // 👑 總花費看板：只顯示真實 AA 累加，永遠保持健康的 $3006
     document.getElementById('user-total-spend').innerText = `$${Math.round(totalMyActualCost)}`;
     const statusEl = document.getElementById('user-fee-status');
     
@@ -4385,11 +4380,23 @@ function renderFeesPage(data) {
         homePriceEl.innerText = `$${Math.round(totalMyActualCost)}`;
     }
 
-    let netBalance = Math.round(totalMyPayerSpend - totalMyActualCost); 
+    // ⚖️ 👑【終極結算公式修正】：
+    // 應付款 = (個人分攤總金額 + 我收到的轉帳) - (我幫全團墊付的總額 + 我付出去的轉帳)
+    let netBalance = Math.round((totalMyActualCost + totalMyReceivedReceipts) - (totalMyPayerSpend + totalMyPaidReceipts)); 
 
-    if (netBalance > 0) { statusEl.innerText = `應收 $${netBalance}`; statusEl.className = "fee-status-text receive"; } 
-    else if (netBalance < 0) { statusEl.innerText = `應付 $${Math.abs(netBalance)}`; statusEl.className = "fee-status-text pay"; } 
-    else { statusEl.innerText = `你的帳目已結清`; statusEl.className = "fee-status-text"; }
+    if (netBalance < 0) { 
+        // 算出來是負數，代表代墊大於分攤，我是債權人（應收款項目）
+        statusEl.innerText = `應收 $${Math.abs(netBalance)}`; 
+        statusEl.className = "fee-status-text receive"; 
+    } else if (netBalance > 0) { 
+        // 應付款項目
+        statusEl.innerText = `應付 $${netBalance}`; 
+        statusEl.className = "fee-status-text pay"; 
+    } else { 
+        // 剛好等於 0，完美結清！
+        statusEl.innerText = `你的帳目已結清`; 
+        statusEl.className = "fee-status-text"; 
+    }
 
     const mainAvatarEl = document.getElementById('user-fee-avatar');
     if (mainAvatarEl) {
